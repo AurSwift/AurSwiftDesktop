@@ -58,6 +58,105 @@ export const appSettings = createTable("app_settings", {
   ...timestampColumns,
 });
 
+// ============================================================================
+// LICENSE ACTIVATION TABLES
+// ============================================================================
+
+/**
+ * License activation record - stores the activated license for this installation
+ * Only one active license per installation at a time
+ */
+export const licenseActivation = createTable("license_activation", {
+  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+
+  // License key from web dashboard (AUR-XXX-V2-XXXXXXXX-XX format)
+  licenseKey: text("license_key").notNull().unique(),
+
+  // Machine fingerprint hash for this installation
+  machineIdHash: text("machine_id_hash").notNull(),
+
+  // Terminal name set during activation
+  terminalName: text("terminal_name").notNull().default("Terminal"),
+
+  // Activation ID from server
+  activationId: text("activation_id"),
+
+  // Plan information
+  planId: text("plan_id").notNull(), // 'basic', 'professional', 'enterprise'
+  planName: text("plan_name").notNull(),
+  maxTerminals: integer("max_terminals").notNull().default(1),
+
+  // Features enabled by plan (JSON array)
+  features: text("features", { mode: "json" })
+    .$type<string[]>()
+    .notNull()
+    .default([]),
+
+  // Business info from license
+  businessName: text("business_name"),
+
+  // Status
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  subscriptionStatus: text("subscription_status").notNull().default("active"),
+
+  // Expiration
+  expiresAt: integer("expires_at", { mode: "timestamp_ms" }),
+
+  // Timestamps
+  activatedAt: integer("activated_at", { mode: "timestamp_ms" })
+    .$defaultFn(() => new Date())
+    .notNull(),
+  lastHeartbeat: integer("last_heartbeat", { mode: "timestamp_ms" })
+    .$defaultFn(() => new Date())
+    .notNull(),
+  lastValidatedAt: integer("last_validated_at", { mode: "timestamp_ms" })
+    .$defaultFn(() => new Date())
+    .notNull(),
+
+  ...timestampColumns,
+});
+
+/**
+ * License validation history - tracks validation attempts for debugging
+ */
+export const licenseValidationLog = createTable(
+  "license_validation_log",
+  {
+    id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+
+    // What happened
+    action: text("action").notNull(), // 'activation', 'validation', 'heartbeat', 'deactivation'
+    status: text("status").notNull(), // 'success', 'failed', 'offline'
+
+    // Details
+    licenseKey: text("license_key"),
+    machineIdHash: text("machine_id_hash"),
+    errorMessage: text("error_message"),
+    serverResponse: text("server_response", { mode: "json" }),
+
+    // Timestamp
+    timestamp: integer("timestamp", { mode: "timestamp_ms" })
+      .$defaultFn(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("idx_license_validation_log_action").on(table.action),
+    index("idx_license_validation_log_timestamp").on(table.timestamp),
+  ]
+);
+
+// Type exports for license tables
+export type LicenseActivation = InferSelectModel<typeof licenseActivation>;
+export type InsertLicenseActivation = InferInsertModel<
+  typeof licenseActivation
+>;
+export type LicenseValidationLog = InferSelectModel<
+  typeof licenseValidationLog
+>;
+export type InsertLicenseValidationLog = InferInsertModel<
+  typeof licenseValidationLog
+>;
+
 /**
  * Audit log for tracking all user actions and system events
  */
@@ -889,7 +988,7 @@ export const cartSessions = createTable(
 
     // Session status
     status: text("status", {
-      enum: ["ACTIVE", "COMPLETED", "CANCELLED"],
+      enum: ["ACTIVE", "COMPLETED", "CANCELLED", "SAVED"],
     })
       .notNull()
       .default("ACTIVE"),
@@ -989,6 +1088,58 @@ export const cartItems = createTable(
     index("cart_items_category_idx").on(table.categoryId),
     index("cart_items_batch_idx").on(table.batchId),
     index("cart_items_type_idx").on(table.itemType),
+  ]
+);
+
+/**
+ * Saved Baskets - Carts saved for later retrieval via QR code
+ * Allows customers to save their shopping cart and retrieve it later
+ */
+export const savedBaskets = createTable(
+  "saved_baskets",
+  {
+    id: text("id").primaryKey(),
+    basketCode: text("basket_code").notNull().unique(), // e.g. "BSK-ABC123"
+    name: text("name").notNull(), // User-friendly name
+    cartSessionId: text("cart_session_id")
+      .notNull()
+      .references(() => cartSessions.id, { onDelete: "cascade" }),
+    businessId: text("business_id")
+      .notNull()
+      .references(() => businesses.id),
+    savedBy: text("saved_by")
+      .notNull()
+      .references(() => users.id), // User who saved the basket
+    shiftId: text("shift_id").references(() => shifts.id, {
+      onDelete: "set null",
+    }), // Optional shift reference
+
+    // Customer info (optional)
+    customerEmail: text("customer_email"),
+    notes: text("notes"),
+
+    // Status and tracking
+    status: text("status", {
+      enum: ["active", "retrieved", "expired", "deleted"],
+    })
+      .notNull()
+      .default("active"),
+
+    savedAt: integer("saved_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    expiresAt: integer("expires_at", { mode: "timestamp_ms" }),
+    retrievedAt: integer("retrieved_at", { mode: "timestamp_ms" }),
+    retrievedCount: integer("retrieved_count").notNull().default(0),
+
+    ...timestampColumns,
+  },
+  (table) => [
+    index("saved_baskets_code_idx").on(table.basketCode),
+    index("saved_baskets_business_idx").on(table.businessId),
+    index("saved_baskets_saved_by_idx").on(table.savedBy),
+    index("saved_baskets_status_idx").on(table.status),
+    index("saved_baskets_saved_at_idx").on(table.savedAt),
   ]
 );
 
@@ -2547,6 +2698,8 @@ export type CartSession = InferSelectModel<typeof cartSessions>;
 export type NewCartSession = InferInsertModel<typeof cartSessions>;
 export type CartItem = InferSelectModel<typeof cartItems>;
 export type NewCartItem = InferInsertModel<typeof cartItems>;
+export type SavedBasket = InferSelectModel<typeof savedBaskets>;
+export type NewSavedBasket = InferInsertModel<typeof savedBaskets>;
 
 // Transaction types
 export type Transaction = InferSelectModel<typeof transactions>;
@@ -2619,3 +2772,12 @@ export type NewExpiryNotification = InferInsertModel<
 >;
 export type StockMovement = InferSelectModel<typeof stockMovements>;
 export type NewStockMovement = InferInsertModel<typeof stockMovements>;
+
+// ============================================================================
+// APP VERSION TABLE (Preserve existing table)
+// ============================================================================
+
+export const _app_version = createTable("_app_version", {
+  version: text("version").primaryKey().notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+});

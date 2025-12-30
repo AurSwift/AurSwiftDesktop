@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/shared/hooks";
 import { getUserRoleName } from "@/shared/utils/rbac-helpers";
 import { UserSelectionGrid } from "@/features/auth/components/user-selection-grid";
@@ -14,62 +14,44 @@ export function AuthUserSelection() {
   const [selectedUser, setSelectedUser] = useState<UserForLogin | null>(null);
   const [pin, setPin] = useState("");
   const [loginError, setLoginError] = useState("");
-  const [isLoadingUsers, setIsLoadingUsers] = useState(true);
-  const [showSkeleton, setShowSkeleton] = useState(true);
   const [isClockingIn, setIsClockingIn] = useState(false);
   const [isClockingOut, setIsClockingOut] = useState(false);
   const [clockMessage, setClockMessage] = useState("");
   const { login, isLoading, clockIn, clockOut } = useAuth();
 
-  // Minimum loading duration to prevent skeleton flash
-  // Only show skeleton if loading takes more than 200ms
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-
-    if (isLoadingUsers) {
-      // Show skeleton after 200ms to prevent flash on fast loads
-      timer = setTimeout(() => setShowSkeleton(true), 200);
-    } else {
-      setShowSkeleton(false);
-    }
-
-    return () => clearTimeout(timer);
-  }, [isLoadingUsers]);
-
-  // Fetch users on mount
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await window.authAPI.getAllActiveUsers();
-        if (response.success && response.users) {
-          // Map users and assign colors
-          const cashierCount = { count: 0 };
-          const mappedUsers = response.users.map((user: UserForLogin) => {
-            const roleName = getUserRoleName(user);
-            const color = getUserColor(roleName, cashierCount.count);
-            if (roleName === "cashier") {
-              cashierCount.count++;
-            }
-            return {
-              id: user.id,
-              username: user.username,
-              firstName: user.firstName,
-              lastName: user.lastName,
-              roleName: roleName,
-              color,
-            };
-          });
-          setUsers(mappedUsers);
-        }
-      } catch (error) {
-        logger.error("Failed to fetch users:", error);
-      } finally {
-        setIsLoadingUsers(false);
+  // Load users (server-side pattern like categories in product management)
+  const loadUsers = useCallback(async () => {
+    try {
+      const response = await window.authAPI.getAllActiveUsers();
+      if (response.success && response.users) {
+        // Map users and assign colors
+        const cashierCount = { count: 0 };
+        const mappedUsers = response.users.map((user: UserForLogin) => {
+          const roleName = getUserRoleName(user);
+          const color = getUserColor(roleName, cashierCount.count);
+          if (roleName === "cashier") {
+            cashierCount.count++;
+          }
+          return {
+            id: user.id,
+            username: user.username,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            roleName: roleName,
+            color,
+          };
+        });
+        setUsers(mappedUsers);
       }
-    };
-
-    fetchUsers();
+    } catch (error) {
+      logger.error("Failed to fetch users:", error);
+    }
   }, []);
+
+  // Load users on mount
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
 
   const handlePinInput = (digit: string) => {
     if (pin.length < 4) {
@@ -150,11 +132,7 @@ export function AuthUserSelection() {
     <div className="w-full flex items-center justify-center lg:w-auto">
       <div className="w-full max-w-sm sm:max-w-md lg:max-w-lg mx-auto">
         {!selectedUser ? (
-          <UserSelectionGrid
-            users={users}
-            isLoading={showSkeleton}
-            onUserSelect={setSelectedUser}
-          />
+          <UserSelectionGrid users={users} onUserSelect={setSelectedUser} />
         ) : (
           <PinEntryScreen
             user={selectedUser}

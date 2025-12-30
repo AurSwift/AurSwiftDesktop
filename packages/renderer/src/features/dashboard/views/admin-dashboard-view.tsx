@@ -327,7 +327,9 @@ const AdminDashboardView = ({
 
         {/* Admin Features - Permission-based rendering */}
         <DashboardGrid
-          features={FEATURE_REGISTRY}
+          features={FEATURE_REGISTRY.filter(
+            (feature) => feature.id !== "quick-actions"
+          )}
           onActionClick={handleActionClick}
         />
       </div>

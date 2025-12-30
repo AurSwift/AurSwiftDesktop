@@ -1,25 +1,16 @@
 import { Card } from "@/components/ui/card";
 import { User } from "lucide-react";
-import { UserGridSkeleton } from "@/components/skeletons";
 import type { UserForLogin } from "@/types/domain";
 
 interface UserSelectionGridProps {
   users: UserForLogin[];
-  isLoading: boolean;
   onUserSelect: (user: UserForLogin) => void;
 }
 
 export function UserSelectionGrid({
   users,
-  isLoading,
   onUserSelect,
 }: UserSelectionGridProps) {
-  // Show skeleton during loading
-  if (isLoading) {
-    console.log("Rendering UserGridSkeleton");
-    return <UserGridSkeleton count={3} />;
-  }
-
   // Empty state
   if (users.length === 0) {
     return (

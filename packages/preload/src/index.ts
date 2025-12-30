@@ -30,12 +30,14 @@ import { expiryNotificationsAPI } from "./api/expiryNotifications.js";
 import { salesUnitSettingsAPI } from "./api/salesUnitSettings.js";
 import { stockMovementsAPI } from "./api/stockMovements.js";
 import { cartAPI } from "./api/cart.js";
+import { basketAPI } from "./api/basket.js";
 import { dashboardAPI } from "./api/dashboard.js";
 import { importAPI } from "./api/import.js";
 import { rbacAPI } from "./api/rbac.js";
 import { seedAPI } from "./api/seed.js";
 import { businessAPI } from "./api/business.js";
 import { terminalsAPI } from "./api/terminals.js";
+import { licenseAPI } from "./api/license.js";
 import "./api/updates.js";
 
 // Expose APIs to renderer process
@@ -69,12 +71,14 @@ contextBridge.exposeInMainWorld(
 contextBridge.exposeInMainWorld("salesUnitSettingsAPI", salesUnitSettingsAPI);
 contextBridge.exposeInMainWorld("stockMovementsAPI", stockMovementsAPI);
 contextBridge.exposeInMainWorld("cartAPI", cartAPI);
+contextBridge.exposeInMainWorld("basketAPI", basketAPI);
 contextBridge.exposeInMainWorld("dashboardAPI", dashboardAPI);
 contextBridge.exposeInMainWorld("importAPI", importAPI);
 contextBridge.exposeInMainWorld("rbacAPI", rbacAPI);
 contextBridge.exposeInMainWorld("seedAPI", seedAPI);
 contextBridge.exposeInMainWorld("businessAPI", businessAPI);
 contextBridge.exposeInMainWorld("terminalsAPI", terminalsAPI);
+contextBridge.exposeInMainWorld("licenseAPI", licenseAPI);
 
 // Generic IPC send function for testing and general IPC communication
 export const send = (channel: string, ...args: any[]) =>

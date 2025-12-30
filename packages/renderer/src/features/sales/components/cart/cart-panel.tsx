@@ -15,6 +15,8 @@ interface CartPanelProps {
   tax: number;
   total: number;
   onRemoveItem: (itemId: string) => void;
+  selectedItemId?: string | null;
+  onItemSelect?: (item: CartItemWithProduct) => void;
 }
 
 export function CartPanel({
@@ -24,6 +26,8 @@ export function CartPanel({
   tax,
   total,
   onRemoveItem,
+  selectedItemId,
+  onItemSelect,
 }: CartPanelProps) {
   return (
     <div className="bg-white border-b-slate-200 shadow-sm flex-1 flex flex-col min-h-0">
@@ -32,6 +36,8 @@ export function CartPanel({
           items={cartItems}
           loading={loadingCart}
           onRemove={onRemoveItem}
+          selectedItemId={selectedItemId}
+          onItemSelect={onItemSelect}
         />
         <CartSummary
           subtotal={subtotal}

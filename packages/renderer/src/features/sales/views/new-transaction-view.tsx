@@ -58,6 +58,9 @@ import {
   RefundTransactionView,
   VoidTransactionModal,
   CashDrawerCountModal,
+  QuantityModal,
+  SaveBasketModal,
+  ItemEnquiryModal,
 } from "../components/modals";
 import type {
   AgeVerificationData,
@@ -68,6 +71,7 @@ import { ScaleDisplay } from "../components/input/ScaleDisplay";
 // Types
 import type { Product, Category } from "@/types/domain";
 import type { PrinterConfig } from "@/types/features/printer";
+import type { CartItemWithProduct } from "@/types/features/cart";
 
 // Utils
 import { isWeightedProduct } from "../utils/product-helpers";
@@ -137,6 +141,19 @@ export function NewTransactionView({
   const [pendingGenericProduct, setPendingGenericProduct] =
     useState<Product | null>(null);
   const [showScaleDisplay, setShowScaleDisplay] = useState(false);
+
+  // Selected cart item (EPOS-style selection for actions like quantity, enquiry, line void)
+  const [selectedCartItem, setSelectedCartItem] =
+    useState<CartItemWithProduct | null>(null);
+
+  // Quantity modal state
+  const [showQuantityModal, setShowQuantityModal] = useState(false);
+
+  // Item enquiry modal state
+  const [showItemEnquiryModal, setShowItemEnquiryModal] = useState(false);
+
+  // Save basket modal state
+  const [showSaveBasketModal, setShowSaveBasketModal] = useState(false);
 
   // Batch selection modal states
   const [showBatchSelectionModal, setShowBatchSelectionModal] = useState(false);
@@ -502,13 +519,43 @@ export function NewTransactionView({
     [isOperationsDisabled, salesMode.requiresShift]
   );
 
+  // Handle basket QR code scan
+  const handleBasketCodeScanned = useCallback(
+    async (basketCode: string) => {
+      if (!user?.businessId) {
+        toast.error("Cannot retrieve basket: missing business information");
+        return;
+      }
+
+      // Check if current cart has items
+      if (cart.cartItems.length > 0) {
+        // Ask user to confirm replacement
+        const confirmed = window.confirm(
+          "You have items in your cart. Do you want to replace them with the saved basket?"
+        );
+        if (!confirmed) {
+          return;
+        }
+      }
+
+      // Retrieve the basket
+      const result = await cart.retrieveBasket(basketCode, true);
+      if (result) {
+        toast.success("Basket loaded successfully");
+      }
+    },
+    [cart, user?.businessId]
+  );
+
   // Barcode scanner hook - handles keyboard events from barcode scanner
   // This integrates with handleProductClick to ensure scanned products go through
   // the same validation flow (age verification, scale, batch selection) as manual selection
+  // Also handles saved basket QR code scanning
   useBarcodeScanner({
     products: products.products,
     businessId: user?.businessId,
     onProductFound: handleProductClick,
+    onBasketCodeScanned: handleBasketCodeScanned,
     selectedWeightProduct: weightInput.selectedWeightProduct,
     weightInput: weightInput.weightInput,
     weightDisplayPrice: weightInput.weightDisplayPrice,
@@ -817,6 +864,98 @@ export function NewTransactionView({
     setPendingWeightForBatchSelection(undefined);
   }, []);
 
+  // Handle cart item selection (EPOS-style: click item to select it)
+  const handleCartItemSelect = useCallback((item: CartItemWithProduct) => {
+    setSelectedCartItem(item);
+  }, []);
+
+  // Handle quantity button - operate on selected item
+  const handleQuantityClick = useCallback(() => {
+    if (!selectedCartItem) {
+      toast.error("Please select an item from the cart first.");
+      return;
+    }
+    setShowQuantityModal(true);
+  }, [selectedCartItem]);
+
+  // Handle quantity update
+  const handleQuantityUpdate = useCallback(
+    async (quantity?: number, weight?: number) => {
+      if (!selectedCartItem) return;
+      await cart.updateItemQuantity(selectedCartItem.id, quantity, weight);
+      setShowQuantityModal(false);
+      // Keep the item selected after quantity update
+    },
+    [selectedCartItem, cart]
+  );
+
+  // Handle line void - remove selected item (EPOS-style)
+  const handleLineVoid = useCallback(() => {
+    if (!selectedCartItem) {
+      toast.error("Please select an item from the cart first.");
+      return;
+    }
+    const itemName = selectedCartItem.itemName || "item";
+    cart.removeFromCart(selectedCartItem.id);
+    setSelectedCartItem(null);
+    toast.success(`Removed ${itemName} from cart`);
+  }, [selectedCartItem, cart]);
+
+  // Handle void basket - clear entire cart
+  const handleVoidBasket = useCallback(() => {
+    if (cart.cartItems.length === 0) {
+      toast.error("Cart is already empty.");
+      return;
+    }
+    // Remove all items
+    cart.cartItems.forEach((item) => {
+      cart.removeFromCart(item.id);
+    });
+    toast.success("Cart cleared");
+  }, [cart]);
+
+  // Placeholder handlers for other buttons
+  const handlePriceOverride = useCallback(() => {
+    toast.info("Price override feature coming soon");
+  }, []);
+
+  const handleLockTill = useCallback(() => {
+    toast.info("Lock till feature coming soon");
+  }, []);
+
+  const handleSaveBasket = useCallback(() => {
+    if (cart.cartItems.length === 0) {
+      toast.error("Cart is empty. Add items before saving.");
+      return;
+    }
+    setShowSaveBasketModal(true);
+  }, [cart.cartItems]);
+
+  // Handle item enquiry - operate on selected item (EPOS-style)
+  const handleItemEnquiry = useCallback(() => {
+    if (!selectedCartItem) {
+      toast.error("Please select an item from the cart first.");
+      return;
+    }
+    setShowItemEnquiryModal(true);
+  }, [selectedCartItem]);
+
+  const handleReceipts = useCallback(() => {
+    toast.info("Receipts feature coming soon");
+  }, []);
+
+  // Clear selected item if it's no longer in the cart (EPOS-style)
+  useEffect(() => {
+    if (selectedCartItem) {
+      const itemStillInCart = cart.cartItems.some(
+        (item) => item.id === selectedCartItem.id
+      );
+      if (!itemStillInCart) {
+        setSelectedCartItem(null);
+      }
+    }
+  }, [cart.cartItems, selectedCartItem]);
+
   // Initialize cart session on mount
   useEffect(() => {
     if (!user) return;
@@ -963,7 +1102,15 @@ export function NewTransactionView({
           />
           {!payment.paymentStep && (
             <div className="shrink-0">
-              <QuickActionButtons onLogOff={logout} />
+              <QuickActionButtons
+                onQuantity={handleQuantityClick}
+                onLineVoid={handleLineVoid}
+                onPriceOverride={handlePriceOverride}
+                onLockTill={handleLockTill}
+                onVoidBasket={handleVoidBasket}
+                onSaveBasket={handleSaveBasket}
+                onItemEnquiry={handleItemEnquiry}
+              />
             </div>
           )}
         </div>
@@ -975,6 +1122,8 @@ export function NewTransactionView({
             onVoid={() => setShowVoidModal(true)}
             onCount={() => setShowCountModal(true)}
             onDashboard={onBack}
+            onReceipts={handleReceipts}
+            onLogOff={logout}
             hasActiveShift={!!shift.activeShift}
           />
 
@@ -1131,7 +1280,15 @@ export function NewTransactionView({
             subtotal={cart.subtotal}
             tax={cart.tax}
             total={cart.total}
-            onRemoveItem={cart.removeFromCart}
+            onRemoveItem={(itemId) => {
+              cart.removeFromCart(itemId);
+              // Clear selection if the selected item was removed
+              if (selectedCartItem?.id === itemId) {
+                setSelectedCartItem(null);
+              }
+            }}
+            selectedItemId={selectedCartItem?.id || null}
+            onItemSelect={handleCartItemSelect}
           />
 
           {/* Payment Panel */}
@@ -1383,6 +1540,47 @@ export function NewTransactionView({
           printerStatus={payment.printerStatus}
         />
       )}
+
+      {/* Quantity Modal */}
+      {selectedCartItem && (
+        <QuantityModal
+          isOpen={showQuantityModal}
+          item={selectedCartItem}
+          businessId={user?.businessId}
+          onConfirm={handleQuantityUpdate}
+          onCancel={() => {
+            setShowQuantityModal(false);
+          }}
+        />
+      )}
+
+      {/* Item Enquiry Modal */}
+      {selectedCartItem && (
+        <ItemEnquiryModal
+          isOpen={showItemEnquiryModal}
+          item={selectedCartItem}
+          onClose={() => {
+            setShowItemEnquiryModal(false);
+          }}
+        />
+      )}
+
+      {/* Save Basket Modal */}
+      <SaveBasketModal
+        isOpen={showSaveBasketModal}
+        cartItems={cart.cartItems}
+        cartSessionId={cart.cartSession?.id || null}
+        businessId={user?.businessId}
+        userId={user?.id}
+        shiftId={shift.activeShift?.id || null}
+        onSave={cart.saveBasket}
+        onClose={() => setShowSaveBasketModal(false)}
+        onClearCart={async () => {
+          if (cart.cartSession) {
+            await cart.clearCart();
+          }
+        }}
+      />
     </>
   );
 }

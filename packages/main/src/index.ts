@@ -95,6 +95,23 @@ export async function initApp(initConfig: AppInitConfig) {
   // Initialize Viva Wallet service for payment terminal integration
   await import("./services/vivaWallet/index.js");
 
+  // Initialize email service (with console mode by default - can be configured via settings)
+  const { emailService } = await import("./services/email-service.js");
+  await emailService.initialize({
+    provider: "smtp",
+    smtp: {
+      host: "smtp.gmail.com", // Your SMTP host
+      port: 587, // SMTP port
+      secure: false, // true for 465, false for 587
+      auth: {
+        user: "aurswiftassistanceteam@gmail.com", // Your email
+        pass: "qhgs bgpy xejt kwro", // App password (not regular password)
+      },
+    },
+    fromEmail: "aurswiftassistanceteam@gmail.com",
+    fromName: "AurSwift POS",
+  });
+
   // Initialize expiry notification service
   const { ExpiryNotificationService } = await import(
     "./services/expiryNotificationService.js"

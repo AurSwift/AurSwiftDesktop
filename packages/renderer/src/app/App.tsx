@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   HashRouter as Router,
   Routes,
@@ -8,8 +9,27 @@ import {
 import { ProtectedRoute, PublicRoute } from "@/components";
 import { AuthPage } from "@/features/auth";
 import { DashboardView } from "@/features/dashboard";
+import { LicenseActivationScreen, useLicenseContext } from "@/features/license";
+import { Loader2 } from "lucide-react";
 
-export default function App() {
+/**
+ * Loading screen shown while checking license status
+ */
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+      <div className="text-center space-y-4">
+        <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
+        <p className="text-muted-foreground">Loading AuraSwift...</p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Main App content - only shown after license check
+ */
+function AppContent() {
   return (
     <Router>
       <Routes>
@@ -34,4 +54,48 @@ export default function App() {
       </Routes>
     </Router>
   );
+}
+
+/**
+ * App wrapper that handles license activation flow
+ */
+function AppWithLicenseCheck() {
+  const { isLoading, isActivated, refreshStatus } = useLicenseContext();
+  const [showActivation, setShowActivation] = useState(false);
+
+  useEffect(() => {
+    // Once loading is complete, determine if we need activation
+    if (!isLoading) {
+      setShowActivation(!isActivated);
+    }
+  }, [isLoading, isActivated]);
+
+  // Show loading screen while checking license
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  // Show activation screen if not licensed
+  if (showActivation) {
+    return (
+      <LicenseActivationScreen
+        onActivationSuccess={() => {
+          refreshStatus();
+          setShowActivation(false);
+        }}
+        // Enable skip for demo mode during development
+        // Remove onSkip in production if you want to enforce licensing
+        onSkip={() => {
+          setShowActivation(false);
+        }}
+      />
+    );
+  }
+
+  // Show main app if licensed
+  return <AppContent />;
+}
+
+export default function App() {
+  return <AppWithLicenseCheck />;
 }

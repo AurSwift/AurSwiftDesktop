@@ -4,6 +4,8 @@ import {
   LayoutDashboard,
   RotateCcw,
   XCircle,
+  Receipt,
+  LogOut,
 } from "lucide-react";
 import React from "react";
 import { useState } from "react";
@@ -13,6 +15,8 @@ interface QuickActionsCarouselProps {
   onVoid: () => void;
   onCount: () => void;
   onDashboard: () => void;
+  onReceipts?: () => void;
+  onLogOff?: () => void;
   hasActiveShift?: boolean; // Enable buttons only when cashier has active shift
 }
 
@@ -21,6 +25,8 @@ export const QuickActionsCarousel: React.FC<QuickActionsCarouselProps> = ({
   onVoid,
   onCount,
   onDashboard,
+  onReceipts,
+  onLogOff,
   hasActiveShift = false,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -62,6 +68,30 @@ export const QuickActionsCarousel: React.FC<QuickActionsCarouselProps> = ({
       disabled: false, // Dashboard is always enabled
       requiresShift: false,
     },
+    ...(onReceipts
+      ? [
+          {
+            icon: Receipt,
+            title: "Receipts",
+            onClick: onReceipts,
+            hoverColor: "hover:bg-amber-50",
+            disabled: false,
+            requiresShift: false,
+          },
+        ]
+      : []),
+    ...(onLogOff
+      ? [
+          {
+            icon: LogOut,
+            title: "Log off",
+            onClick: onLogOff,
+            hoverColor: "hover:bg-slate-50",
+            disabled: false,
+            requiresShift: false,
+          },
+        ]
+      : []),
   ];
 
   const itemsPerView = 4;

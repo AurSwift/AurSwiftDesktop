@@ -9,11 +9,36 @@ import type { CartItemWithProduct } from "@/types";
 interface CartItemRowProps {
   item: CartItemWithProduct;
   onRemove: (itemId: string) => void;
+  isSelected?: boolean;
+  onSelect?: () => void;
 }
 
-export function CartItemRow({ item, onRemove }: CartItemRowProps) {
+export function CartItemRow({
+  item,
+  onRemove,
+  isSelected = false,
+  onSelect,
+}: CartItemRowProps) {
+  const handleRowClick = (e: React.MouseEvent<HTMLTableRowElement>) => {
+    // Don't trigger selection if clicking on the remove button
+    if (
+      (e.target as HTMLElement).closest('button') ||
+      (e.target as HTMLElement).tagName === 'BUTTON'
+    ) {
+      return;
+    }
+    onSelect?.();
+  };
+
   return (
-    <tr className="border-b border-slate-200">
+    <tr
+      className={`border-b border-slate-200 transition-colors cursor-pointer ${
+        isSelected
+          ? "bg-sky-100 hover:bg-sky-200"
+          : "hover:bg-slate-50"
+      }`}
+      onClick={handleRowClick}
+    >
       <td className="text-center text-xs sm:text-sm" style={{ width: "100px" }}>
         {item.itemType === "WEIGHT" && item.weight
           ? `${item.weight.toFixed(2)}`

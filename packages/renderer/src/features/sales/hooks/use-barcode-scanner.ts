@@ -19,11 +19,13 @@ import {
   useSalesUnitSettings,
   getEffectiveSalesUnit,
 } from "@/shared/hooks/use-sales-unit-settings";
+import { extractBasketCode, isValidBasketCode } from "../utils/qr-code";
 
 interface UseBarcodeScannerProps {
   products: Product[];
   businessId?: string;
   onProductFound: (product: Product, weight?: number) => Promise<void>;
+  onBasketCodeScanned?: (basketCode: string) => Promise<void>;
   selectedWeightProduct: Product | null;
   weightInput: string;
   weightDisplayPrice: string; // Used in hook but not directly in this interface
@@ -43,6 +45,7 @@ export function useBarcodeScanner({
   products,
   businessId,
   onProductFound,
+  onBasketCodeScanned,
   selectedWeightProduct,
   weightInput,
   weightDisplayPrice: _weightDisplayPrice, // Prefixed with _ to indicate intentionally unused
@@ -61,6 +64,19 @@ export function useBarcodeScanner({
   const handleHardwareScan = useCallback(
     async (barcode: string): Promise<boolean> => {
       logger.info("🔍 Hardware scanner detected barcode:", barcode);
+
+      // Check if this is a saved basket QR code
+      const basketCode = extractBasketCode(barcode);
+      if (basketCode && onBasketCodeScanned) {
+        logger.info("📦 Detected basket QR code:", basketCode);
+        try {
+          await onBasketCodeScanned(basketCode);
+          return true; // Successfully handled basket code
+        } catch (error) {
+          logger.error("Failed to retrieve basket:", error);
+          return false;
+        }
+      }
 
       // Search by barcode, PLU, or SKU
       const product = products.find(
@@ -129,6 +145,7 @@ export function useBarcodeScanner({
       selectedWeightProduct,
       weightInput,
       onProductFound,
+      onBasketCodeScanned,
       onSetSelectedWeightProduct,
       onSetWeightInput,
       onSetWeightDisplayPrice,
@@ -142,6 +159,20 @@ export function useBarcodeScanner({
    */
   const handleBarcodeScan = useCallback(async () => {
     if (barcodeInput.trim() === "") return;
+
+    // Check if this is a saved basket QR code
+    const basketCode = extractBasketCode(barcodeInput);
+    if (basketCode && onBasketCodeScanned) {
+      logger.info("📦 Detected basket QR code:", basketCode);
+      try {
+        await onBasketCodeScanned(basketCode);
+        setBarcodeInput("");
+        return;
+      } catch (error) {
+        logger.error("Failed to retrieve basket:", error);
+        return;
+      }
+    }
 
     // Search by ID, SKU, or PLU
     const product = products.find(
@@ -192,6 +223,7 @@ export function useBarcodeScanner({
     products,
     weightInput,
     onProductFound,
+    onBasketCodeScanned,
     onSetSelectedWeightProduct,
     onSetWeightInput,
     onSetWeightDisplayPrice,

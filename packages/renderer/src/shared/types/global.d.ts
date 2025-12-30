@@ -39,6 +39,8 @@ import type { AppAPI } from "../types/api/app";
 import type { UpdateAPI } from "../types/api/update";
 import type { BusinessAPI } from "../types/api/business";
 import type { TerminalsAPI } from "../types/api/terminals";
+import type { LicenseAPI } from "../types/api/license";
+import type { BasketAPI } from "../types/api/basket";
 import type { APIResponse } from "../types/api/common";
 
 declare global {
@@ -115,6 +117,12 @@ declare global {
 
     // Terminal Management
     terminalsAPI: TerminalsAPI;
+
+    // License Management
+    licenseAPI: LicenseAPI;
+
+    // Basket Management
+    basketAPI: BasketAPI;
 
     // Dashboard cache invalidation
     invalidateDashboardCache?: (businessId?: string) => void;

@@ -1,5 +1,6 @@
 import { registerAgeVerificationHandlers } from "./age-verification.handlers.js";
 import { registerAuthHandlers } from "./auth.handlers.js";
+import { registerBasketHandlers } from "./basket.handlers.js";
 import { registerBatchHandlers } from "./batch.handlers.js";
 import { registerBusinessHandlers } from "./business.handlers.js";
 import { registerCartHandlers } from "./cart.handlers.js";
@@ -8,6 +9,7 @@ import { registerCategoryHandlers } from "./category.handlers.js";
 import { registerDashboardHandlers } from "./dashboard.handlers.js";
 import { registerDbHandlers } from "./db.handler.js";
 import { registerExpiryProductHandlers } from "./expiryProduct.handlers.js";
+import { registerLicenseHandlers } from "./license.handlers.js";
 import { registerSalesUnitSettingsHandlers } from "./sales-unit-settings.handlers.js";
 import { registerProductHandlers } from "./product.handlers.js";
 import { registerRoleHandlers } from "./role.handlers.js";
@@ -22,6 +24,7 @@ import { registerUpdateHandlers } from "./update.handlers.js";
 export function registerAllIpcHandlers() {
   registerAgeVerificationHandlers();
   registerAuthHandlers();
+  registerBasketHandlers();
   registerBatchHandlers();
   registerBusinessHandlers();
   registerCartHandlers();
@@ -30,6 +33,7 @@ export function registerAllIpcHandlers() {
   registerDashboardHandlers();
   registerDbHandlers();
   registerExpiryProductHandlers();
+  registerLicenseHandlers();
   registerSalesUnitSettingsHandlers();
   registerProductHandlers();
   registerRoleHandlers();

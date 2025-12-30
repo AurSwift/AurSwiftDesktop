@@ -26,6 +26,7 @@ import { ExpiryNotificationManager } from "./managers/expiryNotificationManager.
 import { SalesUnitSettingManager } from "./managers/salesUnitSettingsManager.js";
 import { StockMovementManager } from "./managers/stockMovementManager.js";
 import { CartManager } from "./managers/cartManager.js";
+import { SavedBasketManager } from "./managers/savedBasketManager.js";
 import { RoleManager } from "./managers/roleManager.js";
 import { UserRoleManager } from "./managers/userRoleManager.js";
 import { UserPermissionManager } from "./managers/userPermissionManager.js";
@@ -73,6 +74,7 @@ export interface DatabaseManagers {
   salesUnitSettings: SalesUnitSettingManager;
   stockMovements: StockMovementManager;
   cart: CartManager;
+  savedBaskets: SavedBasketManager;
 
   // RBAC managers
   roles: RoleManager;
@@ -181,6 +183,7 @@ export async function getDatabase(): Promise<DatabaseManagers> {
     const stockMovements = new StockMovementManager(drizzle, uuid, batches);
     const inventory = new InventoryManager(drizzle, uuid, stockMovements);
     const cart = new CartManager(drizzle, uuid);
+    const savedBaskets = new SavedBasketManager(drizzle, uuid);
 
     // Cleanup expired sessions on startup
     try {
@@ -232,6 +235,7 @@ export async function getDatabase(): Promise<DatabaseManagers> {
       salesUnitSettings,
       stockMovements,
       cart,
+      savedBaskets,
 
       // RBAC managers
       roles,

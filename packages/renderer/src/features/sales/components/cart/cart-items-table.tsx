@@ -19,12 +19,16 @@ interface CartItemsTableProps {
   items: CartItemWithProduct[];
   loading: boolean;
   onRemove: (itemId: string) => void;
+  selectedItemId?: string | null;
+  onItemSelect?: (item: CartItemWithProduct) => void;
 }
 
 export function CartItemsTable({
   items,
   loading,
   onRemove,
+  selectedItemId,
+  onItemSelect,
 }: CartItemsTableProps) {
   return (
     <div className="border border-slate-200 rounded-lg overflow-hidden flex-1 flex flex-col min-h-0">
@@ -88,7 +92,13 @@ export function CartItemsTable({
                 </TableRow>
               ) : (
                 items.map((item) => (
-                  <CartItemRow key={item.id} item={item} onRemove={onRemove} />
+                  <CartItemRow
+                    key={item.id}
+                    item={item}
+                    onRemove={onRemove}
+                    isSelected={selectedItemId === item.id}
+                    onSelect={onItemSelect ? () => onItemSelect(item) : undefined}
+                  />
                 ))
               )}
             </AnimatePresence>

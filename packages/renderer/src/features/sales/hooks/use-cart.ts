@@ -488,6 +488,286 @@ export function useCart({
   );
 
   /**
+   * Update item quantity or weight
+   */
+  const updateItemQuantity = useCallback(
+    async (
+      itemId: string,
+      quantity?: number,
+      weight?: number
+    ) => {
+      if (!cartSession) {
+        toast.error("No active cart session");
+        return;
+      }
+
+      try {
+        // Find the item to get product info
+        const item = cartItems.find((i) => i.id === itemId);
+        if (!item) {
+          toast.error("Item not found in cart");
+          return;
+        }
+
+        // Get product for price calculation
+        const product = item.product;
+        if (!product) {
+          toast.error("Product information not available");
+          return;
+        }
+
+        // Calculate new price based on updated quantity/weight
+        let priceCalculation;
+        try {
+          if (item.itemType === "WEIGHT" && weight !== undefined) {
+            priceCalculation = calculateItemPrice(product, weight);
+          } else if (item.itemType === "UNIT" && quantity !== undefined) {
+            priceCalculation = calculateItemPrice(product, undefined, undefined);
+            // For unit items, multiply by quantity
+            priceCalculation.totalPrice = priceCalculation.unitPrice * quantity;
+            priceCalculation.taxAmount =
+              priceCalculation.totalPrice * (product.taxRate ?? 0.08);
+          } else {
+            toast.error("Invalid quantity or weight");
+            return;
+          }
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "Invalid price calculation";
+          toast.error(errorMessage);
+          return;
+        }
+
+        const { totalPrice, taxAmount } = priceCalculation;
+
+        // Update the item
+        const updateResponse = await window.cartAPI.updateItem(itemId, {
+          quantity: quantity ?? undefined,
+          weight: weight ?? undefined,
+          totalPrice,
+          taxAmount,
+        });
+
+        if (updateResponse.success) {
+          // Reload cart items
+          const itemsResponse = await window.cartAPI.getItems(cartSession.id);
+          if (itemsResponse.success && itemsResponse.data) {
+            setCartItems(itemsResponse.data as CartItemWithProduct[]);
+          }
+
+          const salesUnit = item.unitOfMeasure || "each";
+          const effectiveUnit = getEffectiveSalesUnit(
+            salesUnit,
+            salesUnitSettings
+          );
+
+          toast.success(
+            `Updated ${item.itemName}${
+              item.itemType === "UNIT"
+                ? ` (${quantity}x)`
+                : ` - ${weight?.toFixed(3) || "0.000"} ${effectiveUnit}`
+            }`
+          );
+        } else {
+          const errorMessage =
+            updateResponse.message || "Failed to update item";
+          logger.error("Failed to update item:", errorMessage);
+          toast.error(errorMessage);
+        }
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Failed to update item quantity";
+        logger.error("Error updating item quantity:", error);
+        toast.error(errorMessage);
+      }
+    },
+    [cartSession, cartItems, salesUnitSettings]
+  );
+
+  /**
+   * Save current basket
+   */
+  const saveBasket = useCallback(
+    async (
+      basketName: string,
+      customerEmail?: string | null,
+      notes?: string | null
+    ) => {
+      if (!cartSession || !businessId || !userId) {
+        toast.error("Cannot save basket: missing cart or user data");
+        return null;
+      }
+
+      if (cartItems.length === 0) {
+        toast.error("Cart is empty. Add items before saving.");
+        return null;
+      }
+
+      try {
+        const response = await window.basketAPI.saveBasket({
+          cartSessionId: cartSession.id,
+          basketName: basketName || `Basket ${new Date().toLocaleString()}`,
+          businessId,
+          savedBy: userId,
+          shiftId: activeShift?.id || null,
+          customerEmail: customerEmail || null,
+          notes: notes || null,
+          expirationDays: 7,
+        });
+
+        if (response.success && response.data) {
+          toast.success(`Basket "${response.data.basket.name}" saved successfully`);
+          return response.data;
+        } else {
+          const errorMessage =
+            response.message || "Failed to save basket";
+          logger.error("Failed to save basket:", errorMessage);
+          toast.error(errorMessage);
+          return null;
+        }
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Failed to save basket";
+        logger.error("Error saving basket:", error);
+        toast.error(errorMessage);
+        return null;
+      }
+    },
+    [cartSession, cartItems, businessId, userId, activeShift]
+  );
+
+  /**
+   * Retrieve a saved basket (load items into current or new cart)
+   */
+  const retrieveBasket = useCallback(
+    async (basketCode: string, replaceCurrentCart: boolean = false) => {
+      if (!businessId || !userId) {
+        toast.error("Cannot retrieve basket: missing user data");
+        return null;
+      }
+
+      try {
+        // Get basket by code
+        const getResponse = await window.basketAPI.getBasketByCode(basketCode);
+
+        if (!getResponse.success || !getResponse.data) {
+          const errorMessage =
+            getResponse.message || "Basket not found or invalid code";
+          toast.error(errorMessage);
+          return null;
+        }
+
+        const { basket, cartSession: savedCartSession } = getResponse.data;
+
+        // Check if basket is valid
+        if (basket.status !== "active") {
+          toast.error(`Basket is ${basket.status} and cannot be retrieved`);
+          return null;
+        }
+
+        // Check expiration
+        if (basket.expiresAt && new Date(basket.expiresAt) < new Date()) {
+          toast.error("Basket has expired");
+          return null;
+        }
+
+        // Check if current cart has items
+        if (cartItems.length > 0 && !replaceCurrentCart) {
+          // Ask user to confirm (this should be handled by the UI component)
+          toast.info("Current cart has items. Please clear it first or confirm replacement.");
+          return null;
+        }
+
+        // Get or create cart session
+        let targetSession = cartSession;
+        if (!targetSession || replaceCurrentCart) {
+          // Clear current cart if replacing
+          if (targetSession && replaceCurrentCart) {
+            await window.cartAPI.clearCart(targetSession.id);
+          }
+
+          // Create new session or use existing
+          const sessionResponse = await initializeCartSession();
+          if (!sessionResponse) {
+            toast.error("Failed to create cart session for basket retrieval");
+            return null;
+          }
+          targetSession = sessionResponse;
+        }
+
+        // Retrieve basket items into target session
+        const retrieveResponse = await window.basketAPI.retrieveBasket({
+          basketId: basket.id,
+          newCartSessionId: targetSession.id,
+          businessId,
+        });
+
+        if (retrieveResponse.success && retrieveResponse.data) {
+          const { items, warnings } = retrieveResponse.data;
+
+          // Reload cart items
+          const itemsResponse = await window.cartAPI.getItems(targetSession.id);
+          if (itemsResponse.success && itemsResponse.data) {
+            setCartItems(itemsResponse.data as CartItemWithProduct[]);
+            setCartSession(targetSession);
+          }
+
+          // Show warnings if any
+          if (warnings && warnings.length > 0) {
+            toast.warning(
+              `Basket loaded with ${warnings.length} warning(s). Some items may have changed.`
+            );
+          } else {
+            toast.success(`Basket "${basket.name}" loaded successfully`);
+          }
+
+          return retrieveResponse.data;
+        } else {
+          const errorMessage =
+            retrieveResponse.message || "Failed to retrieve basket";
+          logger.error("Failed to retrieve basket:", errorMessage);
+          toast.error(errorMessage);
+          return null;
+        }
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Failed to retrieve basket";
+        logger.error("Error retrieving basket:", error);
+        toast.error(errorMessage);
+        return null;
+      }
+    },
+    [cartSession, cartItems, businessId, userId, initializeCartSession]
+  );
+
+  /**
+   * Clear all items from cart
+   */
+  const clearCart = useCallback(async () => {
+    if (!cartSession) {
+      toast.error("No active cart session");
+      return;
+    }
+
+    try {
+      const response = await window.cartAPI.clearCart(cartSession.id);
+      if (response.success) {
+        setCartItems([]);
+        toast.success("Cart cleared successfully");
+      } else {
+        toast.error("Failed to clear cart");
+      }
+    } catch (error) {
+      logger.error("Error clearing cart:", error);
+      toast.error("Failed to clear cart");
+    }
+  }, [cartSession]);
+
+  /**
    * Calculate cart totals
    */
   const { subtotal, tax, total } = useMemo(() => {
@@ -521,5 +801,9 @@ export function useCart({
     addToCart,
     addCategoryToCart,
     removeFromCart,
+    updateItemQuantity,
+    clearCart,
+    saveBasket,
+    retrieveBasket,
   };
 }
