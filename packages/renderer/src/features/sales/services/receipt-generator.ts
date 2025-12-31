@@ -314,7 +314,7 @@ export class ReceiptGenerator {
   static createReceiptData(
     transactionData: {
       receiptNumber: string;
-      id?: string;
+      id: string; // Required: actual database transaction ID
       items: Array<{
         productName: string;
         quantity: number;
@@ -342,6 +342,10 @@ export class ReceiptGenerator {
       name: string;
     }
   ): ReceiptData {
+    if (!transactionData.id) {
+      throw new Error("Transaction ID is required for receipt generation");
+    }
+
     const now = new Date();
 
     return {
@@ -353,7 +357,7 @@ export class ReceiptGenerator {
 
       // Transaction details
       receiptNumber: transactionData.receiptNumber,
-      transactionId: transactionData.id || transactionData.receiptNumber,
+      transactionId: transactionData.id, // Use actual transaction ID (required, no fallback)
       date: now.toLocaleDateString("en-GB"),
       time: now.toLocaleTimeString("en-GB", {
         hour: "2-digit",

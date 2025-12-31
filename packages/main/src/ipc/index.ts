@@ -20,6 +20,7 @@ import { registerTerminalHandlers } from "./terminal.handlers.js";
 import { registerTimeTrackingHandlers } from "./time-tracking.handlers.js";
 import { registerTransactionHandlers } from "./transaction.handler.js";
 import { registerUpdateHandlers } from "./update.handlers.js";
+import { registerReportsExportHandlers } from "./reports-export.handlers.js";
 
 export function registerAllIpcHandlers() {
   registerAgeVerificationHandlers();
@@ -44,4 +45,5 @@ export function registerAllIpcHandlers() {
   registerTimeTrackingHandlers();
   registerTransactionHandlers();
   registerUpdateHandlers();
+  registerReportsExportHandlers();
 }

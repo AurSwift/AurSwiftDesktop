@@ -123,6 +123,13 @@ export const useThermalPrinter = () => {
         return false;
       }
 
+      // Validate transaction ID is present
+      if (!transactionData.id) {
+        logger.error("Transaction ID is required for receipt printing");
+        toast.error("Cannot print receipt: Transaction ID is missing");
+        return false;
+      }
+
       const jobId = `receipt_${Date.now()}_${Math.random()
         .toString(36)
         .substr(2, 9)}`;
@@ -130,7 +137,7 @@ export const useThermalPrinter = () => {
       // Add to print queue
       const printJob: PrintJob = {
         id: jobId,
-        transactionId: transactionData.id || "unknown",
+        transactionId: transactionData.id, // Use actual transaction ID (required, no fallback)
         data: transactionData,
         timestamp: new Date(),
         status: "printing",

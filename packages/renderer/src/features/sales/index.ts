@@ -29,6 +29,7 @@ export { useSalesMode } from "./hooks/use-sales-mode";
 // Views
 // ============================================================================
 export { default as NewTransactionView } from "./views/new-transaction-view";
+export { default as SalesReportsView } from "./views/sales-reports-view";
 
 // ============================================================================
 // Services

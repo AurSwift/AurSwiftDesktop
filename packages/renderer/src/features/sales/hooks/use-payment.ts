@@ -100,8 +100,13 @@ const createReceiptData = (
   userBusinessName: string | undefined,
   paymentMethod: PaymentMethod | null,
   cashAmount: number,
-  skipPaymentValidation: boolean
+  skipPaymentValidation: boolean,
+  transactionId: string // Required: actual database transaction ID
 ): TransactionData => {
+  if (!transactionId) {
+    throw new Error("Transaction ID is required for receipt generation");
+  }
+
   const amountPaid = skipPaymentValidation
     ? total
     : paymentMethod?.type === "cash"
@@ -115,7 +120,7 @@ const createReceiptData = (
     : 0;
 
   return {
-    id: receiptNumber,
+    id: transactionId, // Use actual transaction ID (required, no fallback)
     timestamp: new Date(),
     cashierId: userId,
     cashierName: `${userFirstName || ""} ${userLastName || ""}`.trim(),
@@ -286,8 +291,15 @@ export function usePayment({
       printerStatusResult: { connected: boolean; error: string | null },
       skipPaymentValidation: boolean,
       validatedUserId: string,
-      validatedBusinessId: string
+      validatedBusinessId: string,
+      transactionId: string // Required: actual database transaction ID
     ) => {
+      if (!transactionId) {
+        logger.error("Transaction ID is missing - cannot generate receipt");
+        toast.error("Failed to generate receipt: Transaction ID is missing");
+        return;
+      }
+
       // Create receipt data
       const receiptData = createReceiptData(
         receiptNumber,
@@ -302,7 +314,8 @@ export function usePayment({
         userBusinessName,
         paymentMethod,
         cashAmount,
-        skipPaymentValidation
+        skipPaymentValidation,
+        transactionId // Pass actual transaction ID from database (required)
       );
 
       // FIX #5: Wrap state updates in try-catch to handle partial state update failures
@@ -616,9 +629,24 @@ export function usePayment({
             return;
           }
 
-          // Get transaction ID for potential rollback
+          // Get transaction ID for potential rollback and receipt generation
           const transactionId =
             (transactionResponse.data as { id?: string })?.id || null;
+
+          if (!transactionId) {
+            logger.error("Transaction created but ID is missing from response");
+            toast.error(
+              "Transaction created but receipt cannot be generated. Please contact support.",
+              { duration: 10000 }
+            );
+            // FIX #6: Cleanup timeout before returning on error
+            if (timeoutRef.current) {
+              clearTimeout(timeoutRef.current);
+              timeoutRef.current = null;
+            }
+            isProcessingRef.current = false;
+            return;
+          }
 
           // CRITICAL FIX #1: Complete cart session with rollback on failure
           try {
@@ -674,7 +702,8 @@ export function usePayment({
             printerStatusResult,
             skipPaymentValidation,
             userId,
-            businessId
+            businessId,
+            transactionId // Pass actual transaction ID from database
           );
         } catch (error) {
           logger.error("Transaction error:", error);
@@ -757,13 +786,17 @@ export function usePayment({
         throw new Error("Business ID is required to generate receipt");
       }
 
+      // Validate transaction ID is present
+      if (!completedTransactionData.id) {
+        throw new Error("Transaction ID is required for PDF receipt generation");
+      }
+
       // Prepare receipt data for PDF
       // Business details will be fetched from database in the PDF service
       const receiptData = {
         businessId: businessId,
         receiptNumber: completedTransactionData.receiptNumber,
-        transactionId:
-          completedTransactionData.id || completedTransactionData.receiptNumber,
+        transactionId: completedTransactionData.id, // Use actual transaction ID (required, no fallback)
         date: new Date(completedTransactionData.timestamp).toLocaleDateString(
           "en-GB"
         ),

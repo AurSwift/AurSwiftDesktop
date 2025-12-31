@@ -14,3 +14,7 @@ export * from "./use-payment";
 // Performance-optimized hooks for large datasets
 export * from "./use-paginated-products";
 export * from "./use-virtual-categories";
+
+// Sales reports hooks
+export * from "./use-sales-reports-data";
+export * from "./use-transaction-history";
