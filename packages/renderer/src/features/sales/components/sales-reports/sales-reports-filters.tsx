@@ -8,7 +8,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Filter, X } from "lucide-react";
+import { Filter, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/shared/utils/cn";
 import { DateRangePicker } from "./date-range-picker";

@@ -153,7 +153,7 @@ export function generateCSVContent(
       transaction.items.length.toString(),
       transaction.total.toFixed(2),
       transaction.status,
-      transaction.cashierName || "",
+      transaction.cashierName || "N/A",
     ];
     lines.push(row.map(escapeCSV).join(delimiter));
 

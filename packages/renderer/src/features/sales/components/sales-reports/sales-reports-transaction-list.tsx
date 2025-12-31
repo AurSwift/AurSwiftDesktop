@@ -23,6 +23,9 @@ export interface Transaction {
   items: TransactionItem[];
   type: "sale" | "refund" | "void";
   status: "completed" | "voided" | "pending";
+  cashierName?: string;
+  shiftId?: string;
+  userId?: string;
 }
 
 export interface TransactionItem {

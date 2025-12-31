@@ -30,7 +30,7 @@ export function SalesReportsHeader({
   onExport,
   onPrint,
   showExport = true,
-  showPrint = true,
+  showPrint = false,
   className,
 }: SalesReportsHeaderProps) {
   return (

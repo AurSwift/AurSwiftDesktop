@@ -41,6 +41,7 @@ import type { BusinessAPI } from "../types/api/business";
 import type { TerminalsAPI } from "../types/api/terminals";
 import type { LicenseAPI } from "../types/api/license";
 import type { BasketAPI } from "../types/api/basket";
+import type { ReportsExportAPI } from "../types/api/reports-export";
 import type { APIResponse } from "../types/api/common";
 
 declare global {
@@ -123,6 +124,9 @@ declare global {
 
     // Basket Management
     basketAPI: BasketAPI;
+
+    // Reports Export
+    reportsExportAPI: ReportsExportAPI;
 
     // Dashboard cache invalidation
     invalidateDashboardCache?: (businessId?: string) => void;

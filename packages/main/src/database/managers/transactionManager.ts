@@ -181,8 +181,17 @@ export class TransactionManager {
     limit: number = 50
   ): Promise<TransactionWithItems[]> {
     const transactions = await this.db
-      .select()
+      .select({
+        transaction: schema.transactions,
+        shift: schema.shifts,
+        user: schema.users,
+      })
       .from(schema.transactions)
+      .leftJoin(
+        schema.shifts,
+        eq(schema.transactions.shiftId, schema.shifts.id)
+      )
+      .leftJoin(schema.users, eq(schema.shifts.user_id, schema.users.id))
       .where(
         and(
           eq(schema.transactions.businessId, businessId),
@@ -193,7 +202,7 @@ export class TransactionManager {
       .limit(limit);
 
     const transactionsWithItems = await Promise.all(
-      transactions.map(async (transaction) => {
+      transactions.map(async ({ transaction, user }) => {
         const items = await this.getTransactionItems(transaction.id);
         return {
           ...transaction,
@@ -202,7 +211,11 @@ export class TransactionManager {
           appliedDiscounts: transaction.appliedDiscounts
             ? JSON.parse(transaction.appliedDiscounts)
             : undefined,
-        } as TransactionWithItems;
+          cashierName: user
+            ? `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+              user.username
+            : undefined,
+        } as TransactionWithItems & { cashierName?: string };
       })
     );
 

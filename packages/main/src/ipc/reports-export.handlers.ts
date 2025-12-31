@@ -102,7 +102,7 @@ export function registerReportsExportHandlers() {
         await exportToCSV(exportData, dialogResult.filePath, options);
 
         logger.info(
-          `CSV export successful for user ${auth.user.id} to ${dialogResult.filePath}`
+          `CSV export successful for user ${auth.user?.id || "unknown"} to ${dialogResult.filePath}`
         );
 
         return {
@@ -170,7 +170,7 @@ export function registerReportsExportHandlers() {
         await exportToPDF(exportData, dialogResult.filePath, options);
 
         logger.info(
-          `PDF export successful for user ${auth.user.id} to ${dialogResult.filePath}`
+          `PDF export successful for user ${auth.user?.id || "unknown"} to ${dialogResult.filePath}`
         );
 
         return {

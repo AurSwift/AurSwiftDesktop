@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import { getLogger } from "@/shared/utils/logger";
 import type { Transaction } from "../components/sales-reports";
 import type { DateRange } from "../components/sales-reports/sales-reports-filters";
-import { formatDateRangeForFilename } from "../utils/export-utils";
 
 const logger = getLogger("use-export-reports");
 
@@ -83,7 +82,6 @@ export function useExportReports() {
               quantity: item.quantity,
               unitPrice: item.unitPrice,
               totalPrice: item.totalPrice,
-              sku: item.sku,
             })),
             cashierName: t.cashierName,
             status: t.status,
@@ -168,7 +166,6 @@ export function useExportReports() {
               quantity: item.quantity,
               unitPrice: item.unitPrice,
               totalPrice: item.totalPrice,
-              sku: item.sku,
             })),
             cashierName: t.cashierName,
             status: t.status,

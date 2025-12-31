@@ -230,12 +230,6 @@ const SalesReportsView = ({ onBack }: SalesReportsViewProps) => {
     ]
   );
 
-  // Handle print
-  const handlePrint = useCallback(() => {
-    logger.info("Printing sales report");
-    window.print();
-  }, []);
-
   // Handle filter reset
   const handleResetFilters = useCallback(() => {
     setTransactionType("all");
@@ -313,9 +307,8 @@ const SalesReportsView = ({ onBack }: SalesReportsViewProps) => {
         subtitle="Comprehensive sales analytics and insights"
         dateRange={calculatedDateRange}
         onExport={canExport ? handleExport : undefined}
-        onPrint={canExport ? handlePrint : undefined}
         showExport={canExport}
-        showPrint={canExport}
+        showPrint={false}
       />
 
       {/* Filters */}
