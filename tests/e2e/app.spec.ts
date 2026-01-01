@@ -5,7 +5,7 @@ import { globSync } from "glob";
 import { test } from "./fixtures";
 
 /**
- * E2E Tests for AuraSwift POS System
+ * E2E Tests for aurswift POS System
  * Technology Stack: React 18 + TypeScript + Electron + Vite
  * Architecture: Main process, Preload scripts, Renderer (React)
  *

@@ -39,7 +39,7 @@ export function AuthHeader() {
         <div className="min-w-0">
           <div className="relative inline-block">
             <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-foreground truncate">
-              AuraSwift
+              aurswift
             </h1>
             <span className="absolute -bottom-0.6 -right-1 sm:-right-2 z-10 inline-flex items-center px-1 sm:px-1.5 py-0.5 rounded-md bg-primary/12 border border-primary/25 shadow-sm">
               <span className="text-[8px] sm:text-[9px] font-semibold text-primary leading-none tracking-tight">

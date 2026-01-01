@@ -125,7 +125,7 @@ const createReceiptData = (
     cashierId: userId,
     cashierName: `${userFirstName || ""} ${userLastName || ""}`.trim(),
     businessId,
-    businessName: userBusinessName || "AuraSwift POS",
+    businessName: userBusinessName || "aurswift POS",
     items: cartItems.map((item) => ({
       id: item.id || "",
       transactionId: "", // Will be set when transaction is created
@@ -788,7 +788,9 @@ export function usePayment({
 
       // Validate transaction ID is present
       if (!completedTransactionData.id) {
-        throw new Error("Transaction ID is required for PDF receipt generation");
+        throw new Error(
+          "Transaction ID is required for PDF receipt generation"
+        );
       }
 
       // Prepare receipt data for PDF
@@ -902,16 +904,13 @@ export function usePayment({
   const handleEmailReceiptOption = useCallback(async () => {
     if (!completedTransactionData) return;
 
-    try {
-      toast.info("Email receipt feature coming soon!");
-      setTimeout(() => {
-        handleCloseReceiptOptions();
-      }, 2000);
-    } catch (error) {
-      logger.error("Email error:", error);
-      toast.error("Failed to send receipt email");
-    }
-  }, [completedTransactionData, handleCloseReceiptOptions]);
+    // Show email modal - modal will handle the actual sending
+    // This is a placeholder that will be replaced with modal state management
+    toast.info("Opening email dialog...");
+
+    // The modal integration will be handled in the view component
+    // This callback signals that email option was selected
+  }, [completedTransactionData]);
 
   /**
    * Handler for canceling payment from receipt modal

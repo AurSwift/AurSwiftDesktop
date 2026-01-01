@@ -32,8 +32,8 @@ function getLogsDirectory(): string {
   }
 
   // For macOS and Linux, use Electron's default logs path
-  // macOS: ~/Library/Logs/AuraSwift
-  // Linux: ~/.config/AuraSwift/logs (or userData/logs)
+  // macOS: ~/Library/Logs/aurswift
+  // Linux: ~/.config/aurswift/logs (or userData/logs)
   return app.getPath("logs");
 }
 

@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 /**
- * Playwright Configuration for AuraSwift Electron E2E Tests
+ * Playwright Configuration for aurswift Electron E2E Tests
  *
  * This configuration is optimized for Electron applications which:
  * - Cannot run tests in parallel (single Electron instance)

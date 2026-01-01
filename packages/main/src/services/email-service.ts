@@ -49,6 +49,36 @@ interface BasketEmailData {
   businessEmail?: string;
 }
 
+interface TransactionReceiptEmailData {
+  customerEmail: string;
+  receiptNumber: string;
+  transactionId: string;
+  date: string;
+  time: string;
+  items: Array<{
+    name: string;
+    quantity?: number;
+    weight?: number;
+    unit?: string;
+    unitPrice: number;
+    totalPrice: number;
+    sku?: string;
+  }>;
+  subtotal: number;
+  tax: number;
+  total: number;
+  paymentMethod: string;
+  cashAmount?: number;
+  cardAmount?: number;
+  change?: number;
+  businessName?: string;
+  businessAddress?: string;
+  businessPhone?: string;
+  businessEmail?: string;
+  vatNumber?: string;
+  cashierName?: string;
+}
+
 class EmailService {
   private config: EmailConfig | null = null;
   private transporter: any = null;
@@ -196,6 +226,102 @@ class EmailService {
       return false;
     } catch (error) {
       logger.error("Failed to send email:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Send transaction receipt email
+   */
+  async sendTransactionReceipt(
+    data: TransactionReceiptEmailData
+  ): Promise<boolean> {
+    if (!this.config) {
+      logger.error("Email service not initialized");
+      return false;
+    }
+
+    try {
+      // Generate barcode PNG from receipt number
+      let barcodePngBuffer: Buffer | null = null;
+      try {
+        barcodePngBuffer = await bwipjs.toBuffer({
+          bcid: "code128",
+          text: data.receiptNumber,
+          scale: 3,
+          height: 12,
+          includetext: false,
+          backgroundcolor: "ffffff",
+        });
+        logger.info(
+          `Receipt barcode PNG generated, size: ${barcodePngBuffer.length} bytes`
+        );
+      } catch (error) {
+        logger.error("Failed to generate receipt barcode PNG:", error);
+      }
+
+      const emailHTML = this.generateTransactionReceiptHTML(
+        data,
+        barcodePngBuffer !== null
+      );
+      const emailText = this.generateTransactionReceiptText(data);
+
+      // Build mail options with CID attachment for barcode
+      const mailOptions: {
+        from: string;
+        to: string;
+        subject: string;
+        text: string;
+        html: string;
+        attachments?: Array<{
+          filename: string;
+          content: Buffer;
+          cid: string;
+        }>;
+      } = {
+        from: `"${this.config.fromName}" <${this.config.fromEmail}>`,
+        to: data.customerEmail,
+        subject: `Receipt #${data.receiptNumber} - ${
+          data.businessName || "Your Purchase"
+        }`,
+        text: emailText,
+        html: emailHTML,
+      };
+
+      // Add barcode as CID attachment if generated successfully
+      if (barcodePngBuffer) {
+        mailOptions.attachments = [
+          {
+            filename: "receipt-barcode.png",
+            content: barcodePngBuffer,
+            cid: "barcode@receipt", // Referenced in HTML as cid:barcode@receipt
+          },
+        ];
+      }
+
+      if (this.config.provider === "console") {
+        // Log email instead of sending
+        logger.info("=== TRANSACTION RECEIPT EMAIL (Console Mode) ===");
+        logger.info(`To: ${data.customerEmail}`);
+        logger.info(`Subject: ${mailOptions.subject}`);
+        logger.info(`Receipt Number: ${data.receiptNumber}`);
+        logger.info(`Transaction ID: ${data.transactionId}`);
+        logger.info(`HTML Content Length: ${emailHTML.length} bytes`);
+        return true;
+      }
+
+      if (this.transporter) {
+        const info = await this.transporter.sendMail(mailOptions);
+        logger.info(
+          `Transaction receipt email sent successfully: ${info.messageId}`
+        );
+        return true;
+      }
+
+      logger.error("No email transporter available");
+      return false;
+    } catch (error) {
+      logger.error("Failed to send transaction receipt email:", error);
       return false;
     }
   }
@@ -415,6 +541,279 @@ Note: This basket expires on ${expiresDate}. Please retrieve it before then.
 
 Thank you for shopping with ${businessName}!
     `.trim();
+  }
+
+  /**
+   * Generate HTML email template for transaction receipt
+   * @param data - Transaction receipt email data
+   * @param hasBarcodeAttachment - Whether barcode PNG is attached as CID
+   */
+  private generateTransactionReceiptHTML(
+    data: TransactionReceiptEmailData,
+    hasBarcodeAttachment: boolean
+  ): string {
+    const businessName = data.businessName || "Our Store";
+    const businessAddress = data.businessAddress || "";
+    const businessPhone = data.businessPhone || "";
+    const businessEmail = data.businessEmail || this.config?.fromEmail || "";
+    const vatNumber = data.vatNumber || "";
+
+    const paymentMethodDisplay = this.formatPaymentMethod(data.paymentMethod);
+
+    // Use CID reference for barcode image - reliable way for Gmail
+    const barcodeImageTag = hasBarcodeAttachment
+      ? `<img src="cid:barcode@receipt" alt="Barcode: ${data.receiptNumber}" style="display: block; margin: 0 auto; max-width: 100%;" />`
+      : `<div style="font-size: 20px; font-weight: bold; letter-spacing: 2px; color: #2c3e50; padding: 15px; font-family: monospace;">${data.receiptNumber}</div>`;
+
+    const itemsHTML = data.items
+      .map(
+        (item) => `
+      <tr>
+        <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.name}${
+          item.sku
+            ? ` <span style="color: #999; font-size: 12px;">(${item.sku})</span>`
+            : ""
+        }</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">
+          ${
+            item.weight
+              ? `${item.weight.toFixed(3)} ${item.unit || "kg"}`
+              : `${item.quantity || 1}x`
+          }
+        </td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">£${item.unitPrice.toFixed(
+          2
+        )}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">£${item.totalPrice.toFixed(
+          2
+        )}</td>
+      </tr>
+    `
+      )
+      .join("");
+
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Receipt #${data.receiptNumber}</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+    <h1 style="color: #2c3e50; margin: 0 0 10px 0;">${businessName}</h1>
+    ${
+      businessAddress
+        ? `<p style="margin: 5px 0; color: #666;">${businessAddress}</p>`
+        : ""
+    }
+    ${
+      businessPhone
+        ? `<p style="margin: 5px 0; color: #666;">Phone: ${businessPhone}</p>`
+        : ""
+    }
+    ${
+      businessEmail
+        ? `<p style="margin: 5px 0; color: #666;">Email: ${businessEmail}</p>`
+        : ""
+    }
+    ${
+      vatNumber
+        ? `<p style="margin: 5px 0; color: #666;">VAT: ${vatNumber}</p>`
+        : ""
+    }
+  </div>
+
+  <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <h2 style="color: #2c3e50; margin-top: 0;">Receipt</h2>
+    
+    <div style="text-align: center; margin: 20px 0; padding: 20px; background: white; border: 2px solid #2c3e50; border-radius: 8px;">
+      ${barcodeImageTag}
+      <p style="font-size: 16px; font-weight: bold; letter-spacing: 1px; color: #2c3e50; margin: 10px 0 5px 0;">Receipt #${
+        data.receiptNumber
+      }</p>
+      <p style="color: #666; font-size: 12px; margin: 5px 0 0 0;">${
+        data.date
+      } ${data.time}</p>
+    </div>
+
+    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 5px 0;"><strong>Date & Time:</strong></td>
+          <td style="padding: 5px 0; text-align: right;">${data.date} ${
+      data.time
+    }</td>
+        </tr>
+        ${
+          data.cashierName
+            ? `<tr><td style="padding: 5px 0;"><strong>Cashier:</strong></td><td style="padding: 5px 0; text-align: right;">${data.cashierName}</td></tr>`
+            : ""
+        }
+        <tr>
+          <td style="padding: 5px 0;"><strong>Payment Method:</strong></td>
+          <td style="padding: 5px 0; text-align: right;">${paymentMethodDisplay}</td>
+        </tr>
+      </table>
+    </div>
+
+    <div style="margin: 30px 0;">
+      <h3 style="color: #2c3e50; margin-bottom: 15px;">Items Purchased:</h3>
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+        <thead>
+          <tr style="background: #f8f9fa;">
+            <th style="padding: 10px; text-align: left; border-bottom: 2px solid #dee2e6;">Item</th>
+            <th style="padding: 10px; text-align: center; border-bottom: 2px solid #dee2e6;">Qty</th>
+            <th style="padding: 10px; text-align: right; border-bottom: 2px solid #dee2e6;">Unit Price</th>
+            <th style="padding: 10px; text-align: right; border-bottom: 2px solid #dee2e6;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsHTML}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3" style="padding: 10px; text-align: right; border-top: 2px solid #dee2e6;"><strong>Subtotal:</strong></td>
+            <td style="padding: 10px; text-align: right; border-top: 2px solid #dee2e6;"><strong>£${data.subtotal.toFixed(
+              2
+            )}</strong></td>
+          </tr>
+          <tr>
+            <td colspan="3" style="padding: 10px; text-align: right;"><strong>Tax:</strong></td>
+            <td style="padding: 10px; text-align: right;"><strong>£${data.tax.toFixed(
+              2
+            )}</strong></td>
+          </tr>
+          <tr style="background: #f8f9fa;">
+            <td colspan="3" style="padding: 10px; text-align: right; font-size: 18px;"><strong>Total:</strong></td>
+            <td style="padding: 10px; text-align: right; font-size: 18px;"><strong>£${data.total.toFixed(
+              2
+            )}</strong></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    ${
+      data.cashAmount || data.cardAmount || (data.change && data.change > 0)
+        ? `<div style="background: #e7f3ff; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2196F3;">
+      <h3 style="color: #1976D2; margin-top: 0; font-size: 16px;">Payment Details</h3>
+      <table style="width: 100%; border-collapse: collapse;">
+        ${
+          data.cashAmount
+            ? `<tr><td style="padding: 5px 0;"><strong>Cash Received:</strong></td><td style="padding: 5px 0; text-align: right;">£${data.cashAmount.toFixed(
+                2
+              )}</td></tr>`
+            : ""
+        }
+        ${
+          data.cardAmount
+            ? `<tr><td style="padding: 5px 0;"><strong>Card Payment:</strong></td><td style="padding: 5px 0; text-align: right;">£${data.cardAmount.toFixed(
+                2
+              )}</td></tr>`
+            : ""
+        }
+        ${
+          data.change && data.change > 0
+            ? `<tr><td style="padding: 5px 0;"><strong>Change:</strong></td><td style="padding: 5px 0; text-align: right; color: #28a745; font-weight: bold;">£${data.change.toFixed(
+                2
+              )}</td></tr>`
+            : ""
+        }
+      </table>
+    </div>`
+        : ""
+    }
+
+    <div style="text-align: center; margin: 30px 0; padding: 20px; background: #e7f3ff; border-radius: 8px;">
+      <p style="margin: 0; font-size: 18px; color: #1976D2;">Thank you for your purchase!</p>
+    </div>
+  </div>
+
+  <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; color: #666; font-size: 12px;">
+    <p>This is an electronic receipt for your records.</p>
+    <p>${businessName}</p>
+    ${businessAddress ? `<p>${businessAddress}</p>` : ""}
+    ${businessPhone ? `<p>Phone: ${businessPhone}</p>` : ""}
+    ${businessEmail ? `<p>Email: ${businessEmail}</p>` : ""}
+    <p style="margin-top: 15px; font-size: 10px; color: #999;">Transaction ID: ${
+      data.transactionId
+    }</p>
+  </div>
+</body>
+</html>
+    `;
+  }
+
+  /**
+   * Generate plain text email for transaction receipt
+   */
+  private generateTransactionReceiptText(
+    data: TransactionReceiptEmailData
+  ): string {
+    const businessName = data.businessName || "Our Store";
+    const paymentMethodDisplay = this.formatPaymentMethod(data.paymentMethod);
+
+    const itemsText = data.items
+      .map(
+        (item) =>
+          `  - ${item.name}${item.sku ? ` (${item.sku})` : ""}: ${
+            item.weight
+              ? `${item.weight.toFixed(3)} ${item.unit || "kg"}`
+              : `${item.quantity || 1}x`
+          } @ £${item.unitPrice.toFixed(2)} = £${item.totalPrice.toFixed(2)}`
+      )
+      .join("\n");
+
+    return `
+RECEIPT - ${businessName}
+
+Receipt Number: ${data.receiptNumber}
+Transaction ID: ${data.transactionId}
+Date: ${data.date} ${data.time}
+${data.cashierName ? `Cashier: ${data.cashierName}\n` : ""}
+Items Purchased:
+${itemsText}
+
+Subtotal: £${data.subtotal.toFixed(2)}
+Tax: £${data.tax.toFixed(2)}
+Total: £${data.total.toFixed(2)}
+
+Payment Method: ${paymentMethodDisplay}
+${data.cashAmount ? `Cash Received: £${data.cashAmount.toFixed(2)}\n` : ""}${
+      data.cardAmount ? `Card Payment: £${data.cardAmount.toFixed(2)}\n` : ""
+    }${
+      data.change && data.change > 0
+        ? `Change: £${data.change.toFixed(2)}\n`
+        : ""
+    }
+Thank you for your purchase!
+
+${businessName}
+    `.trim();
+  }
+
+  /**
+   * Format payment method for display
+   */
+  private formatPaymentMethod(method: string): string {
+    switch (method.toLowerCase()) {
+      case "cash":
+        return "Cash";
+      case "card":
+        return "Card";
+      case "mobile":
+        return "Mobile Payment";
+      case "viva_wallet":
+        return "Viva Wallet";
+      case "split":
+        return "Split Payment";
+      case "voucher":
+        return "Voucher";
+      default:
+        return method;
+    }
   }
 }
 

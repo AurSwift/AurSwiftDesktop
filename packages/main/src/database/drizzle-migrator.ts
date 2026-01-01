@@ -235,19 +235,19 @@ interface BackupRetentionConfig {
  * All backup prefixes used by the system
  */
 const BACKUP_PREFIXES = {
-  migration: "auraswift-backup-",
-  repair: "auraswift-repair-backup-",
-  freshStart: "auraswift-fresh-start-backup-",
-  pathMigration: "auraswift-path-migration-backup-",
+  migration: "aurswift-backup-",
+  repair: "aurswift-repair-backup-",
+  freshStart: "aurswift-fresh-start-backup-",
+  pathMigration: "aurswift-path-migration-backup-",
 } as const;
 
 /**
  * Cleanup old backups, keeping only the most recent N backups for each type
  * This handles ALL backup types created by the system:
- * - auraswift-backup-* (migration backups)
- * - auraswift-repair-backup-* (repair backups)
- * - auraswift-fresh-start-backup-* (fresh start backups)
- * - auraswift-path-migration-backup-* (path migration backups)
+ * - aurswift-backup-* (migration backups)
+ * - aurswift-repair-backup-* (repair backups)
+ * - aurswift-fresh-start-backup-* (fresh start backups)
+ * - aurswift-path-migration-backup-* (path migration backups)
  *
  * @param backupDir - Directory containing backups
  * @param maxBackups - Maximum number of migration backups to keep (default: 10)
@@ -423,7 +423,7 @@ function shouldSkipBackup(backupDir: string, isProduction: boolean): boolean {
     }
 
     const backups = readdirSync(backupDir)
-      .filter((f) => f.startsWith("auraswift-backup-") && f.endsWith(".db"))
+      .filter((f) => f.startsWith("aurswift-backup-") && f.endsWith(".db"))
       .map((f) => {
         try {
           return statSync(join(backupDir, f)).mtimeMs;
@@ -626,7 +626,7 @@ export async function runDrizzleMigrations(
       );
     }
 
-    backupPath = join(backupDir, `auraswift-backup-${timestamp}.db`);
+    backupPath = join(backupDir, `aurswift-backup-${timestamp}.db`);
 
     // Verify database file exists before backing up
     if (!existsSync(dbPath)) {

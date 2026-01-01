@@ -90,7 +90,7 @@ function getProductionDbPath() {
     userDataPath = path.join(userHome, ".config");
   }
 
-  return path.join(userDataPath, "AuraSwift", "pos_system.db");
+  return path.join(userDataPath, "aurswift", "pos_system.db");
 }
 
 function getDevelopmentDbPath() {

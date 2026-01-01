@@ -31,7 +31,7 @@ export function UpdateReadyToast({
             Update ready to install
           </h3>
           <p className="text-xs text-muted-foreground mt-1">
-            AuraSwift {updateInfo.version} has been downloaded
+            aurswift {updateInfo.version} has been downloaded
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             The app will close, install in the background, and reopen

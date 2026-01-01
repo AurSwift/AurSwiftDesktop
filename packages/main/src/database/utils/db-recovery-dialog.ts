@@ -9,8 +9,8 @@ import { dialog, app } from "electron";
 import path from "path";
 import fs from "fs";
 
-import { getLogger } from '../../utils/logger.js';
-const logger = getLogger('db-recovery-dialog');
+import { getLogger } from "../../utils/logger.js";
+const logger = getLogger("db-recovery-dialog");
 
 export type RecoveryAction =
   | "backup-and-fresh"
@@ -139,7 +139,7 @@ export async function showDatabaseTooOldDialog(
     title: "⚠️  Incompatible Database Detected",
     message: "Your database cannot be automatically migrated.",
     detail:
-      "Your database was created with a very old version of AuraSwift " +
+      "Your database was created with a very old version of aurswift " +
       "and cannot be automatically migrated to the current version.\n\n" +
       "We recommend creating a backup of your current database and starting fresh. " +
       "Your old database will be preserved and can be manually inspected if needed.",
@@ -202,7 +202,7 @@ export async function showIncompatibleSchemaDialog(
     title: "⚠️  Database Schema Incompatible",
     message: "Your database schema is incompatible with this version.",
     detail:
-      "The database structure doesn't match what this version of AuraSwift expects. " +
+      "The database structure doesn't match what this version of aurswift expects. " +
       "This can happen if the database was corrupted or modified externally.\n\n" +
       "We recommend creating a backup and starting fresh. Your old database will be preserved.",
     backupPath,

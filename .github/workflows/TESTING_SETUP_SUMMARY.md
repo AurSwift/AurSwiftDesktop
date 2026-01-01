@@ -2,7 +2,7 @@
 
 ## ✅ What Was Implemented
 
-A comprehensive, production-ready testing infrastructure has been set up for AuraSwift that follows industry best practices and works seamlessly both locally and in CI/CD.
+A comprehensive, production-ready testing infrastructure has been set up for aurswift that follows industry best practices and works seamlessly both locally and in CI/CD.
 
 ## 📦 Components Created/Updated
 

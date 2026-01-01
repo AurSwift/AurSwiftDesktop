@@ -1111,6 +1111,115 @@ export function registerTransactionHandlers() {
     }
   );
 
+  /**
+   * Send transaction receipt via email
+   */
+  ipcMain.handle(
+    "transactions:sendReceipt",
+    async (
+      event,
+      data: {
+        transactionId: string;
+        customerEmail: string;
+      }
+    ) => {
+      try {
+        const db = await getDatabase();
+
+        // Get transaction by ID
+        const transaction = await db.transactions.getTransactionById(
+          data.transactionId
+        );
+
+        if (!transaction) {
+          return {
+            success: false,
+            message: "Transaction not found",
+          };
+        }
+
+        // Get transaction items
+        const items = await db.transactions.getTransactionItems(
+          data.transactionId
+        );
+
+        // Get business info
+        const business = db.businesses.getBusinessById(transaction.businessId);
+
+        // Get cashier info
+        const cashier = db.users.getUserById(transaction.cashierId);
+
+        // Prepare email data
+        const emailData = {
+          customerEmail: data.customerEmail,
+          receiptNumber: transaction.receiptNumber,
+          transactionId: transaction.id,
+          date: new Date(transaction.timestamp).toLocaleDateString("en-GB"),
+          time: new Date(transaction.timestamp).toLocaleTimeString("en-GB", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          items: items.map((item) => ({
+            name: item.productName || "Item",
+            quantity: item.quantity || undefined,
+            weight: item.weight || undefined,
+            unit: item.unitOfMeasure || undefined,
+            unitPrice: item.unitPrice || 0,
+            totalPrice: item.totalPrice || 0,
+            sku: item.sku || undefined,
+          })),
+          subtotal: transaction.subtotal || 0,
+          tax: transaction.tax || 0,
+          total: transaction.total || 0,
+          paymentMethod: transaction.paymentMethod || "cash",
+          cashAmount: transaction.cashAmount || undefined,
+          cardAmount: transaction.cardAmount || undefined,
+          change:
+            transaction.cashAmount && transaction.cashAmount > transaction.total
+              ? transaction.cashAmount - transaction.total
+              : undefined,
+          businessName: business?.businessName,
+          businessAddress: business?.address ?? undefined,
+          businessPhone: business?.phone ?? undefined,
+          businessEmail: business?.email ?? undefined,
+          vatNumber: business?.vatNumber ?? undefined,
+          cashierName: cashier
+            ? `${cashier.firstName} ${cashier.lastName}`.trim()
+            : undefined,
+        };
+
+        // Send email using email service
+        const { emailService } = await import("../services/email-service.js");
+        const emailSent = await emailService.sendTransactionReceipt(emailData);
+
+        if (!emailSent) {
+          return {
+            success: false,
+            message:
+              "Failed to send email. Please check email service configuration.",
+          };
+        }
+
+        // Check if email was actually sent or just logged (console mode)
+        const isConsoleMode = !emailService.isConfiguredForSending();
+
+        return {
+          success: true,
+          message: isConsoleMode
+            ? `Email logged (console mode). Configure SMTP in settings for actual delivery.`
+            : `Receipt sent successfully to ${data.customerEmail}`,
+        };
+      } catch (error) {
+        logger.error("Send transaction receipt email IPC error:", error);
+        return {
+          success: false,
+          message:
+            error instanceof Error ? error.message : "Failed to send email",
+        };
+      }
+    }
+  );
+
   // Cash Drawer handlers are in cash-drawer.handlers.ts
   // Removed duplicate handlers:
   // - cashDrawer:getExpectedCash

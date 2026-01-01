@@ -1,5 +1,5 @@
 /**
- * Drizzle ORM Integration for AuraSwift
+ * Drizzle ORM Integration for aurswift
  *
  * This module initializes Drizzle ORM with the existing better-sqlite3 connection.
  * It allows gradual migration from raw SQL to type-safe Drizzle queries.
@@ -15,7 +15,7 @@ import type Database from "better-sqlite3";
 import * as schema from "./schema.js";
 import { getLogger } from "../utils/logger.js";
 
-const logger = getLogger('drizzle');
+const logger = getLogger("drizzle");
 
 let drizzleInstance: BetterSQLite3Database<typeof schema> | null = null;
 let rawDatabaseInstance: Database.Database | null = null;

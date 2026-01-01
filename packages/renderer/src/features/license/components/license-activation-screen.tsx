@@ -6,7 +6,13 @@
  */
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,14 +32,13 @@ import {
 
 interface LicenseActivationScreenProps {
   onActivationSuccess: () => void;
-  onSkip?: () => void; // Optional: Allow skipping for demo/trial mode
 }
 
 export function LicenseActivationScreen({
   onActivationSuccess,
-  onSkip,
 }: LicenseActivationScreenProps) {
-  const { activate, getMachineInfo, isLoading, error, clearError } = useLicense();
+  const { activate, getMachineInfo, isLoading, error, clearError } =
+    useLicense();
 
   const [licenseKey, setLicenseKey] = useState("");
   const [terminalName, setTerminalName] = useState("");
@@ -92,7 +97,9 @@ export function LicenseActivationScreen({
         onActivationSuccess();
       }, 1500);
     } else {
-      setActivationError(result.message || "Activation failed. Please check your license key.");
+      setActivationError(
+        result.message || "Activation failed. Please check your license key."
+      );
     }
   };
 
@@ -111,7 +118,7 @@ export function LicenseActivationScreen({
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
             <KeyRound className="w-8 h-8 text-primary" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">AuraSwift EPOS</h1>
+          <h1 className="text-3xl font-bold tracking-tight">aurswift EPOS</h1>
           <p className="text-muted-foreground">
             Enter your license key to activate this terminal
           </p>
@@ -125,8 +132,8 @@ export function LicenseActivationScreen({
               License Activation
             </CardTitle>
             <CardDescription>
-              Find your license key in your AuraSwift dashboard at{" "}
-              <span className="font-medium text-primary">auraswift.com</span>
+              Find your license key in your aurswift dashboard at{" "}
+              <span className="font-medium text-primary">aurswift.com</span>
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -171,7 +178,9 @@ export function LicenseActivationScreen({
             <div className="space-y-2">
               <Label htmlFor="terminal-name">
                 Terminal Name{" "}
-                <span className="text-muted-foreground font-normal">(optional)</span>
+                <span className="text-muted-foreground font-normal">
+                  (optional)
+                </span>
               </Label>
               <div className="relative">
                 <Monitor className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -212,18 +221,6 @@ export function LicenseActivationScreen({
                 </>
               )}
             </Button>
-
-            {/* Skip Option (if enabled) */}
-            {onSkip && !isSuccess && (
-              <Button
-                variant="ghost"
-                onClick={onSkip}
-                disabled={isLoading}
-                className="w-full text-muted-foreground"
-              >
-                Skip for now (Demo Mode)
-              </Button>
-            )}
           </CardContent>
         </Card>
 
@@ -241,12 +238,16 @@ export function LicenseActivationScreen({
                 <div className="flex items-center gap-2">
                   <Monitor className="w-4 h-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Name:</span>
-                  <span className="font-medium truncate">{machineInfo.hostname}</span>
+                  <span className="font-medium truncate">
+                    {machineInfo.hostname}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Globe className="w-4 h-4 text-muted-foreground" />
                   <span className="text-muted-foreground">OS:</span>
-                  <span className="font-medium capitalize">{machineInfo.platform}</span>
+                  <span className="font-medium capitalize">
+                    {machineInfo.platform}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Cpu className="w-4 h-4 text-muted-foreground" />
@@ -256,7 +257,9 @@ export function LicenseActivationScreen({
                 <div className="flex items-center gap-2">
                   <HardDrive className="w-4 h-4 text-muted-foreground" />
                   <span className="text-muted-foreground">RAM:</span>
-                  <span className="font-medium">{machineInfo.totalMemoryGB} GB</span>
+                  <span className="font-medium">
+                    {machineInfo.totalMemoryGB} GB
+                  </span>
                 </div>
               </div>
               <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
@@ -270,7 +273,7 @@ export function LicenseActivationScreen({
         <p className="text-center text-sm text-muted-foreground">
           Need help?{" "}
           <a
-            href="https://auraswift.com/support"
+            href="https://aurswift.com/support"
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary hover:underline"

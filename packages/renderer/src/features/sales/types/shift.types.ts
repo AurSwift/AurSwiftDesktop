@@ -2,7 +2,7 @@
  * Shift-related type definitions
  *
  * @deprecated Use @/types/domain instead
- * @see /Users/admin/Documents/Developer/Electron/AuraSwift/packages/renderer/src/types/domain
+ * @see /Users/admin/Documents/Developer/Electron/aurswift/packages/renderer/src/types/domain
  *
  * Migration: Replace imports with:
  * ```typescript

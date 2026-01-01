@@ -1,6 +1,6 @@
 # Testing Infrastructure Guide
 
-This document describes the comprehensive testing infrastructure for AuraSwift, including how tests run both locally and in CI/CD.
+This document describes the comprehensive testing infrastructure for aurswift, including how tests run both locally and in CI/CD.
 
 ## 🏗️ Architecture
 

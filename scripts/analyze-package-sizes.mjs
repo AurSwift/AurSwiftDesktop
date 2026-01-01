@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Package Size Analysis Script for AuraSwift
+ * Package Size Analysis Script for aurswift
  *
  * Analyzes package sizes and their impact on the app bundle.
  * Run with: npm run analyze:packages
@@ -164,8 +164,8 @@ function analyzeBuiltApp() {
   );
 
   // Check for macOS build
-  const macAppPath = join(rootDir, "dist", "mac", "AuraSwift.app");
-  const winAppPath = join(rootDir, "dist", "win-unpacked", "AuraSwift.exe");
+  const macAppPath = join(rootDir, "dist", "mac", "aurswift.app");
+  const winAppPath = join(rootDir, "dist", "win-unpacked", "aurswift.exe");
 
   if (existsSync(macAppPath)) {
     analyzeMacApp(macAppPath);
@@ -394,7 +394,7 @@ function checkDependencies() {
 // Main execution
 console.log(`${colors.bright}${colors.blue}`);
 console.log("╔════════════════════════════════════════════════════════════╗");
-console.log("║     AuraSwift Package Size Analysis Tool                   ║");
+console.log("║     aurswift Package Size Analysis Tool                   ║");
 console.log("╚════════════════════════════════════════════════════════════╝");
 console.log(colors.reset);
 

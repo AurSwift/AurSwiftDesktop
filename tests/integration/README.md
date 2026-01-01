@@ -1,6 +1,6 @@
 # Integration Tests
 
-Integration tests for AuraSwift POS System.
+Integration tests for aurswift POS System.
 
 ## Structure
 
@@ -31,6 +31,7 @@ npm run test tests/integration/main/ipc/example.test.ts
 ## Writing Integration Tests
 
 Integration tests verify that multiple units work together correctly. They test:
+
 - IPC communication between main and renderer
 - Database operations with real queries
 - Service interactions
@@ -53,4 +54,3 @@ describe("Transaction Integration", () => {
   });
 });
 ```
-

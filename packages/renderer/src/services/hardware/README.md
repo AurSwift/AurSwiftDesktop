@@ -1,6 +1,6 @@
 # Hardware Services
 
-Hardware integration services for the AuraSwift POS application.
+Hardware integration services for the aurswift POS application.
 
 ## Overview
 

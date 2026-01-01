@@ -1,9 +1,9 @@
 /**
  * Age Restriction Types
- * 
+ *
  * @deprecated Use @/types/enums instead
- * @see /Users/admin/Documents/Developer/Electron/AuraSwift/packages/renderer/src/types/enums
- * 
+ * @see /Users/admin/Documents/Developer/Electron/aurswift/packages/renderer/src/types/enums
+ *
  * Migration: Replace imports with:
  * ```typescript
  * import { AgeRestrictionLevel, VerificationMethod } from '@/types/enums';
@@ -22,7 +22,10 @@ export interface AgeRestrictionConfig {
   color: string;
 }
 
-export const AGE_RESTRICTIONS: Record<AgeRestrictionLevel, AgeRestrictionConfig> = {
+export const AGE_RESTRICTIONS: Record<
+  AgeRestrictionLevel,
+  AgeRestrictionConfig
+> = {
   NONE: { level: "NONE", minAge: 0, label: "No Restriction", color: "gray" },
   AGE_16: { level: "AGE_16", minAge: 16, label: "16+", color: "blue" },
   AGE_18: { level: "AGE_18", minAge: 18, label: "18+", color: "orange" },
@@ -55,4 +58,3 @@ export interface AgeVerificationRecord {
   createdAt?: Date | string;
   updatedAt?: Date | string;
 }
-

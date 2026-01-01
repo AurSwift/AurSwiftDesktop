@@ -2,7 +2,7 @@
  * Payment-related type definitions
  *
  * @deprecated Use @/types/domain/payment instead
- * @see /Users/admin/Documents/Developer/Electron/AuraSwift/packages/renderer/src/types/domain/payment.ts
+ * @see /Users/admin/Documents/Developer/Electron/aurswift/packages/renderer/src/types/domain/payment.ts
  *
  * Migration: Replace imports with:
  * ```typescript

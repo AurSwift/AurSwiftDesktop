@@ -411,7 +411,7 @@ jobs:
 
       - uses: actions/attest-build-provenance@v3
         with:
-          subject-path: "dist/auraswift-*, dist/latest*.yml"
+          subject-path: "dist/aurswift-*, dist/latest*.yml"
 
       - name: Upload compiled app
         uses: actions/upload-artifact@v4

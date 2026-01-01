@@ -57,6 +57,9 @@ export const transactionAPI = {
       vivaWalletTerminalId?: string;
     }
   ) => ipcRenderer.invoke("transactions:createFromCart", sessionToken, data),
+
+  sendReceipt: (data: { transactionId: string; customerEmail: string }) =>
+    ipcRenderer.invoke("transactions:sendReceipt", data),
 };
 
 export const refundAPI = {

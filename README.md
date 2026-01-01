@@ -1,4 +1,4 @@
-# AuraSwift POS
+# aurswift POS
 
 Modern window based POS software for supermarket built using electron-vite-builder boilderplate.
 
@@ -493,7 +493,7 @@ ELECTRON_UPDATER_DISABLED=1
 This POS system uses **environment-aware database storage**:
 
 - **Development**: `./data/pos_system.db` (project directory)
-- **Production**: OS-specific user data directory (e.g., `~/Library/Application Support/AuraSwift/pos_system.db` on macOS)
+- **Production**: OS-specific user data directory (e.g., `~/Library/Application Support/aurswift/pos_system.db` on macOS)
 
 ### Quick Commands
 
@@ -515,7 +515,7 @@ See [Contributing Guide](CONTRIBUTING.md).
 [playwright]: https://playwright.dev
 
 ```
-AuraSwift
+aurswift
 ├─ .editorconfig
 ├─ .env
 ├─ .idea

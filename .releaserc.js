@@ -1,6 +1,6 @@
 export default {
   branches: ["main"],
-  repositoryUrl: "https://github.com/Sam231221/AuraSwift",
+  repositoryUrl: "https://github.com/Sam231221/aurswift",
   plugins: [
     [
       "@semantic-release/commit-analyzer",

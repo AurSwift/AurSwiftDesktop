@@ -130,7 +130,7 @@ export function DashboardLayout({ children, subtitle }: DashboardLayoutProps) {
                 <Store className="w-4 h-4 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-lg font-bold">AuraSwift</h1>
+                <h1 className="text-lg font-bold">aurswift</h1>
               </div>
             </div>
             <div className="hidden md:block h-6 w-px bg-border" />

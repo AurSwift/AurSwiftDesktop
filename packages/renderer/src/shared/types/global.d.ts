@@ -4,7 +4,7 @@
  * This file augments the Window interface with all IPC APIs.
  * All type definitions are imported from /types/api for better organization.
  *
- * @see /Users/admin/Documents/Developer/Electron/AuraSwift/packages/renderer/src/types/api
+ * @see /Users/admin/Documents/Developer/Electron/aurswift/packages/renderer/src/types/api
  */
 
 import type { AuthStoreAPI } from "../types/api/auth-store";

@@ -1,5 +1,5 @@
 /**
- * Hardware Integration Tests for AuraSwift POS System
+ * Hardware Integration Tests for aurswift POS System
  * Tests hardware API exposure and native module loading
  */
 
@@ -167,4 +167,3 @@ test.describe("Hardware Integration Tests", () => {
     expect(paymentMethods).toContain("processCardPayment");
   });
 });
-

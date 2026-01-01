@@ -226,7 +226,7 @@ export class DBManager {
             await showDatabaseErrorDialog(
               "Database Locked",
               "Database is locked by another process.",
-              "Please close any other instances of AuraSwift or other applications that might be using the database."
+              "Please close any other instances of aurswift or other applications that might be using the database."
             );
             throw new Error("Database is locked by another process");
           }
@@ -348,7 +348,7 @@ export class DBManager {
           this.db = null;
           dialog.showErrorBox(
             "Cannot Open Database",
-            "This database was created with a newer version of AuraSwift.\n\n" +
+            "This database was created with a newer version of aurswift.\n\n" +
               "Please update the application to the latest version to continue.\n\n" +
               `Current app version: ${this.getAppVersion()}\n` +
               "Database requires a newer version."
@@ -413,7 +413,7 @@ export class DBManager {
             const backups = fs
               .readdirSync(backupDir)
               .filter(
-                (f) => f.startsWith("auraswift-backup-") && f.endsWith(".db")
+                (f) => f.startsWith("aurswift-backup-") && f.endsWith(".db")
               )
               .map((f) => path.join(backupDir, f))
               .sort((a, b) => {
@@ -669,7 +669,7 @@ export class DBManager {
       logger.info(`Database path: ${finalPath}`);
     } else {
       // Production: Use proper user data directory based on platform
-      // Note: app.getPath("userData") already includes the app name (e.g., "AuraSwift")
+      // Note: app.getPath("userData") already includes the app name (e.g., "aurswift")
       const userDataPath = app.getPath("userData");
       finalPath = path.join(userDataPath, "pos_system.db");
       logger.info("Production mode: Using user data directory for database");

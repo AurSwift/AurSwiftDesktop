@@ -15,7 +15,7 @@ export default /** @type import('electron-builder').Configuration */
   publish: {
     provider: 'github',
     owner: 'Sam231221',
-    repo: 'AuraSwift',
+    repo: 'aurswift',
     releaseType: 'release',
     channel: 'latest'  // Explicitly set channel to 'latest' to generate latest.yml
   },
@@ -53,7 +53,7 @@ export default /** @type import('electron-builder').Configuration */
   },
   squirrelWindows: {
     // iconUrl is required for Squirrel - must be a public URL
-    iconUrl: 'https://raw.githubusercontent.com/Sam231221/AuraSwift/main/buildResources/icon.ico',
+    iconUrl: 'https://raw.githubusercontent.com/Sam231221/aurswift/main/buildResources/icon.ico',
     // Optional: Add a loading GIF during installation
     // loadingGif: 'buildResources/install-spinner.gif'
   },
@@ -64,7 +64,7 @@ export default /** @type import('electron-builder').Configuration */
     allowToChangeInstallationDirectory: true,  // Let user choose install location
     createDesktopShortcut: true,        // Create desktop shortcut
     createStartMenuShortcut: true,      // Create Start Menu shortcut
-    shortcutName: 'AuraSwift',         // Shortcut name
+    shortcutName: 'aurswift',         // Shortcut name
     deleteAppDataOnUninstall: true,    // Remove user data when uninstalling
     menuCategory: true,                 // Create program group in Start Menu
     runAfterFinish: true,              // Run app after installation completes

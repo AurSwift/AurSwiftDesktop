@@ -1,8 +1,8 @@
 /**
  * Transaction API Types - Preload
- * 
+ *
  * Type definitions for transaction, refund, void, and cash drawer IPC APIs.
- * 
+ *
  * @module preload/types/api/transaction
  */
 
@@ -47,6 +47,11 @@ export interface TransactionAPIPreload {
       receiptNumber: string;
     }
   ) => Promise<any>;
+
+  sendReceipt: (data: {
+    transactionId: string;
+    customerEmail: string;
+  }) => Promise<any>;
 }
 
 export interface RefundAPIPreload {
@@ -139,4 +144,3 @@ export interface CashDrawerAPIPreload {
 
   getCountsByShift: (shiftId: string) => Promise<any>;
 }
-

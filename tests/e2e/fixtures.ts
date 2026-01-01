@@ -9,7 +9,7 @@ import electronPath from "electron";
 process.env.PLAYWRIGHT_TEST = "true";
 
 /**
- * E2E Test Fixtures for AuraSwift POS System
+ * E2E Test Fixtures for aurswift POS System
  *
  * This file contains the shared test fixtures that can be imported by all E2E test files.
  * Playwright doesn't allow test files to import other test files, so fixtures are
@@ -35,19 +35,19 @@ export const test = base.extend<TestFixtures>({
       // Try multiple possible locations and patterns based on electron-builder output
       const possiblePaths = [
         // Windows-specific patterns (prioritized since we're Windows-only now)
-        "dist/win-unpacked/auraswift.exe",
-        "dist/win-unpacked/AuraSwift.exe",
+        "dist/win-unpacked/aurswift.exe",
+        "dist/win-unpacked/aurswift.exe",
         "dist/win-unpacked/*.exe",
         "dist/*.exe",
         "dist/**/*.exe",
         "dist/win-unpacked/**/*.exe",
 
         // Electron-builder Windows output patterns (common locations)
-        "dist/**/auraswift.exe",
-        "dist/**/AuraSwift.exe",
+        "dist/**/aurswift.exe",
+        "dist/**/aurswift.exe",
         "dist/**/aura-swift.exe",
-        "dist/auraswift*.exe",
-        "dist/AuraSwift*.exe",
+        "dist/aurswift*.exe",
+        "dist/aurswift*.exe",
         "dist/aura-swift*.exe",
 
         // Generic executable patterns

@@ -92,7 +92,7 @@ class WindowManager implements AppModule {
                     dialog.showMessageBox({
                       type: "info",
                       title: "You're Up to Date ✅",
-                      message: "AuraSwift is up to date!",
+                      message: "aurswift is up to date!",
                       detail: `You are running version ${electronApp.getVersion()}, which is the latest available version.`,
                       buttons: ["OK"],
                     });
@@ -114,7 +114,7 @@ class WindowManager implements AppModule {
                     dialog.showMessageBox({
                       type: "info",
                       title: "You're Up to Date ✅",
-                      message: "AuraSwift is up to date!",
+                      message: "aurswift is up to date!",
                       detail: `You are running version ${electronApp.getVersion()}, which is the latest available version.`,
                       buttons: ["OK"],
                     });
@@ -125,13 +125,13 @@ class WindowManager implements AppModule {
                         type: "warning",
                         title: "Unable to Check for Updates",
                         message: "Could not connect to update server",
-                        detail: `Error: ${errorMessage}\n\nPlease check your internet connection and try again later.\n\nYou can also check for updates manually at:\nhttps://github.com/Sam231221/AuraSwift/releases`,
+                        detail: `Error: ${errorMessage}\n\nPlease check your internet connection and try again later.\n\nYou can also check for updates manually at:\nhttps://github.com/Sam231221/aurswift/releases`,
                         buttons: ["OK", "Open GitHub Releases"],
                       })
                       .then((result: { response: number }) => {
                         if (result.response === 1) {
                           shell.openExternal(
-                            "https://github.com/Sam231221/AuraSwift/releases"
+                            "https://github.com/Sam231221/aurswift/releases"
                           );
                         }
                       });
@@ -152,7 +152,7 @@ class WindowManager implements AppModule {
                     dialog.showMessageBox({
                       type: "info",
                       title: "You're Up to Date ✅",
-                      message: "AuraSwift is up to date!",
+                      message: "aurswift is up to date!",
                       detail: `You are running the latest version (${electronApp.getVersion()}).`,
                       buttons: ["OK"],
                     });
@@ -160,7 +160,7 @@ class WindowManager implements AppModule {
                     dialog.showMessageBox({
                       type: "info",
                       title: "You're Up to Date ✅",
-                      message: "AuraSwift is up to date!",
+                      message: "aurswift is up to date!",
                       detail: `You are running version ${electronApp.getVersion()}, which is the latest available version.`,
                       buttons: ["OK"],
                     });
@@ -178,7 +178,7 @@ class WindowManager implements AppModule {
                     dialog.showMessageBox({
                       type: "info",
                       title: "You're Up to Date ✅",
-                      message: "AuraSwift is up to date!",
+                      message: "aurswift is up to date!",
                       detail: `You are running version ${electronApp.getVersion()}, which is the latest available version.`,
                       buttons: ["OK"],
                     });
@@ -188,13 +188,13 @@ class WindowManager implements AppModule {
                         type: "warning",
                         title: "Unable to Check for Updates",
                         message: "Could not connect to update server",
-                        detail: `Error: ${errorMessage}\n\nPlease check your internet connection and try again later.\n\nYou can also check for updates manually at:\nhttps://github.com/Sam231221/AuraSwift/releases`,
+                        detail: `Error: ${errorMessage}\n\nPlease check your internet connection and try again later.\n\nYou can also check for updates manually at:\nhttps://github.com/Sam231221/aurswift/releases`,
                         buttons: ["OK", "Open GitHub Releases"],
                       })
                       .then((result: { response: number }) => {
                         if (result.response === 1) {
                           shell.openExternal(
-                            "https://github.com/Sam231221/AuraSwift/releases"
+                            "https://github.com/Sam231221/aurswift/releases"
                           );
                         }
                       });
@@ -220,13 +220,13 @@ class WindowManager implements AppModule {
                     title: "Auto-Updater Not Available",
                     message: "Auto-updater is not enabled",
                     detail:
-                      "The auto-updater is not available in development mode.\n\nTo check for updates manually, visit:\nhttps://github.com/Sam231221/AuraSwift/releases",
+                      "The auto-updater is not available in development mode.\n\nTo check for updates manually, visit:\nhttps://github.com/Sam231221/aurswift/releases",
                     buttons: ["OK", "Open GitHub Releases"],
                   })
                   .then((result: { response: number }) => {
                     if (result.response === 1) {
                       shell.openExternal(
-                        "https://github.com/Sam231221/AuraSwift/releases"
+                        "https://github.com/Sam231221/aurswift/releases"
                       );
                     }
                   });
@@ -238,28 +238,26 @@ class WindowManager implements AppModule {
             label: "View Release Notes",
             click: () => {
               shell.openExternal(
-                "https://github.com/Sam231221/AuraSwift/releases"
+                "https://github.com/Sam231221/aurswift/releases"
               );
             },
           },
           { type: "separator" as const },
           {
-            label: "About AuraSwift",
+            label: "About aurswift",
             click: () => {
               const { dialog } = require("electron");
               dialog
                 .showMessageBox({
                   type: "info",
-                  title: "About AuraSwift",
-                  message: `AuraSwift POS System`,
-                  detail: `Version: ${electronApp.getVersion()}\n\nA modern point-of-sale system for retail businesses.\n\n© 2025 Sameer Shahi\n\nGitHub: github.com/Sam231221/AuraSwift`,
+                  title: "About aurswift",
+                  message: `aurswift POS System`,
+                  detail: `Version: ${electronApp.getVersion()}\n\nA modern point-of-sale system for retail businesses.\n\n© 2025 Sameer Shahi\n\nGitHub: github.com/Sam231221/aurswift`,
                   buttons: ["OK", "Visit GitHub"],
                 })
                 .then((result: { response: number }) => {
                   if (result.response === 1) {
-                    shell.openExternal(
-                      "https://github.com/Sam231221/AuraSwift"
-                    );
+                    shell.openExternal("https://github.com/Sam231221/aurswift");
                   }
                 });
             },

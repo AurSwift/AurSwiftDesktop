@@ -49,7 +49,7 @@ export function registerDbHandlers() {
           String(now.getMinutes()).padStart(2, "0"),
           String(now.getSeconds()).padStart(2, "0"),
         ].join("");
-      const defaultFilename = `auraswift-backup-${timestamp}.db`;
+      const defaultFilename = `aurswift-backup-${timestamp}.db`;
 
       // Show save dialog
       const focusedWindow = BrowserWindow.getFocusedWindow();
@@ -250,7 +250,7 @@ export function registerDbHandlers() {
           };
         }
 
-        // Validate AuraSwift schema - check for required tables
+        // Validate aurswift schema - check for required tables
         const tableNames = tables.map((t: any) => t.name);
         const requiredTables = [
           "users",
@@ -272,9 +272,9 @@ export function registerDbHandlers() {
           );
           return {
             success: false,
-            message: `Invalid AuraSwift database: Missing required tables (${missingTables.join(
+            message: `Invalid aurswift database: Missing required tables (${missingTables.join(
               ", "
-            )}). This may not be an AuraSwift database or it may be corrupted.`,
+            )}). This may not be an aurswift database or it may be corrupted.`,
           };
         }
 

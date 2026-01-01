@@ -3,8 +3,8 @@
  *
  * Handles migration of databases from old incorrect paths to new correct paths.
  * Specifically handles the case where old versions created double-nested paths:
- * - Old (wrong): C:\Users\<username>\AppData\Roaming\AuraSwift\AuraSwift\pos_system.db
- * - New (correct): C:\Users\<username>\AppData\Roaming\AuraSwift\pos_system.db
+ * - Old (wrong): C:\Users\<username>\AppData\Roaming\aurswift\aurswift\pos_system.db
+ * - New (correct): C:\Users\<username>\AppData\Roaming\aurswift\pos_system.db
  */
 
 import path from "path";
@@ -12,8 +12,8 @@ import fs from "fs";
 import { app } from "electron";
 import { validateDatabaseFile } from "./db-validator.js";
 
-import { getLogger } from '../../utils/logger.js';
-const logger = getLogger('db-path-migration');
+import { getLogger } from "../../utils/logger.js";
+const logger = getLogger("db-path-migration");
 
 export interface PathMigrationResult {
   migrated: boolean;
@@ -33,9 +33,9 @@ export function getOldDatabasePath(): string | null {
   // Only check in production mode (development uses different path)
   if (app.isPackaged) {
     const userDataPath = app.getPath("userData");
-    // Old path had double nesting: userData/AuraSwift/pos_system.db
-    // But userData already includes AuraSwift, so we check for AuraSwift/AuraSwift
-    const oldPath = path.join(userDataPath, "AuraSwift", "pos_system.db");
+    // Old path had double nesting: userData/aurswift/pos_system.db
+    // But userData already includes aurswift, so we check for aurswift/aurswift
+    const oldPath = path.join(userDataPath, "aurswift", "pos_system.db");
 
     // Only return if it exists
     if (fs.existsSync(oldPath)) {
@@ -120,7 +120,7 @@ export function migrateDatabaseFromOldPath(
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const backupPath = path.join(
       backupDir,
-      `auraswift-path-migration-backup-${timestamp}.db`
+      `aurswift-path-migration-backup-${timestamp}.db`
     );
 
     // Copy old database to backup location
@@ -136,14 +136,19 @@ export function migrateDatabaseFromOldPath(
     if (fs.existsSync(newPath)) {
       // Validate existing new database
       const newValidation = validateDatabaseFile(newPath);
-      if (newValidation.valid && newValidation.fileSize && newValidation.fileSize > 0) {
+      if (
+        newValidation.valid &&
+        newValidation.fileSize &&
+        newValidation.fileSize > 0
+      ) {
         // New database exists and is valid - don't overwrite
         return {
           migrated: false,
           oldPath,
           newPath,
           backupPath,
-          reason: "New database already exists and is valid. Old database preserved at backup location.",
+          reason:
+            "New database already exists and is valid. Old database preserved at backup location.",
         };
       } else {
         // New database exists but is invalid - backup it first
@@ -188,8 +193,8 @@ export function migrateDatabaseFromOldPath(
         // Try to remove old directory if empty
         try {
           const files = fs.readdirSync(oldDir);
-          if (files.length === 0 || files.every(f => f === 'backups')) {
-            // Only backups left or empty - can remove AuraSwift subdirectory
+          if (files.length === 0 || files.every((f) => f === "backups")) {
+            // Only backups left or empty - can remove aurswift subdirectory
             if (files.length === 0) {
               fs.rmdirSync(oldDir);
             }
@@ -210,8 +215,7 @@ export function migrateDatabaseFromOldPath(
       backupPath,
     };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       migrated: false,
       oldPath,
@@ -243,7 +247,11 @@ export function shouldMigrateDatabasePath(): boolean {
 
   // Both paths exist - check if new database is valid
   const newValidation = validateDatabaseFile(newPath);
-  if (!newValidation.valid || !newValidation.fileSize || newValidation.fileSize === 0) {
+  if (
+    !newValidation.valid ||
+    !newValidation.fileSize ||
+    newValidation.fileSize === 0
+  ) {
     // New database is invalid or empty - migration needed
     return true;
   }
@@ -261,4 +269,3 @@ export function shouldMigrateDatabasePath(): boolean {
 
   return false;
 }
-

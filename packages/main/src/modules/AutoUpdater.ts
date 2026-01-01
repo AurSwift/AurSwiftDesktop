@@ -52,7 +52,7 @@ export class AutoUpdater implements AppModule {
 
   readonly #REMIND_LATER_INTERVAL = 2 * 60 * 60 * 1000;
   readonly #MAX_POSTPONE_COUNT = 3;
-  readonly #GITHUB_REPO_URL = "https://github.com/Sam231221/AuraSwift";
+  readonly #GITHUB_REPO_URL = "https://github.com/Sam231221/aurswift";
   readonly #GITHUB_RELEASES_URL = `${this.#GITHUB_REPO_URL}/releases`;
   readonly #STARTUP_DELAY = 5 * 1000; // 5 seconds delay for startup check
   readonly #CACHE_DURATION = 15 * 60 * 1000; // 15 minutes cache duration
@@ -351,8 +351,8 @@ export class AutoUpdater implements AppModule {
         ? "Important: Update Available"
         : "Update Reminder";
       const body = hasReachedLimit
-        ? `AuraSwift ${newVersion} is ready. Please update to continue receiving updates.`
-        : `AuraSwift ${newVersion} is available. Click to download.`;
+        ? `aurswift ${newVersion} is ready. Please update to continue receiving updates.`
+        : `aurswift ${newVersion} is available. Click to download.`;
 
       const notification = new Notification({
         title,
@@ -421,7 +421,7 @@ export class AutoUpdater implements AppModule {
       .showMessageBox({
         type: hasReachedLimit ? "warning" : "info",
         title: isReminder ? "Update Reminder" : "Update Available",
-        message: `A new version of AuraSwift is available!`,
+        message: `A new version of aurswift is available!`,
         detail: `Current version: ${currentVersion}\nNew version: ${newVersion}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nWhat's New:\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n${releaseNotes}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${reminderText}\n\nWould you like to download this update now?\n(The download will happen in the background.)`,
         buttons,
         defaultId: 0,
@@ -463,7 +463,7 @@ export class AutoUpdater implements AppModule {
           if (Notification.isSupported()) {
             const notification = new Notification({
               title: "Downloading Update",
-              body: `AuraSwift ${newVersion} is downloading in the background...`,
+              body: `aurswift ${newVersion} is downloading in the background...`,
               silent: false,
             });
             notification.show();
@@ -485,7 +485,7 @@ export class AutoUpdater implements AppModule {
             const hours = this.#REMIND_LATER_INTERVAL / (60 * 60 * 1000);
             const notification = new Notification({
               title: "Reminder Set",
-              body: `We'll remind you about AuraSwift ${newVersion} in ${hours} hours.`,
+              body: `We'll remind you about aurswift ${newVersion} in ${hours} hours.`,
               silent: true,
             });
             notification.show();
@@ -1490,7 +1490,7 @@ export class AutoUpdater implements AppModule {
       if (Notification.isSupported()) {
         const notification = new Notification({
           title: "Update Ready",
-          body: `AuraSwift ${newVersion} is ready to install. Click the notification to install now.`,
+          body: `aurswift ${newVersion} is ready to install. Click the notification to install now.`,
           silent: false,
         });
 

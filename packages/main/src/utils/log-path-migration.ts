@@ -3,8 +3,8 @@
  *
  * Handles migration of log files from old incorrect paths (Roaming/APPDATA) to new correct paths (Local/LOCALAPPDATA).
  * Specifically handles the case where old versions stored logs in Roaming profile:
- * - Old (suboptimal): %USERPROFILE%\AppData\Roaming\AuraSwift\logs\
- * - New (correct): %USERPROFILE%\AppData\Local\AuraSwift\logs\
+ * - Old (suboptimal): %USERPROFILE%\AppData\Roaming\aurswift\logs\
+ * - New (correct): %USERPROFILE%\AppData\Local\aurswift\logs\
  *
  * This migration is important because:
  * - Logs are machine-specific and don't need to sync across machines

@@ -12,15 +12,19 @@
  */
 
 import { getLogger } from "../utils/logger.js";
-import { generateMachineFingerprint, getMachineInfo } from "../utils/machineFingerprint.js";
+import {
+  generateMachineFingerprint,
+  getMachineInfo,
+} from "../utils/machineFingerprint.js";
 import { app } from "electron";
 
 const logger = getLogger("licenseService");
 
 // API Configuration
 // TODO: Move to environment config
-const DEFAULT_API_BASE_URL = process.env.LICENSE_API_URL || "http://localhost:3000";
-const API_TIMEOUT_MS = 30000; // 30 seconds
+const DEFAULT_API_BASE_URL =
+  process.env.LICENSE_API_URL || "http://localhost:3000";
+const API_TIMEOUT_MS = 90000; // 90 seconds (allows for Neon free tier cold start)
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000; // Base delay, will be multiplied exponentially
 
@@ -119,7 +123,7 @@ async function makeRequest<T>(
         method,
         headers: {
           "Content-Type": "application/json",
-          "User-Agent": `AuraSwift-Desktop/${app.getVersion()}`,
+          "User-Agent": `aurswift-Desktop/${app.getVersion()}`,
         },
         body: body ? JSON.stringify(body) : undefined,
         signal: controller.signal,
@@ -141,7 +145,8 @@ async function makeRequest<T>(
       };
     } catch (error) {
       const isLastAttempt = attempt === MAX_RETRIES;
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
 
       // Check if offline
       if (
@@ -150,12 +155,16 @@ async function makeRequest<T>(
         errorMessage.includes("network") ||
         errorMessage.includes("fetch failed")
       ) {
-        logger.warn(`License API offline (attempt ${attempt}/${MAX_RETRIES}):`, errorMessage);
+        logger.warn(
+          `License API offline (attempt ${attempt}/${MAX_RETRIES}):`,
+          errorMessage
+        );
 
         if (isLastAttempt) {
           return {
             success: false,
-            error: "Unable to connect to license server. Please check your internet connection.",
+            error:
+              "Unable to connect to license server. Please check your internet connection.",
             offline: true,
           };
         }
@@ -170,7 +179,10 @@ async function makeRequest<T>(
           };
         }
       } else {
-        logger.error(`License API error (attempt ${attempt}/${MAX_RETRIES}):`, error);
+        logger.error(
+          `License API error (attempt ${attempt}/${MAX_RETRIES}):`,
+          error
+        );
 
         if (isLastAttempt) {
           return {
@@ -218,7 +230,8 @@ export async function activateLicense(
       body: {
         licenseKey: request.licenseKey,
         machineIdHash,
-        terminalName: request.terminalName || `${machineInfo.hostname} - Terminal`,
+        terminalName:
+          request.terminalName || `${machineInfo.hostname} - Terminal`,
         appVersion: app.getVersion(),
         location: {
           platform: machineInfo.platform,
@@ -263,7 +276,9 @@ export async function validateLicense(
   apiBaseUrl?: string
 ): Promise<ValidationResponse> {
   try {
-    const machineIdHash = checkMachine ? generateMachineFingerprint() : undefined;
+    const machineIdHash = checkMachine
+      ? generateMachineFingerprint()
+      : undefined;
 
     logger.debug("Validating license:", {
       licenseKey: licenseKey.substring(0, 15) + "...",

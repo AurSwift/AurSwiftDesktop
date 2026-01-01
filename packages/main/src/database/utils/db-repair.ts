@@ -61,10 +61,7 @@ export async function repairDatabase(
       fs.mkdirSync(backupDir, { recursive: true });
     }
 
-    backupPath = path.join(
-      backupDir,
-      `auraswift-repair-backup-${timestamp}.db`
-    );
+    backupPath = path.join(backupDir, `aurswift-repair-backup-${timestamp}.db`);
 
     // Checkpoint WAL to ensure all data is in main file before backup
     try {
@@ -241,7 +238,7 @@ export async function createFreshDatabase(
 
   const backupPath = path.join(
     backupDir,
-    `auraswift-fresh-start-backup-${timestamp}.db`
+    `aurswift-fresh-start-backup-${timestamp}.db`
   );
 
   if (fs.existsSync(oldDbPath)) {

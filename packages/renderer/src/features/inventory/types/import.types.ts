@@ -1,14 +1,14 @@
 /**
  * @deprecated Use @/types/features/import instead
- * @see /Users/admin/Documents/Developer/Electron/AuraSwift/packages/renderer/src/types/features/import/index.ts
- * 
+ * @see /Users/admin/Documents/Developer/Electron/aurswift/packages/renderer/src/types/features/import/index.ts
+ *
  * Migration: Replace imports with:
  * ```typescript
  * import { ImportProgress, ImportResult, ImportOptions } from '@/types/features/import';
  * ```
  */
 export interface ImportProgress {
-  stage: 'categories' | 'suppliers' | 'products' | 'complete';
+  stage: "categories" | "suppliers" | "products" | "complete";
   total: number;
   processed: number;
   succeeded: number;
@@ -39,14 +39,13 @@ export interface ImportResult {
 }
 
 export interface ImportOptions {
-  onDuplicateSku?: 'skip' | 'update' | 'error';
-  onDuplicateBarcode?: 'skip' | 'update' | 'error';
+  onDuplicateSku?: "skip" | "update" | "error";
+  onDuplicateBarcode?: "skip" | "update" | "error";
   createMissingCategories?: boolean;
   updateStockLevels?: boolean;
-  stockUpdateMode?: 'replace' | 'add';
+  stockUpdateMode?: "replace" | "add";
   mapVatFromPercentage?: boolean;
   defaultVatCategoryId?: string;
   batchSize?: number;
   defaultExpiryDays?: number;
 }
-

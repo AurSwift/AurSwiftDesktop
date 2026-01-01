@@ -80,7 +80,7 @@ vi.mock("electron", () => {
         }
         return "/tmp/test-path";
       }),
-      getName: vi.fn(() => "AuraSwift"),
+      getName: vi.fn(() => "aurswift"),
       getVersion: vi.fn(() => "1.8.0"),
     },
     ipcMain: {

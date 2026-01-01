@@ -25,9 +25,10 @@ export function UpdateAvailableToast({
   const [showNotes, setShowNotes] = useState(false);
 
   // Release notes are now pre-formatted by the main process
-  const releaseNotes = typeof updateInfo.releaseNotes === "string" 
-    ? updateInfo.releaseNotes 
-    : "Release notes available on GitHub";
+  const releaseNotes =
+    typeof updateInfo.releaseNotes === "string"
+      ? updateInfo.releaseNotes
+      : "Release notes available on GitHub";
   const hasNotes = releaseNotes.length > 0;
 
   return (
@@ -42,7 +43,7 @@ export function UpdateAvailableToast({
             New update available
           </h3>
           <p className="text-xs text-muted-foreground mt-1">
-            AuraSwift {updateInfo.version} is now available
+            aurswift {updateInfo.version} is now available
           </p>
           <p className="text-xs text-muted-foreground">
             You're currently on v{currentVersion}

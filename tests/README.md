@@ -1,6 +1,6 @@
-# AuraSwift Test Suite
+# aurswift Test Suite
 
-This directory contains all tests for the AuraSwift POS System.
+This directory contains all tests for the aurswift POS System.
 
 ## 📚 Documentation
 

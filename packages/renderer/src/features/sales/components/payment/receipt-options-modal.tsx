@@ -3,6 +3,7 @@
  * Shown after successful transaction completion for all payment types
  */
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   CheckCircle,
@@ -14,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { TransactionData } from "@/types/domain/transaction";
+import { EmailReceiptModal } from "../modals/email-receipt-modal";
 
 interface ReceiptOptionsModalProps {
   isOpen: boolean;
@@ -39,6 +41,8 @@ export function ReceiptOptionsModal({
   onCancel,
   printerStatus = { connected: true, error: null },
 }: ReceiptOptionsModalProps) {
+  const [showEmailModal, setShowEmailModal] = useState(false);
+
   if (!isOpen || !transactionData) return null;
 
   // Determine payment method and if it's a cash payment
@@ -187,7 +191,7 @@ export function ReceiptOptionsModal({
 
             {/* Email Receipt Button */}
             <Button
-              onClick={onEmail}
+              onClick={() => setShowEmailModal(true)}
               variant="outline"
               className="w-full min-h-[44px] h-14 sm:h-16 border-2 border-slate-300 hover:border-purple-400 hover:bg-purple-50 flex items-center justify-between px-4 sm:px-6 text-sm sm:text-base font-semibold transition-all touch-manipulation"
             >
@@ -231,6 +235,14 @@ export function ReceiptOptionsModal({
           </div>
         </div>
       </div>
+
+      {/* Email Receipt Modal */}
+      <EmailReceiptModal
+        isOpen={showEmailModal}
+        onClose={() => setShowEmailModal(false)}
+        transactionId={transactionData.id}
+        receiptNumber={transactionData.receiptNumber}
+      />
     </div>
   );
 }
