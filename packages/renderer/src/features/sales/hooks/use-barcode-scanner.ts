@@ -78,13 +78,17 @@ export function useBarcodeScanner({
         }
       }
 
-      // Search by barcode, PLU, or SKU
+      // Search by barcode, SKU, PLU, or ID
+      // Barcode is the primary identifier scanned from product packaging
       const product = products.find(
         (p) =>
-          p.id === barcode ||
+          p.barcode === barcode ||
+          p.barcode?.toLowerCase() === barcode.toLowerCase() ||
           p.sku === barcode ||
+          p.sku?.toLowerCase() === barcode.toLowerCase() ||
           p.plu === barcode ||
-          p.sku.toLowerCase() === barcode.toLowerCase()
+          p.plu?.toLowerCase() === barcode.toLowerCase() ||
+          p.id === barcode
       );
 
       if (product) {
@@ -174,12 +178,17 @@ export function useBarcodeScanner({
       }
     }
 
-    // Search by ID, SKU, or PLU
+    // Search by barcode, SKU, PLU, or ID
+    // Barcode is the primary identifier for manual entry
     const product = products.find(
       (p) =>
-        p.id === barcodeInput ||
+        p.barcode === barcodeInput ||
+        p.barcode?.toLowerCase() === barcodeInput.toLowerCase() ||
         p.sku === barcodeInput ||
-        p.plu === barcodeInput
+        p.sku?.toLowerCase() === barcodeInput.toLowerCase() ||
+        p.plu === barcodeInput ||
+        p.plu?.toLowerCase() === barcodeInput.toLowerCase() ||
+        p.id === barcodeInput
     );
 
     if (product) {
