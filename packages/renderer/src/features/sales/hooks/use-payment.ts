@@ -820,7 +820,15 @@ export function usePayment({
         total: completedTransactionData.total,
         paymentMethod:
           completedTransactionData.paymentMethods[0]?.type || "cash",
-        cashAmount: completedTransactionData.amountPaid,
+        cashAmount:
+          completedTransactionData.paymentMethods[0]?.type === "cash"
+            ? completedTransactionData.amountPaid
+            : undefined,
+        cardAmount:
+          completedTransactionData.paymentMethods[0]?.type === "card" ||
+          completedTransactionData.paymentMethods[0]?.type === "mobile"
+            ? completedTransactionData.total
+            : undefined,
         change: completedTransactionData.change,
       };
 

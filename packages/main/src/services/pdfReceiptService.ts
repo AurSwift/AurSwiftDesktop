@@ -8,6 +8,7 @@ import { ipcMain } from "electron";
 import PDFDocument from "pdfkit";
 import { getLogger } from "../utils/logger.js";
 import { getDatabase } from "../database/index.js";
+import bwipjs from "bwip-js";
 
 const logger = getLogger("pdfReceiptService");
 
@@ -37,7 +38,7 @@ interface ReceiptData {
   date: string;
   time: string;
   cashierId: string;
-  cashierName: string;
+  cashierName?: string;
 
   // Items
   items: ReceiptItem[];
@@ -114,6 +115,25 @@ async function generatePDFReceipt(data: ReceiptData): Promise<Buffer> {
       const storeAddress = data.storeAddress || businessDetails.storeAddress;
       const storePhone = data.storePhone || businessDetails.storePhone;
       const vatNumber = data.vatNumber || businessDetails.vatNumber;
+
+      // Generate barcode PNG from receipt number
+      let barcodePngBuffer: Buffer | null = null;
+      try {
+        barcodePngBuffer = await bwipjs.toBuffer({
+          bcid: "code128",
+          text: data.receiptNumber,
+          scale: 3,
+          height: 12,
+          includetext: false,
+          backgroundcolor: "ffffff",
+        });
+        logger.info(
+          `Receipt barcode PNG generated for PDF, size: ${barcodePngBuffer.length} bytes`
+        );
+      } catch (error) {
+        logger.error("Failed to generate barcode PNG for PDF:", error);
+      }
+
       const doc = new PDFDocument({
         size: "LETTER",
         margins: {
@@ -182,7 +202,7 @@ async function generatePDFReceipt(data: ReceiptData): Promise<Buffer> {
       y += 20;
 
       // ========================================
-      // RECEIPT TITLE
+      // RECEIPT TITLE & BARCODE SECTION
       // ========================================
       doc.font("Helvetica-Bold").fontSize(18);
       doc.text("RECEIPT", leftMargin, y, {
@@ -191,50 +211,134 @@ async function generatePDFReceipt(data: ReceiptData): Promise<Buffer> {
       });
       y += 30;
 
-      // ========================================
-      // TRANSACTION INFO
-      // ========================================
-      doc.font("Helvetica").fontSize(10);
+      // Add barcode in a bordered box (matching email receipt style)
+      const barcodeBoxY = y;
+      const barcodeBoxHeight = barcodePngBuffer ? 130 : 80;
 
-      // Left column
-      doc.text(`Receipt #: ${data.receiptNumber}`, leftMargin, y);
-      // Right column
-      doc.text(`Date: ${data.date}`, leftMargin + 300, y, {
-        width: 200,
-        align: "right",
-      });
+      // Draw border around barcode area
+      doc
+        .rect(leftMargin + 60, barcodeBoxY, pageWidth - 120, barcodeBoxHeight)
+        .stroke("#2c3e50");
+
       y += 15;
 
-      doc.text(`Transaction: ${data.transactionId}`, leftMargin, y);
-      doc.text(`Time: ${data.time}`, leftMargin + 300, y, {
-        width: 200,
-        align: "right",
-      });
-      y += 15;
+      // Add barcode image if generated, otherwise show text
+      if (barcodePngBuffer) {
+        const barcodeWidth = 300;
+        const barcodeX = leftMargin + (pageWidth - barcodeWidth) / 2;
+        doc.image(barcodePngBuffer, barcodeX, y, {
+          width: barcodeWidth,
+          align: "center",
+        });
+        y += 50;
+      } else {
+        // Fallback to text if barcode generation failed
+        doc.font("Courier-Bold").fontSize(16);
+        doc.text(data.receiptNumber, leftMargin, y, {
+          width: pageWidth,
+          align: "center",
+        });
+        y += 25;
+      }
 
+      // Receipt number below barcode
+      doc.font("Helvetica-Bold").fontSize(12);
+      doc.text(`Receipt #${data.receiptNumber}`, leftMargin, y, {
+        width: pageWidth,
+        align: "center",
+      });
+      y += 20;
+
+      // Date and time
+      doc.font("Helvetica").fontSize(9).fillColor("#666666");
+      doc.text(`${data.date} ${data.time}`, leftMargin, y, {
+        width: pageWidth,
+        align: "center",
+      });
+      doc.fillColor("#000000");
       y += 25;
+
+      // ========================================
+      // TRANSACTION INFO BOX
+      // ========================================
+      const infoBoxY = y;
+      const infoBoxHeight = data.cashierName ? 70 : 55;
+
+      doc
+        .rect(leftMargin, infoBoxY, pageWidth, infoBoxHeight)
+        .fillAndStroke("#f8f9fa", "#dee2e6");
+
+      y += 12;
+
+      doc.font("Helvetica").fontSize(10).fillColor("#000000");
+
+      // Date & Time row
+      doc.font("Helvetica-Bold").text("Date & Time:", leftMargin + 15, y);
+      doc
+        .font("Helvetica")
+        .text(`${data.date} ${data.time}`, leftMargin + 250, y, {
+          width: 200,
+          align: "right",
+        });
+      y += 18;
+
+      // Cashier row (if provided)
+      if (data.cashierName) {
+        doc.font("Helvetica-Bold").text("Cashier:", leftMargin + 15, y);
+        doc.font("Helvetica").text(data.cashierName, leftMargin + 250, y, {
+          width: 200,
+          align: "right",
+        });
+        y += 18;
+      }
+
+      // Payment Method row
+      const paymentMethodDisplay =
+        data.paymentMethod === "card"
+          ? "Card"
+          : data.paymentMethod === "cash"
+          ? "Cash"
+          : data.paymentMethod === "mobile"
+          ? "Mobile Payment"
+          : "Mixed Payment";
+      doc.font("Helvetica-Bold").text("Payment Method:", leftMargin + 15, y);
+      doc.font("Helvetica").text(paymentMethodDisplay, leftMargin + 250, y, {
+        width: 200,
+        align: "right",
+      });
+
+      y = infoBoxY + infoBoxHeight + 25;
 
       // ========================================
       // ITEMS SECTION HEADER
       // ========================================
-      doc
-        .moveTo(leftMargin, y)
-        .lineTo(612 - rightMargin, y)
-        .stroke("#000000");
-      y += 12;
+      doc.font("Helvetica-Bold").fontSize(13);
+      doc.text("Items Purchased:", leftMargin, y);
+      y += 20;
 
-      doc.font("Helvetica-Bold").fontSize(10);
-      doc.text("Item", leftMargin, y);
+      // Table header with background
+      const headerY = y;
+      doc
+        .rect(leftMargin, headerY, pageWidth, 22)
+        .fillAndStroke("#f8f9fa", "#dee2e6");
+
+      y += 7;
+      doc.font("Helvetica-Bold").fontSize(10).fillColor("#000000");
+      doc.text("Item", leftMargin + 5, y);
       doc.text("Qty", leftMargin + 280, y, { width: 60, align: "center" });
-      doc.text("Price", leftMargin + 340, y, { width: 80, align: "right" });
+      doc.text("Unit Price", leftMargin + 340, y, {
+        width: 80,
+        align: "right",
+      });
       doc.text("Total", leftMargin + 420, y, { width: 80, align: "right" });
-      y += 15;
+
+      y = headerY + 22 + 3;
 
       doc
         .moveTo(leftMargin, y)
         .lineTo(612 - rightMargin, y)
-        .stroke("#CCCCCC");
-      y += 12;
+        .stroke("#dee2e6");
+      y += 8;
 
       // ========================================
       // ITEMS LIST
@@ -300,72 +404,98 @@ async function generatePDFReceipt(data: ReceiptData): Promise<Buffer> {
       y += 10;
 
       // ========================================
-      // TOTALS SECTION
+      // TOTALS SECTION (in table footer style)
       // ========================================
+
+      // Top border for totals
       doc
         .moveTo(leftMargin, y)
         .lineTo(612 - rightMargin, y)
-        .stroke("#CCCCCC");
-      y += 15;
+        .stroke("#dee2e6");
+      y += 12;
 
-      doc.font("Helvetica").fontSize(11);
+      doc.font("Helvetica-Bold").fontSize(11);
 
-      // Subtotal
-      doc.text("Subtotal:", leftMargin + 320, y);
+      // Subtotal row
+      doc.text("Subtotal:", leftMargin + 280, y);
       doc.text(`£${data.subtotal.toFixed(2)}`, leftMargin + 420, y, {
         width: 80,
         align: "right",
       });
       y += 18;
 
-      // Tax
-      doc.text("Tax:", leftMargin + 320, y);
+      // Tax row
+      doc.text("Tax:", leftMargin + 280, y);
       doc.text(`£${data.tax.toFixed(2)}`, leftMargin + 420, y, {
         width: 80,
         align: "right",
       });
       y += 15;
 
-      // Total line
+      // Total row with background
+      const totalRowY = y;
       doc
-        .moveTo(leftMargin + 320, y)
-        .lineTo(612 - rightMargin, y)
-        .stroke("#000000");
-      y += 12;
+        .rect(leftMargin, totalRowY, pageWidth, 28)
+        .fillAndStroke("#f8f9fa", "#dee2e6");
 
-      // Total amount
-      doc.font("Helvetica-Bold").fontSize(14);
-      doc.text("TOTAL:", leftMargin + 320, y);
+      y += 8;
+      doc.font("Helvetica-Bold").fontSize(14).fillColor("#000000");
+      doc.text("Total:", leftMargin + 280, y);
       doc.text(`£${data.total.toFixed(2)}`, leftMargin + 420, y, {
         width: 80,
         align: "right",
       });
-      y += 25;
+
+      y = totalRowY + 28 + 15;
 
       // ========================================
-      // PAYMENT DETAILS
+      // PAYMENT DETAILS (highlighted box like email)
       // ========================================
-      if (data.paymentMethod === "cash" && data.cashAmount) {
-        doc.font("Helvetica").fontSize(11);
+      if (
+        data.cashAmount ||
+        data.cardAmount ||
+        (data.change && data.change > 0)
+      ) {
+        const paymentBoxY = y;
+        let paymentBoxHeight = 50;
 
-        doc.text("Cash Received:", leftMargin + 320, y);
-        doc.text(`£${data.cashAmount.toFixed(2)}`, leftMargin + 420, y, {
-          width: 80,
-          align: "right",
-        });
-        y += 18;
+        if (data.cashAmount && data.change && data.change > 0) {
+          paymentBoxHeight = 75;
+        }
 
-        if (data.change && data.change > 0) {
-          doc.text("Change:", leftMargin + 320, y);
-          doc.text(`£${data.change.toFixed(2)}`, leftMargin + 420, y, {
-            width: 80,
+        // Blue highlighted box for payment details
+        doc
+          .rect(leftMargin, paymentBoxY, pageWidth, paymentBoxHeight)
+          .fillAndStroke("#e7f3ff", "#2196F3");
+
+        y += 12;
+        doc.font("Helvetica-Bold").fontSize(11).fillColor("#000000");
+
+        if (data.paymentMethod === "cash" && data.cashAmount) {
+          doc.text("Cash Received:", leftMargin + 15, y);
+          doc.text(`£${data.cashAmount.toFixed(2)}`, leftMargin + 350, y, {
+            width: 100,
             align: "right",
           });
           y += 20;
-        }
-      }
 
-      y += 15;
+          if (data.change && data.change > 0) {
+            doc.text("Change:", leftMargin + 15, y);
+            doc.text(`£${data.change.toFixed(2)}`, leftMargin + 350, y, {
+              width: 100,
+              align: "right",
+            });
+          }
+        } else if (data.cardAmount) {
+          doc.text("Card Payment:", leftMargin + 15, y);
+          doc.text(`£${data.cardAmount.toFixed(2)}`, leftMargin + 350, y, {
+            width: 100,
+            align: "right",
+          });
+        }
+
+        y = paymentBoxY + paymentBoxHeight + 15;
+      }
 
       // ========================================
       // FOOTER SECTION
@@ -376,14 +506,23 @@ async function generatePDFReceipt(data: ReceiptData): Promise<Buffer> {
         .stroke("#000000");
       y += 20;
 
+      // Thank you message (matching email receipt)
+      doc.font("Helvetica-Bold").fontSize(14).fillColor("#1976D2");
+      doc.text("Thank you for your purchase!", leftMargin, y, {
+        width: pageWidth,
+        align: "center",
+      });
+      y += 25;
+      doc.fillColor("#000000");
+
       // Only show footer message if provided
       if (data.footerMessage) {
-        doc.font("Helvetica-Bold").fontSize(13);
+        doc.font("Helvetica").fontSize(11);
         doc.text(data.footerMessage, leftMargin, y, {
           width: pageWidth,
           align: "center",
         });
-        y += 25;
+        y += 20;
       }
 
       if (data.returnPolicy) {
@@ -397,7 +536,7 @@ async function generatePDFReceipt(data: ReceiptData): Promise<Buffer> {
       }
 
       doc.fontSize(8).font("Helvetica").fillColor("#999999");
-      doc.text(`Transaction Reference: ${data.transactionId}`, leftMargin, y, {
+      doc.text(`Transaction ID: ${data.transactionId}`, leftMargin, y, {
         width: pageWidth,
         align: "center",
       });
