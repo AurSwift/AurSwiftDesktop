@@ -10,7 +10,6 @@ import {
   ShoppingCart,
   Clock,
   RefreshCw,
-  TrendingUp,
   AlertTriangle,
   CheckCircle,
   XCircle,
@@ -284,12 +283,6 @@ const CashierDashboardView = ({
     }, 30000); // Reduced frequency from 2 seconds to 30 seconds to prevent flickering
     return () => clearInterval(interval);
   }, [loadShiftData, user?.id]);
-
-  // Calculate derived values
-  const averageTransaction =
-    shiftStats.totalTransactions > 0
-      ? shiftStats.totalSales / shiftStats.totalTransactions
-      : 0;
 
   if (!user) {
     navigate("/");

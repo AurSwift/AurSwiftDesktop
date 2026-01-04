@@ -57,7 +57,6 @@ export default function UserManagementView({ onBack }: { onBack: () => void }) {
   const { deleteStaffUser } = useDeleteUser();
 
   const userRole = getUserRoleName(user);
-  const isAdmin = userRole === "admin";
   const canManageUsers = hasPermission(PERMISSIONS.USERS_MANAGE);
 
   // Handle loading state
