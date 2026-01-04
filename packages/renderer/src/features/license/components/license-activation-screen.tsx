@@ -56,22 +56,22 @@ export function LicenseActivationScreen({
     // Remove any existing formatting
     const cleaned = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
 
-    // Add formatting: AUR-XXX-V2-XXXXXXXX-XX
+    // Add formatting: AUR-{PLAN}-V2-{8CHARS}-{8CHARS}
     let formatted = "";
     if (cleaned.length > 0) {
       formatted += cleaned.substring(0, 3); // AUR
     }
     if (cleaned.length > 3) {
-      formatted += "-" + cleaned.substring(3, 6); // -XXX
+      formatted += "-" + cleaned.substring(3, 6); // -BAS/PRO/ENT
     }
     if (cleaned.length > 6) {
       formatted += "-" + cleaned.substring(6, 8); // -V2
     }
     if (cleaned.length > 8) {
-      formatted += "-" + cleaned.substring(8, 16); // -XXXXXXXX
+      formatted += "-" + cleaned.substring(8, 16); // -XXXXXXXX (8 chars)
     }
     if (cleaned.length > 16) {
-      formatted += "-" + cleaned.substring(16, 18); // -XX
+      formatted += "-" + cleaned.substring(16, 24); // -XXXXXXXX (8 chars)
     }
 
     setLicenseKey(formatted);
@@ -81,7 +81,7 @@ export function LicenseActivationScreen({
 
   // Handle activation
   const handleActivate = async () => {
-    if (!licenseKey || licenseKey.length < 20) {
+    if (!licenseKey || licenseKey.length < 28) {
       setActivationError("Please enter a valid license key");
       return;
     }

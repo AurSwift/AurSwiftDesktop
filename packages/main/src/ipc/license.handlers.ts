@@ -685,6 +685,39 @@ export function registerLicenseHandlers() {
           result.data
         );
 
+        // Update terminal name in terminals table if provided
+        if (terminalName) {
+          try {
+            const drizzle = getDrizzle();
+            const { terminals } = await import("../database/schema.js");
+            const { eq } = await import("drizzle-orm");
+
+            // Get current user's business to find their terminal
+            const [terminal] = drizzle
+              .select()
+              .from(terminals)
+              .where(eq(terminals.type, "pos"))
+              .limit(1)
+              .all();
+
+            if (terminal) {
+              drizzle
+                .update(terminals)
+                .set({
+                  name: terminalName,
+                  updatedAt: new Date(),
+                })
+                .where(eq(terminals.id, terminal.id))
+                .run();
+
+              logger.info("Updated terminal name in database:", terminalName);
+            }
+          } catch (error) {
+            logger.error("Failed to update terminal name:", error);
+            // Don't fail activation if terminal update fails
+          }
+        }
+
         const apiBaseUrl =
           process.env.LICENSE_API_URL || "http://localhost:3000";
 

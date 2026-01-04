@@ -569,24 +569,9 @@ Thank you for shopping with ${businessName}!
       .map(
         (item) => `
       <tr>
-        <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.name}${
-          item.sku
-            ? ` <span style="color: #999; font-size: 12px;">(${item.sku})</span>`
-            : ""
-        }</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">
-          ${
-            item.weight
-              ? `${item.weight.toFixed(3)} ${item.unit || "kg"}`
-              : `${item.quantity || 1}x`
-          }
-        </td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">£${item.unitPrice.toFixed(
-          2
-        )}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">£${item.totalPrice.toFixed(
-          2
-        )}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.name}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity || 1}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">£${item.totalPrice.toFixed(2)}</td>
       </tr>
     `
       )
@@ -626,108 +611,52 @@ Thank you for shopping with ${businessName}!
   </div>
 
   <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-    <h2 style="color: #2c3e50; margin-top: 0;">Receipt</h2>
-    
-    <div style="text-align: center; margin: 20px 0; padding: 20px; background: white; border: 2px solid #2c3e50; border-radius: 8px;">
-      ${barcodeImageTag}
-      <p style="font-size: 16px; font-weight: bold; letter-spacing: 1px; color: #2c3e50; margin: 10px 0 5px 0;">Receipt #${
-        data.receiptNumber
-      }</p>
-      <p style="color: #666; font-size: 12px; margin: 5px 0 0 0;">${
-        data.date
-      } ${data.time}</p>
+    <div style="margin-bottom: 20px;">
+      <p style="margin: 5px 0;"><strong>Order Ref:</strong> ${data.receiptNumber}</p>
+      <p style="margin: 5px 0;"><strong>Till No:</strong> Till01</p>
     </div>
 
-    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+    <div style="margin: 20px 0;">
       <table style="width: 100%; border-collapse: collapse;">
-        <tr>
-          <td style="padding: 5px 0;"><strong>Date & Time:</strong></td>
-          <td style="padding: 5px 0; text-align: right;">${data.date} ${
-      data.time
-    }</td>
-        </tr>
-        ${
-          data.cashierName
-            ? `<tr><td style="padding: 5px 0;"><strong>Cashier:</strong></td><td style="padding: 5px 0; text-align: right;">${data.cashierName}</td></tr>`
-            : ""
-        }
-        <tr>
-          <td style="padding: 5px 0;"><strong>Payment Method:</strong></td>
-          <td style="padding: 5px 0; text-align: right;">${paymentMethodDisplay}</td>
-        </tr>
-      </table>
-    </div>
-
-    <div style="margin: 30px 0;">
-      <h3 style="color: #2c3e50; margin-bottom: 15px;">Items Purchased:</h3>
-      <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
         <thead>
-          <tr style="background: #f8f9fa;">
-            <th style="padding: 10px; text-align: left; border-bottom: 2px solid #dee2e6;">Item</th>
-            <th style="padding: 10px; text-align: center; border-bottom: 2px solid #dee2e6;">Qty</th>
-            <th style="padding: 10px; text-align: right; border-bottom: 2px solid #dee2e6;">Unit Price</th>
-            <th style="padding: 10px; text-align: right; border-bottom: 2px solid #dee2e6;">Total</th>
+          <tr>
+            <th style="padding: 8px 0; text-align: left; border-bottom: 1px solid #000; font-weight: bold;">Description</th>
+            <th style="padding: 8px 0; text-align: center; border-bottom: 1px solid #000; font-weight: bold;">Qty</th>
+            <th style="padding: 8px 0; text-align: right; border-bottom: 1px solid #000; font-weight: bold;">Total</th>
           </tr>
         </thead>
         <tbody>
           ${itemsHTML}
         </tbody>
-        <tfoot>
-          <tr>
-            <td colspan="3" style="padding: 10px; text-align: right; border-top: 2px solid #dee2e6;"><strong>Subtotal:</strong></td>
-            <td style="padding: 10px; text-align: right; border-top: 2px solid #dee2e6;"><strong>£${data.subtotal.toFixed(
-              2
-            )}</strong></td>
-          </tr>
-          <tr>
-            <td colspan="3" style="padding: 10px; text-align: right;"><strong>Tax:</strong></td>
-            <td style="padding: 10px; text-align: right;"><strong>£${data.tax.toFixed(
-              2
-            )}</strong></td>
-          </tr>
-          <tr style="background: #f8f9fa;">
-            <td colspan="3" style="padding: 10px; text-align: right; font-size: 18px;"><strong>Total:</strong></td>
-            <td style="padding: 10px; text-align: right; font-size: 18px;"><strong>£${data.total.toFixed(
-              2
-            )}</strong></td>
-          </tr>
-        </tfoot>
       </table>
     </div>
 
-    ${
-      data.cashAmount || data.cardAmount || (data.change && data.change > 0)
-        ? `<div style="background: #e7f3ff; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2196F3;">
-      <h3 style="color: #1976D2; margin-top: 0; font-size: 16px;">Payment Details</h3>
-      <table style="width: 100%; border-collapse: collapse;">
-        ${
-          data.cashAmount
-            ? `<tr><td style="padding: 5px 0;"><strong>Cash Received:</strong></td><td style="padding: 5px 0; text-align: right;">£${data.cashAmount.toFixed(
-                2
-              )}</td></tr>`
-            : ""
-        }
-        ${
-          data.cardAmount
-            ? `<tr><td style="padding: 5px 0;"><strong>Card Payment:</strong></td><td style="padding: 5px 0; text-align: right;">£${data.cardAmount.toFixed(
-                2
-              )}</td></tr>`
-            : ""
-        }
-        ${
-          data.change && data.change > 0
-            ? `<tr><td style="padding: 5px 0;"><strong>Change:</strong></td><td style="padding: 5px 0; text-align: right; color: #28a745; font-weight: bold;">£${data.change.toFixed(
-                2
-              )}</td></tr>`
-            : ""
-        }
-      </table>
-    </div>`
-        : ""
-    }
+    <div style="margin: 20px 0;">
+      <p style="margin: 5px 0;"><strong>Grand Total:</strong> £${data.total.toFixed(2)}</p>
+      <p style="margin: 5px 0;"><strong>Number Of Items:</strong> ${data.items.reduce(
+        (sum, item) => sum + (item.quantity || 1),
+        0
+      )}</p>
+      <p style="margin: 5px 0;"><strong>Total:</strong> £${data.total.toFixed(2)}</p>
+      <p style="margin: 5px 0;"><strong>VAT Value:</strong> £${data.tax.toFixed(2)}</p>
+    </div>
 
-    <div style="text-align: center; margin: 30px 0; padding: 20px; background: #e7f3ff; border-radius: 8px;">
-      <p style="margin: 0; font-size: 18px; color: #1976D2;">Thank you for your purchase!</p>
+    <div style="margin: 20px 0;">
+      <p style="margin: 5px 0; font-weight: bold;">Payment Details:</p>
+      <p style="margin: 5px 0;">Paid by: ${paymentMethodDisplay}</p>
+      ${
+        data.change && data.change > 0
+          ? `<p style="margin: 5px 0;">Change: £${data.change.toFixed(2)}</p>`
+          : ""
+      }
+    </div>
+
+    <div style="text-align: center; margin: 30px 0; padding: 20px;">
+      <div style="margin-bottom: 15px;">
+        ${barcodeImageTag}
+      </div>
+      <p style="margin: 10px 0; font-size: 12px;">${data.date} ${data.time}</p>
+      <p style="margin: 10px 0; font-size: 14px; font-weight: bold;">THANK YOU FOR YOUR VISIT</p>
     </div>
   </div>
 
@@ -753,44 +682,41 @@ Thank you for shopping with ${businessName}!
     data: TransactionReceiptEmailData
   ): string {
     const businessName = data.businessName || "Our Store";
-    const paymentMethodDisplay = this.formatPaymentMethod(data.paymentMethod);
 
     const itemsText = data.items
       .map(
         (item) =>
-          `  - ${item.name}${item.sku ? ` (${item.sku})` : ""}: ${
-            item.weight
-              ? `${item.weight.toFixed(3)} ${item.unit || "kg"}`
-              : `${item.quantity || 1}x`
-          } @ £${item.unitPrice.toFixed(2)} = £${item.totalPrice.toFixed(2)}`
+          `  ${item.name}\n  Qty: ${item.quantity || 1} | Total: £${item.totalPrice.toFixed(2)}`
       )
-      .join("\n");
+      .join("\n\n");
+
+    const numberOfItems = data.items.reduce(
+      (sum, item) => sum + (item.quantity || 1),
+      0
+    );
 
     return `
-RECEIPT - ${businessName}
+${businessName}
 
-Receipt Number: ${data.receiptNumber}
-Transaction ID: ${data.transactionId}
-Date: ${data.date} ${data.time}
-${data.cashierName ? `Cashier: ${data.cashierName}\n` : ""}
-Items Purchased:
+Order Ref: ${data.receiptNumber}
+Till No: Till01
 ${itemsText}
 
-Subtotal: £${data.subtotal.toFixed(2)}
-Tax: £${data.tax.toFixed(2)}
+Grand Total: £${data.total.toFixed(2)}
+Number Of Items: ${numberOfItems}
 Total: £${data.total.toFixed(2)}
+VAT Value: £${data.tax.toFixed(2)}
 
-Payment Method: ${paymentMethodDisplay}
-${data.cashAmount ? `Cash Received: £${data.cashAmount.toFixed(2)}\n` : ""}${
-      data.cardAmount ? `Card Payment: £${data.cardAmount.toFixed(2)}\n` : ""
-    }${
+Payment Details:
+Paid by: ${this.formatPaymentMethod(data.paymentMethod)}${
       data.change && data.change > 0
-        ? `Change: £${data.change.toFixed(2)}\n`
+        ? `\nChange: £${data.change.toFixed(2)}`
         : ""
     }
-Thank you for your purchase!
 
-${businessName}
+[Receipt Barcode: ${data.receiptNumber}]
+${data.date} ${data.time}
+THANK YOU FOR YOUR VISIT
     `.trim();
   }
 

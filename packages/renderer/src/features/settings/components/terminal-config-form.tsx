@@ -83,6 +83,7 @@ export function TerminalConfigForm({
   onTestConnection,
 }: TerminalConfigFormProps) {
   const [isTesting, setIsTesting] = useState(false);
+  const [defaultTerminalName, setDefaultTerminalName] = useState("");
   const isEditing = !!terminal && "apiKey" in terminal;
 
   const form = useForm<TerminalConfigFormData>({
@@ -99,6 +100,26 @@ export function TerminalConfigForm({
     },
   });
 
+  // Load terminal name from license activation on mount
+  useEffect(() => {
+    const loadLicenseTerminalName = async () => {
+      if (!terminal) {
+        try {
+          const license = await window.licenseAPI.getLicense();
+          if (license?.terminalName) {
+            setDefaultTerminalName(license.terminalName);
+          }
+        } catch (error) {
+          logger.error("Failed to load license terminal name:", error);
+        }
+      }
+    };
+
+    if (open) {
+      loadLicenseTerminalName();
+    }
+  }, [open, terminal]);
+
   useEffect(() => {
     if (terminal) {
       form.reset({
@@ -113,7 +134,7 @@ export function TerminalConfigForm({
       });
     } else {
       form.reset({
-        name: "",
+        name: defaultTerminalName || "",
         ipAddress: "",
         port: 8080,
         apiKey: "",
@@ -122,7 +143,7 @@ export function TerminalConfigForm({
         terminalType: undefined,
       });
     }
-  }, [terminal, form, open]);
+  }, [terminal, form, open, defaultTerminalName]);
 
   const handleSubmit = (data: TerminalConfigFormData) => {
     onSubmit(data);

@@ -149,18 +149,6 @@ export function EmailReceiptModal({
     setShowKeyboard(false);
   }, []);
 
-  /**
-   * Handle Enter key press
-   */
-  const handleKeyPress = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter" && !isSending && email.trim()) {
-        handleSendEmail();
-      }
-    },
-    [handleSendEmail, isSending, email]
-  );
-
   return (
     <>
       <Dialog

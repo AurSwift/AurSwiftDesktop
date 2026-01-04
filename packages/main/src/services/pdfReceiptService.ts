@@ -202,142 +202,34 @@ async function generatePDFReceipt(data: ReceiptData): Promise<Buffer> {
       y += 20;
 
       // ========================================
-      // RECEIPT TITLE & BARCODE SECTION
+      // TRANSACTION DETAILS SECTION
       // ========================================
-      doc.font("Helvetica-Bold").fontSize(18);
-      doc.text("RECEIPT", leftMargin, y, {
-        width: pageWidth,
-        align: "center",
-      });
-      y += 30;
-
-      // Add barcode in a bordered box (matching email receipt style)
-      const barcodeBoxY = y;
-      const barcodeBoxHeight = barcodePngBuffer ? 130 : 80;
-
-      // Draw border around barcode area
-      doc
-        .rect(leftMargin + 60, barcodeBoxY, pageWidth - 120, barcodeBoxHeight)
-        .stroke("#2c3e50");
-
+      // Order Ref (Receipt Number)
+      doc.font("Helvetica").fontSize(10);
+      doc.text(`Order Ref: ${data.receiptNumber}`, leftMargin, y);
       y += 15;
 
-      // Add barcode image if generated, otherwise show text
-      if (barcodePngBuffer) {
-        const barcodeWidth = 300;
-        const barcodeX = leftMargin + (pageWidth - barcodeWidth) / 2;
-        doc.image(barcodePngBuffer, barcodeX, y, {
-          width: barcodeWidth,
-          align: "center",
-        });
-        y += 50;
-      } else {
-        // Fallback to text if barcode generation failed
-        doc.font("Courier-Bold").fontSize(16);
-        doc.text(data.receiptNumber, leftMargin, y, {
-          width: pageWidth,
-          align: "center",
-        });
-        y += 25;
-      }
+      // Till No (default to Till01 if not provided)
+      const tillNo = (data as any).tillNo || "Till01";
+      doc.text(`Till No: ${tillNo}`, leftMargin, y);
+      y += 15;
 
-      // Receipt number below barcode
-      doc.font("Helvetica-Bold").fontSize(12);
-      doc.text(`Receipt #${data.receiptNumber}`, leftMargin, y, {
-        width: pageWidth,
-        align: "center",
-      });
-      y += 20;
-
-      // Date and time
-      doc.font("Helvetica").fontSize(9).fillColor("#666666");
-      doc.text(`${data.date} ${data.time}`, leftMargin, y, {
-        width: pageWidth,
-        align: "center",
-      });
-      doc.fillColor("#000000");
-      y += 25;
+      y += 10;
 
       // ========================================
-      // TRANSACTION INFO BOX
+      // ITEMS TABLE HEADER
       // ========================================
-      const infoBoxY = y;
-      const infoBoxHeight = data.cashierName ? 70 : 55;
+      doc.font("Helvetica-Bold").fontSize(10);
+      doc.text("Description", leftMargin, y);
+      doc.text("Qty", leftMargin + 300, y, { width: 50, align: "center" });
+      doc.text("Total", leftMargin + 400, y, { width: 100, align: "right" });
+      y += 15;
 
-      doc
-        .rect(leftMargin, infoBoxY, pageWidth, infoBoxHeight)
-        .fillAndStroke("#f8f9fa", "#dee2e6");
-
-      y += 12;
-
-      doc.font("Helvetica").fontSize(10).fillColor("#000000");
-
-      // Date & Time row
-      doc.font("Helvetica-Bold").text("Date & Time:", leftMargin + 15, y);
-      doc
-        .font("Helvetica")
-        .text(`${data.date} ${data.time}`, leftMargin + 250, y, {
-          width: 200,
-          align: "right",
-        });
-      y += 18;
-
-      // Cashier row (if provided)
-      if (data.cashierName) {
-        doc.font("Helvetica-Bold").text("Cashier:", leftMargin + 15, y);
-        doc.font("Helvetica").text(data.cashierName, leftMargin + 250, y, {
-          width: 200,
-          align: "right",
-        });
-        y += 18;
-      }
-
-      // Payment Method row
-      const paymentMethodDisplay =
-        data.paymentMethod === "card"
-          ? "Card"
-          : data.paymentMethod === "cash"
-          ? "Cash"
-          : data.paymentMethod === "mobile"
-          ? "Mobile Payment"
-          : "Mixed Payment";
-      doc.font("Helvetica-Bold").text("Payment Method:", leftMargin + 15, y);
-      doc.font("Helvetica").text(paymentMethodDisplay, leftMargin + 250, y, {
-        width: 200,
-        align: "right",
-      });
-
-      y = infoBoxY + infoBoxHeight + 25;
-
-      // ========================================
-      // ITEMS SECTION HEADER
-      // ========================================
-      doc.font("Helvetica-Bold").fontSize(13);
-      doc.text("Items Purchased:", leftMargin, y);
-      y += 20;
-
-      // Table header with background
-      const headerY = y;
-      doc
-        .rect(leftMargin, headerY, pageWidth, 22)
-        .fillAndStroke("#f8f9fa", "#dee2e6");
-
-      y += 7;
-      doc.font("Helvetica-Bold").fontSize(10).fillColor("#000000");
-      doc.text("Item", leftMargin + 5, y);
-      doc.text("Qty", leftMargin + 280, y, { width: 60, align: "center" });
-      doc.text("Unit Price", leftMargin + 340, y, {
-        width: 80,
-        align: "right",
-      });
-      doc.text("Total", leftMargin + 420, y, { width: 80, align: "right" });
-
-      y = headerY + 22 + 3;
-
+      // Draw line under header
       doc
         .moveTo(leftMargin, y)
         .lineTo(612 - rightMargin, y)
-        .stroke("#dee2e6");
+        .stroke("#000000");
       y += 8;
 
       // ========================================
@@ -354,189 +246,122 @@ async function generatePDFReceipt(data: ReceiptData): Promise<Buffer> {
 
         const itemStartY = y;
 
-        // Item name (with wrapping support)
-        doc.text(item.name, leftMargin, y, { width: 260, continued: false });
-        const nameHeight = doc.heightOfString(item.name, { width: 260 });
-
-        // SKU on next line if exists
-        let skuHeight = 0;
-        if (item.sku) {
-          y += nameHeight + 2;
-          doc.fontSize(8).fillColor("#666666");
-          doc.text(`SKU: ${item.sku}`, leftMargin + 10, y);
-          skuHeight = 10;
-          doc.fontSize(10).fillColor("#000000");
-        }
-
-        // Quantity (aligned to same line as item name)
-        const qtyText = `${item.quantity} × £${item.unitPrice.toFixed(2)}`;
-        doc.text(qtyText, leftMargin + 280, itemStartY, {
-          width: 60,
-          align: "center",
+        // Item description (with wrapping support)
+        doc.text(item.name, leftMargin, y, { 
+          width: 280,
+          continued: false 
         });
+        const nameHeight = doc.heightOfString(item.name, { width: 280 });
 
-        // Unit Price
+        // Quantity (centered)
         doc.text(
-          `£${item.unitPrice.toFixed(2)}`,
-          leftMargin + 340,
+          item.quantity.toString(),
+          leftMargin + 300,
           itemStartY,
-          {
-            width: 80,
-            align: "right",
-          }
+          { width: 50, align: "center" }
         );
 
-        // Total Price
+        // Total Price (right aligned)
         doc.text(
           `£${item.totalPrice.toFixed(2)}`,
-          leftMargin + 420,
+          leftMargin + 400,
           itemStartY,
-          {
-            width: 80,
-            align: "right",
-          }
+          { width: 100, align: "right" }
         );
 
         // Move Y position for next item
-        y = itemStartY + Math.max(nameHeight, 12) + skuHeight + 8;
+        y = itemStartY + Math.max(nameHeight, 12) + 10;
       }
 
       y += 10;
 
       // ========================================
-      // TOTALS SECTION (in table footer style)
+      // SUMMARY SECTION
       // ========================================
-
-      // Top border for totals
-      doc
-        .moveTo(leftMargin, y)
-        .lineTo(612 - rightMargin, y)
-        .stroke("#dee2e6");
-      y += 12;
-
       doc.font("Helvetica-Bold").fontSize(11);
 
-      // Subtotal row
-      doc.text("Subtotal:", leftMargin + 280, y);
-      doc.text(`£${data.subtotal.toFixed(2)}`, leftMargin + 420, y, {
-        width: 80,
-        align: "right",
-      });
-      y += 18;
-
-      // Tax row
-      doc.text("Tax:", leftMargin + 280, y);
-      doc.text(`£${data.tax.toFixed(2)}`, leftMargin + 420, y, {
-        width: 80,
-        align: "right",
-      });
+      // Grand Total
+      doc.text(`Grand Total: £${data.total.toFixed(2)}`, leftMargin, y);
       y += 15;
 
-      // Total row with background
-      const totalRowY = y;
-      doc
-        .rect(leftMargin, totalRowY, pageWidth, 28)
-        .fillAndStroke("#f8f9fa", "#dee2e6");
+      // Number Of Items
+      const numberOfItems = data.items.reduce(
+        (sum, item) => sum + item.quantity,
+        0
+      );
+      doc.text(`Number Of Items: ${numberOfItems}`, leftMargin, y);
+      y += 15;
 
-      y += 8;
-      doc.font("Helvetica-Bold").fontSize(14).fillColor("#000000");
-      doc.text("Total:", leftMargin + 280, y);
-      doc.text(`£${data.total.toFixed(2)}`, leftMargin + 420, y, {
-        width: 80,
-        align: "right",
-      });
+      // Total
+      doc.text(`Total: £${data.total.toFixed(2)}`, leftMargin, y);
+      y += 15;
 
-      y = totalRowY + 28 + 15;
+      // VAT Value
+      doc.text(`VAT Value: £${data.tax.toFixed(2)}`, leftMargin, y);
+      y += 20;
 
       // ========================================
-      // PAYMENT DETAILS (highlighted box like email)
+      // PAYMENT DETAILS SECTION
       // ========================================
-      if (
-        data.cashAmount ||
-        data.cardAmount ||
-        (data.change && data.change > 0)
-      ) {
-        const paymentBoxY = y;
-        let paymentBoxHeight = 50;
+      doc.font("Helvetica-Bold").fontSize(11);
+      doc.text("Payment Details:", leftMargin, y);
+      y += 15;
 
-        if (data.cashAmount && data.change && data.change > 0) {
-          paymentBoxHeight = 75;
-        }
+      doc.font("Helvetica").fontSize(10);
+      
+      // Payment Method
+      const paymentMethodDisplay =
+        data.paymentMethod === "card"
+          ? "Card"
+          : data.paymentMethod === "cash"
+          ? "Cash"
+          : data.paymentMethod === "mobile"
+          ? "Mobile Payment"
+          : data.paymentMethod === "viva_wallet"
+          ? "Viva Wallet"
+          : "Mixed Payment";
+      doc.text(`Paid by: ${paymentMethodDisplay}`, leftMargin, y);
+      y += 15;
 
-        // Blue highlighted box for payment details
-        doc
-          .rect(leftMargin, paymentBoxY, pageWidth, paymentBoxHeight)
-          .fillAndStroke("#e7f3ff", "#2196F3");
-
-        y += 12;
-        doc.font("Helvetica-Bold").fontSize(11).fillColor("#000000");
-
-        if (data.paymentMethod === "cash" && data.cashAmount) {
-          doc.text("Cash Received:", leftMargin + 15, y);
-          doc.text(`£${data.cashAmount.toFixed(2)}`, leftMargin + 350, y, {
-            width: 100,
-            align: "right",
-          });
-          y += 20;
-
-          if (data.change && data.change > 0) {
-            doc.text("Change:", leftMargin + 15, y);
-            doc.text(`£${data.change.toFixed(2)}`, leftMargin + 350, y, {
-              width: 100,
-              align: "right",
-            });
-          }
-        } else if (data.cardAmount) {
-          doc.text("Card Payment:", leftMargin + 15, y);
-          doc.text(`£${data.cardAmount.toFixed(2)}`, leftMargin + 350, y, {
-            width: 100,
-            align: "right",
-          });
-        }
-
-        y = paymentBoxY + paymentBoxHeight + 15;
+      // Change (only show if cash payment and change > 0)
+      if (data.paymentMethod === "cash" && data.change && data.change > 0) {
+        doc.text(`Change: £${data.change.toFixed(2)}`, leftMargin, y);
+        y += 15;
+      } else if (data.change && data.change > 0) {
+        doc.text(`Change: £${data.change.toFixed(2)}`, leftMargin, y);
+        y += 15;
       }
+
+      y += 10;
 
       // ========================================
       // FOOTER SECTION
       // ========================================
-      doc
-        .moveTo(leftMargin, y)
-        .lineTo(612 - rightMargin, y)
-        .stroke("#000000");
       y += 20;
 
-      // Thank you message (matching email receipt)
-      doc.font("Helvetica-Bold").fontSize(14).fillColor("#1976D2");
-      doc.text("Thank you for your purchase!", leftMargin, y, {
+      // Add barcode above date and time
+      if (barcodePngBuffer) {
+        const barcodeWidth = 250;
+        const barcodeX = leftMargin + (pageWidth - barcodeWidth) / 2;
+        doc.image(barcodePngBuffer, barcodeX, y, {
+          width: barcodeWidth,
+          align: "center",
+        });
+        y += 60;
+      }
+
+      // Date and Time
+      doc.font("Helvetica").fontSize(10);
+      const footerDateTime = `${data.date} ${data.time}`;
+      doc.text(footerDateTime, leftMargin, y, {
         width: pageWidth,
         align: "center",
       });
-      y += 25;
-      doc.fillColor("#000000");
+      y += 20;
 
-      // Only show footer message if provided
-      if (data.footerMessage) {
-        doc.font("Helvetica").fontSize(11);
-        doc.text(data.footerMessage, leftMargin, y, {
-          width: pageWidth,
-          align: "center",
-        });
-        y += 20;
-      }
-
-      if (data.returnPolicy) {
-        doc.fontSize(8).font("Helvetica").fillColor("#666666");
-        doc.text(data.returnPolicy, leftMargin, y, {
-          width: pageWidth,
-          align: "center",
-        });
-        doc.fillColor("#000000");
-        y += 20;
-      }
-
-      doc.fontSize(8).font("Helvetica").fillColor("#999999");
-      doc.text(`Transaction ID: ${data.transactionId}`, leftMargin, y, {
+      // Thank you message
+      doc.font("Helvetica-Bold").fontSize(12);
+      doc.text("THANK YOU FOR YOUR VISIT", leftMargin, y, {
         width: pageWidth,
         align: "center",
       });
