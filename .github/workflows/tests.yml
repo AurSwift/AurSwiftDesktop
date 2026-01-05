@@ -57,7 +57,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22.x"
-          cache: "npm"
+          # Disable cache to avoid stale packages after org migration
+          cache: ""
+
+      - name: Clean npm cache
+        run: npm cache clean --force
 
       - name: Install dependencies
         run: |
@@ -70,16 +74,7 @@ jobs:
       - name: Verify vitest installation
         run: |
           echo "Checking for vitest..."
-          if [ -f "node_modules/vitest/dist/config.js" ] || [ -f "node_modules/vitest/config.js" ]; then
-            echo "✓ Vitest installed successfully"
-            npx vitest --version
-          else
-            echo "❌ Vitest not found, listing node_modules:"
-            ls -la node_modules/ | grep vitest || echo "No vitest directory"
-            echo "Installing vitest manually..."
-            npm install vitest@^2.1.0 --no-save --legacy-peer-deps
-            npx vitest --version
-          fi
+          npx vitest --version || (echo "Installing vitest manually..." && npm install vitest@^2.1.0 --no-save)
 
       - name: Build packages (required for test imports)
         run: npm run build
@@ -129,7 +124,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22.x"
-          cache: "npm"
+          # Disable cache to avoid stale packages after org migration
+          cache: ""
+
+      - name: Clean npm cache
+        run: npm cache clean --force
 
       - name: Install dependencies
         run: |
@@ -142,14 +141,7 @@ jobs:
       - name: Verify vitest installation
         run: |
           echo "Checking for vitest..."
-          if [ -f "node_modules/vitest/dist/config.js" ] || [ -f "node_modules/vitest/config.js" ]; then
-            echo "✓ Vitest installed successfully"
-            npx vitest --version
-          else
-            echo "❌ Vitest not found, installing manually..."
-            npm install vitest@^2.1.0 --no-save --legacy-peer-deps
-            npx vitest --version
-          fi
+          npx vitest --version || (echo "Installing vitest manually..." && npm install vitest@^2.1.0 --no-save)
 
       - name: Build packages (required for test imports)
         run: npm run build
@@ -201,7 +193,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22.x"
-          cache: "npm"
+          # Disable cache to avoid stale packages after org migration
+          cache: ""
+
+      - name: Clean npm cache
+        run: npm cache clean --force
 
       - name: Install dependencies
         run: |
@@ -214,14 +210,7 @@ jobs:
       - name: Verify vitest installation
         run: |
           echo "Checking for vitest..."
-          if [ -f "node_modules/vitest/dist/config.js" ] || [ -f "node_modules/vitest/config.js" ]; then
-            echo "✓ Vitest installed successfully"
-            npx vitest --version
-          else
-            echo "❌ Vitest not found, installing manually..."
-            npm install vitest@^2.1.0 --no-save --legacy-peer-deps
-            npx vitest --version
-          fi
+          npx vitest --version || (echo "Installing vitest manually..." && npm install vitest@^2.1.0 --no-save)
 
       - name: Build packages (required for test imports)
         run: npm run build
@@ -273,7 +262,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22.x"
-          cache: "npm"
+          # Disable cache to avoid stale packages after org migration
+          cache: ""
+
+      - name: Clean npm cache
+        run: npm cache clean --force
 
       - name: Install dependencies
         run: |
@@ -286,14 +279,7 @@ jobs:
       - name: Verify vitest installation
         run: |
           echo "Checking for vitest..."
-          if [ -f "node_modules/vitest/dist/config.js" ] || [ -f "node_modules/vitest/config.js" ]; then
-            echo "✓ Vitest installed successfully"
-            npx vitest --version
-          else
-            echo "❌ Vitest not found, installing manually..."
-            npm install vitest@^2.1.0 --no-save --legacy-peer-deps
-            npx vitest --version
-          fi
+          npx vitest --version || (echo "Installing vitest manually..." && npm install vitest@^2.1.0 --no-save)
 
       - name: Build packages (required for test imports)
         run: npm run build
@@ -349,7 +335,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22.x"
-          cache: "npm"
+          # Disable cache to avoid stale packages after org migration
+          cache: ""
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
@@ -359,24 +346,12 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Cache node_modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-            packages/*/node_modules
-            **/node_modules/better-sqlite3/build
-            **/node_modules/node-hid/build
-            **/node_modules/serialport/build
-            **/node_modules/usb/build
-          key: node-deps-${{ runner.os }}-node22-electron-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            node-deps-${{ runner.os }}-node22-electron-
-            node-deps-${{ runner.os }}-node22-
-            node-deps-${{ runner.os }}-node22-
+      - name: Clean npm cache
+        run: npm cache clean --force
+        shell: powershell
 
       - name: Install dependencies
-        run: npm ci --prefer-offline --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
         shell: powershell
         # Note: Don't skip Playwright browser download for E2E tests
 
