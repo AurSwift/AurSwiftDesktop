@@ -59,21 +59,31 @@ jobs:
           node-version: "22.x"
           cache: "npm"
 
-      - name: Cache node_modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-            packages/*/node_modules
-          key: node-deps-${{ runner.os }}-node22-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            node-deps-${{ runner.os }}-node22-
-
       - name: Install dependencies
-        run: npm ci --prefer-offline --no-audit --no-fund --ignore-scripts
+        run: |
+          npm ci --no-audit --no-fund
+          echo "✓ Dependencies installed"
         env:
           ELECTRON_SKIP_BINARY_DOWNLOAD: 1
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+      - name: Verify vitest installation
+        run: |
+          echo "Checking for vitest..."
+          if [ -f "node_modules/vitest/dist/config.js" ] || [ -f "node_modules/vitest/config.js" ]; then
+            echo "✓ Vitest installed successfully"
+            npx vitest --version
+          else
+            echo "❌ Vitest not found, listing node_modules:"
+            ls -la node_modules/ | grep vitest || echo "No vitest directory"
+            echo "Installing vitest manually..."
+            npm install vitest@^2.1.0 --no-save --legacy-peer-deps
+            npx vitest --version
+          fi
+
+      - name: Build packages (required for test imports)
+        run: npm run build
+        continue-on-error: true
 
       - name: Create test-results directory
         run: mkdir -p test-results
@@ -121,21 +131,29 @@ jobs:
           node-version: "22.x"
           cache: "npm"
 
-      - name: Cache node_modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-            packages/*/node_modules
-          key: node-deps-${{ runner.os }}-node22-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            node-deps-${{ runner.os }}-node22-
-
       - name: Install dependencies
-        run: npm ci --prefer-offline --no-audit --no-fund --ignore-scripts
+        run: |
+          npm ci --no-audit --no-fund
+          echo "✓ Dependencies installed"
         env:
           ELECTRON_SKIP_BINARY_DOWNLOAD: 1
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+      - name: Verify vitest installation
+        run: |
+          echo "Checking for vitest..."
+          if [ -f "node_modules/vitest/dist/config.js" ] || [ -f "node_modules/vitest/config.js" ]; then
+            echo "✓ Vitest installed successfully"
+            npx vitest --version
+          else
+            echo "❌ Vitest not found, installing manually..."
+            npm install vitest@^2.1.0 --no-save --legacy-peer-deps
+            npx vitest --version
+          fi
+
+      - name: Build packages (required for test imports)
+        run: npm run build
+        continue-on-error: true
 
       - name: Create test-results directory
         run: mkdir -p test-results
@@ -185,21 +203,29 @@ jobs:
           node-version: "22.x"
           cache: "npm"
 
-      - name: Cache node_modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-            packages/*/node_modules
-          key: node-deps-${{ runner.os }}-node22-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            node-deps-${{ runner.os }}-node22-
-
       - name: Install dependencies
-        run: npm ci --prefer-offline --no-audit --no-fund --ignore-scripts
+        run: |
+          npm ci --no-audit --no-fund
+          echo "✓ Dependencies installed"
         env:
           ELECTRON_SKIP_BINARY_DOWNLOAD: 1
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+      - name: Verify vitest installation
+        run: |
+          echo "Checking for vitest..."
+          if [ -f "node_modules/vitest/dist/config.js" ] || [ -f "node_modules/vitest/config.js" ]; then
+            echo "✓ Vitest installed successfully"
+            npx vitest --version
+          else
+            echo "❌ Vitest not found, installing manually..."
+            npm install vitest@^2.1.0 --no-save --legacy-peer-deps
+            npx vitest --version
+          fi
+
+      - name: Build packages (required for test imports)
+        run: npm run build
+        continue-on-error: true
 
       - name: Create test-results directory
         run: mkdir -p test-results
@@ -249,21 +275,29 @@ jobs:
           node-version: "22.x"
           cache: "npm"
 
-      - name: Cache node_modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-            packages/*/node_modules
-          key: node-deps-${{ runner.os }}-node22-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            node-deps-${{ runner.os }}-node22-
-
       - name: Install dependencies
-        run: npm ci --prefer-offline --no-audit --no-fund --ignore-scripts
+        run: |
+          npm ci --no-audit --no-fund
+          echo "✓ Dependencies installed"
         env:
           ELECTRON_SKIP_BINARY_DOWNLOAD: 1
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+      - name: Verify vitest installation
+        run: |
+          echo "Checking for vitest..."
+          if [ -f "node_modules/vitest/dist/config.js" ] || [ -f "node_modules/vitest/config.js" ]; then
+            echo "✓ Vitest installed successfully"
+            npx vitest --version
+          else
+            echo "❌ Vitest not found, installing manually..."
+            npm install vitest@^2.1.0 --no-save --legacy-peer-deps
+            npx vitest --version
+          fi
+
+      - name: Build packages (required for test imports)
+        run: npm run build
+        continue-on-error: true
 
       - name: Run tests with coverage
         run: npm run test:coverage
@@ -342,7 +376,7 @@ jobs:
             node-deps-${{ runner.os }}-node22-
 
       - name: Install dependencies
-        run: npm ci --prefer-offline --no-audit --no-fund --ignore-scripts
+        run: npm ci --prefer-offline --no-audit --no-fund
         shell: powershell
         # Note: Don't skip Playwright browser download for E2E tests
 
