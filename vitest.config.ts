@@ -5,6 +5,7 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Vitest configuration for test suite
 export default defineConfig({
   plugins: [react()] as any,
   test: {
