@@ -2,6 +2,70 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.27.0](https://github.com/AurSwift/AurSwift/compare/v1.26.0...v1.27.0) (2026-01-06)
+
+
+* feat(barcode):Enhance barcode scanning functionality to support case-insensitive matching for barcode, SKU, PLU, and ID. ([](https://github.com/AurSwift/AurSwift/commit/8b25480f8d447a758dddc24390c5d089729bb960))
+* fix:Add comprehensive License & Subscription System documentation and minor code adjustments ([](https://github.com/AurSwift/AurSwift/commit/c3bbd04941bb3265e620e936ce039f714ffe0006))
+* Sales button update with license key activation ([](https://github.com/AurSwift/AurSwift/commit/3f8567701875ba7f454cf41c0680176069b51634))
+
+
+### chore
+
+* clean up code by removing trailing whitespace in multiple files ([](https://github.com/AurSwift/AurSwift/commit/b59b4c3dff7b6fcf54eab8a28872061905737d6f))
+
+
+### ci
+
+* trigger workflow re-run with fixed configuration ([](https://github.com/AurSwift/AurSwift/commit/bc6dcc2bd3176b9492df634ce33ac4b5e6b5b808))
+* trigger workflow re-run with fixed configuration ([](https://github.com/AurSwift/AurSwift/commit/ecb70c06a17e7cec84ca5aa325074e2b157805c2))
+
+
+### docs
+
+* add comment to vitest config ([](https://github.com/AurSwift/AurSwift/commit/e87044462893c1bd47c6cc974f5032fa27549922))
+
+
+### feat
+
+* **dashboard:** add "Go To Sales" button to StatsCards and ManagerStatsCards for quick navigation, with permission checks for visibility ([](https://github.com/AurSwift/AurSwift/commit/9ccf39580a90c5d8f0c913cc225a54227b97948e))
+* add Email Receipt Modal component for sending transaction receipts ([](https://github.com/AurSwift/AurSwift/commit/a642e104c9d0ed871a423a842c0e49cf72540361))
+* Add network information retrieval and export functionality ([](https://github.com/AurSwift/AurSwift/commit/9772897605458cf2d2b5b053834c853766a395a9))
+* **update:** add pause, resume, and get download state functionality for updates ([](https://github.com/AurSwift/AurSwift/commit/cc5eb70a78376416c75e23c43f2c382c1a5132ec))
+* **migrations:** create backup directory for migration files if it doesn't exist ([](https://github.com/AurSwift/AurSwift/commit/eaf6215e0f8026554be4f6e7806947d8dd571478))
+* **transaction:** enhance transaction handling by filtering recent transactions to today's date, adding cashier shift context for refunds, and integrating adaptive keyboard support in modals for improved user experience ([](https://github.com/AurSwift/AurSwift/commit/d1295e7ae5ef8a6fd28a11d1c7f38d4552166827))
+* **transaction:** enhance transaction manager to include cashier name and user details, update CSV export to handle missing cashier names, and adjust sales reports header and view for improved functionality ([](https://github.com/AurSwift/AurSwift/commit/b0b12dc3ca61688754e2a4d8934533553a59d342))
+* **sales:** implement reports export functionality and remove outdated save basket documentation ([](https://github.com/AurSwift/AurSwift/commit/4c56c39b00385c28e44dc4c175e2c3fa9280b077))
+* **terminal:** load terminal name from license activation on mount and set as default in configuration form ([](https://github.com/AurSwift/AurSwift/commit/5c68c784be3f0da58f801906d070e3f6485ae111))
+* **payment:** update payment processing to conditionally set cash and card amounts based on payment method ([](https://github.com/AurSwift/AurSwift/commit/be3be356536c5ab5c48befb057e485540ae6396b))
+
+
+### fix
+
+* add --ignore-scripts flag to npm ci command in multiple jobs ([](https://github.com/AurSwift/AurSwift/commit/aa1536384d9d8788e8074186163519e159bb57ed))
+* add empty lines for improved readability in email service config, jsdom types, item enquiry modal, and basket API files ([](https://github.com/AurSwift/AurSwift/commit/1acc9c8d6b439a609f2cfdb61b8c25823f188381))
+* adjust performance test scaling factor and coverage branch threshold ([](https://github.com/AurSwift/AurSwift/commit/ef0c4b70bc312adb8a0c07f29c38ead74fbc32e2))
+* adjust performance test scaling factor threshold to 40x for CI stability ([](https://github.com/AurSwift/AurSwift/commit/8bc0c302aec39f976f2df9a004f2663c76e699c6))
+* correct repository URL case sensitivity in package.json ([](https://github.com/AurSwift/AurSwift/commit/8f988c44ac88a5987ef9ab7da8dcee7605891383))
+* **receipt:** correct typo in download button label from "Download PDF" to "Download Receipt" ([](https://github.com/AurSwift/AurSwift/commit/41e90b70bfc31ca6c63d1fb2788f6621aa50a69f))
+* remove email service configuration documentation ([](https://github.com/AurSwift/AurSwift/commit/2d2dc903affe86fe21ac41ccb7f94ad226782c04))
+* **dependencies:** remove react-qr-code and add @types/jsdom and @types/tough-cookie ([](https://github.com/AurSwift/AurSwift/commit/abe57120ef5b973124fda266452ae03100d527ad)), closes [types/tou#cookie](https://github.com/types/tou/issues/cookie)
+* **ci:** remove redundant token parameter, rely on persist-credentials ([](https://github.com/AurSwift/AurSwift/commit/a18c95a79fea09c8ebf496d27a9f97a4b60e36dc))
+* **updater:** streamline download state checks and improve logging error messages ([](https://github.com/AurSwift/AurSwift/commit/567308be21fda78badaa3c74064effa8cfdcf581))
+* trigger workflow re-run with fixed configuration ([](https://github.com/AurSwift/AurSwift/commit/78c9ad6a992d2d53e3dd55fc446ea9e1090729c3))
+* **ci:** update checkout action to persist credentials for improved authentication ([](https://github.com/AurSwift/AurSwift/commit/4c7c4a879ad1291ba75bd9adc66b4b1568431678))
+* update GitHub release links to reflect new repository name ([](https://github.com/AurSwift/AurSwift/commit/de9f604f81b335b61e10a41be8db7ad38c56d5b9))
+* update repository URL in .releaserc.js to reflect new organization path ([](https://github.com/AurSwift/AurSwift/commit/1611aa4ec312200506261ab689040a3863b818d7))
+* update repository URL in package.json to reflect correct path ([](https://github.com/AurSwift/AurSwift/commit/d94604829f5a02e6e4213b7610599f27d5b10f57))
+* update tests.yml workflow for improved structure and clarity ([](https://github.com/AurSwift/AurSwift/commit/bcbfce32c1dcf5b2ff3c10eeb847bd001e08fbb8))
+* update vitest import path in configuration file ([](https://github.com/AurSwift/AurSwift/commit/b089a4d58e6c7626a7db27efa8655dfcd362fb01))
+
+
+### refactor
+
+* **logging:** Improve log message formatting and structure across multiple files ([](https://github.com/AurSwift/AurSwift/commit/acd5ba1f1b93601e987712dc9e3a6c4d04cc0040))
+* **dashboard:** remove unused average transaction calculation and clean up imports in CashierDashboardView ([](https://github.com/AurSwift/AurSwift/commit/a3c7d2e61547577f5dba7a717d4b4cddd37071c2))
+
 # [1.26.0](https://github.com/AurSwift/AurSwift/compare/v1.25.0...v1.26.0) (2025-12-17)
 
 ### chore
