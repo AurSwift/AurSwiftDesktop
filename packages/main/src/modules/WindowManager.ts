@@ -125,13 +125,13 @@ class WindowManager implements AppModule {
                         type: "warning",
                         title: "Unable to Check for Updates",
                         message: "Could not connect to update server",
-                        detail: `Error: ${errorMessage}\n\nPlease check your internet connection and try again later.\n\nYou can also check for updates manually at:\nhttps://github.com/Sam231221/aurswift/releases`,
+                        detail: `Error: ${errorMessage}\n\nPlease check your internet connection and try again later.\n\nYou can also check for updates manually at:\nhttps://github.com/AurSwift/AurSwift/releases`,
                         buttons: ["OK", "Open GitHub Releases"],
                       })
                       .then((result: { response: number }) => {
                         if (result.response === 1) {
                           shell.openExternal(
-                            "https://github.com/Sam231221/aurswift/releases"
+                            "https://github.com/AurSwift/AurSwift/releases"
                           );
                         }
                       });
@@ -188,13 +188,13 @@ class WindowManager implements AppModule {
                         type: "warning",
                         title: "Unable to Check for Updates",
                         message: "Could not connect to update server",
-                        detail: `Error: ${errorMessage}\n\nPlease check your internet connection and try again later.\n\nYou can also check for updates manually at:\nhttps://github.com/Sam231221/aurswift/releases`,
+                        detail: `Error: ${errorMessage}\n\nPlease check your internet connection and try again later.\n\nYou can also check for updates manually at:\nhttps://github.com/AurSwift/AurSwift/releases`,
                         buttons: ["OK", "Open GitHub Releases"],
                       })
                       .then((result: { response: number }) => {
                         if (result.response === 1) {
                           shell.openExternal(
-                            "https://github.com/Sam231221/aurswift/releases"
+                            "https://github.com/AurSwift/AurSwift/releases"
                           );
                         }
                       });
@@ -220,13 +220,13 @@ class WindowManager implements AppModule {
                     title: "Auto-Updater Not Available",
                     message: "Auto-updater is not enabled",
                     detail:
-                      "The auto-updater is not available in development mode.\n\nTo check for updates manually, visit:\nhttps://github.com/Sam231221/aurswift/releases",
+                      "The auto-updater is not available in development mode.\n\nTo check for updates manually, visit:\nhttps://github.com/AurSwift/AurSwift/releases",
                     buttons: ["OK", "Open GitHub Releases"],
                   })
                   .then((result: { response: number }) => {
                     if (result.response === 1) {
                       shell.openExternal(
-                        "https://github.com/Sam231221/aurswift/releases"
+                        "https://github.com/AurSwift/AurSwift/releases"
                       );
                     }
                   });
@@ -238,7 +238,7 @@ class WindowManager implements AppModule {
             label: "View Release Notes",
             click: () => {
               shell.openExternal(
-                "https://github.com/Sam231221/aurswift/releases"
+                "https://github.com/AurSwift/AurSwift/releases"
               );
             },
           },
