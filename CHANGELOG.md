@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.27.1](https://github.com/AurSwift/AurSwift/compare/v1.27.0...v1.27.1) (2026-01-07)
+
+
+### refactor
+
+* remove obsolete license and subscription documentation, and delete unused database migration files ([](https://github.com/AurSwift/AurSwift/commit/2160b715e34fa114805eb9889b7813e1a5b6f634))
+
 # [1.27.0](https://github.com/AurSwift/AurSwift/compare/v1.26.0...v1.27.0) (2026-01-06)
 
 
