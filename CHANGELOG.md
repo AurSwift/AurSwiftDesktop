@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.28.0](https://github.com/AurSwift/AurSwift/compare/v1.27.1...v1.28.0) (2026-01-07)
+
+
+### chore
+
+* update author information in package.json to reflect new team details ([](https://github.com/AurSwift/AurSwift/commit/60949af382c9e514c6e75804f14ee2cfad7e40d1))
+
+
+### feat
+
+* enhance AutoUpdater to track update check error notifications and manage version status ([](https://github.com/AurSwift/AurSwift/commit/a461187341a49abec0c678121d5f2e6b91a9182e))
+
+
+### fix
+
+* add empty lines for improved readability in jsdom types, item enquiry modal, and basket API files ([](https://github.com/AurSwift/AurSwift/commit/573945064929133e3a9eb62358028a7dfe2d9acf))
+
 ## [1.27.1](https://github.com/AurSwift/AurSwift/compare/v1.27.0...v1.27.1) (2026-01-07)
 
 
