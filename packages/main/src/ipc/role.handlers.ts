@@ -8,7 +8,12 @@ import {
   validateSessionAndPermission,
   hasAnyRole,
   hasPermission,
+  validateBusinessAccess,
 } from "../utils/authHelpers.js";
+import {
+  invalidateUserPermissionCache,
+  getUserPermissions,
+} from "../utils/rbacHelpers.js";
 
 const logger = getLogger("roleHandlers");
 // let db: any = null; // Removed: Always get fresh DB reference
@@ -264,9 +269,6 @@ export function registerRoleHandlers() {
         );
 
         // Invalidate permission cache for this user
-        const { invalidateUserPermissionCache } = await import(
-          "../utils/rbacHelpers.js"
-        );
         invalidateUserPermissionCache(userId);
 
         await logAction(
@@ -309,9 +311,6 @@ export function registerRoleHandlers() {
         const userRole = db.userRoles.revokeRole(userId, roleId);
 
         // Invalidate permission cache
-        const { invalidateUserPermissionCache } = await import(
-          "../utils/rbacHelpers.js"
-        );
         invalidateUserPermissionCache(userId);
 
         await logAction(
@@ -392,9 +391,6 @@ export function registerRoleHandlers() {
         }
 
         // Validate business access
-        const { validateBusinessAccess } = await import(
-          "../utils/authHelpers.js"
-        );
         const businessCheck = validateBusinessAccess(
           auth.user!,
           user.businessId
@@ -433,9 +429,6 @@ export function registerRoleHandlers() {
         }
 
         // Invalidate permission cache
-        const { invalidateUserPermissionCache } = await import(
-          "../utils/rbacHelpers.js"
-        );
         invalidateUserPermissionCache(userId);
 
         await logAction(db, auth.user!, "set_primary_role", "users", userId, {
@@ -515,9 +508,6 @@ export function registerRoleHandlers() {
         );
 
         // Invalidate permission cache
-        const { invalidateUserPermissionCache } = await import(
-          "../utils/rbacHelpers.js"
-        );
         invalidateUserPermissionCache(userId);
 
         await logAction(
@@ -565,9 +555,6 @@ export function registerRoleHandlers() {
         );
 
         // Invalidate permission cache
-        const { invalidateUserPermissionCache } = await import(
-          "../utils/rbacHelpers.js"
-        );
         invalidateUserPermissionCache(userId);
 
         await logAction(
@@ -629,7 +616,6 @@ export function registerRoleHandlers() {
       try {
         const directPermissions =
           db.userPermissions.getActivePermissionsByUser(userId);
-        const { getUserPermissions } = await import("../utils/rbacHelpers.js");
         const allPermissions = await getUserPermissions(db, userId);
 
         return {

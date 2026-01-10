@@ -44,7 +44,7 @@ function getWindowsProductId(): string | null {
   try {
     const result = execSync(
       'reg query "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion" /v ProductId 2>nul',
-      { encoding: "utf-8", timeout: 5000 }
+      { encoding: "utf-8", timeout: 10000 }
     );
     const match = result.match(/ProductId\s+REG_SZ\s+(.+)/);
     return match ? match[1].trim() : null;
@@ -64,7 +64,7 @@ function getDiskSerial(): string | null {
       // Windows: Get boot drive serial
       const result = execSync(
         "wmic diskdrive where index=0 get serialnumber 2>nul",
-        { encoding: "utf-8", timeout: 5000 }
+        { encoding: "utf-8", timeout: 10000 }
       );
       const lines = result.trim().split("\n").filter(Boolean);
       const serial = lines[1]?.trim();
@@ -73,7 +73,7 @@ function getDiskSerial(): string | null {
       // macOS: Get hardware UUID
       const result = execSync(
         "ioreg -rd1 -c IOPlatformExpertDevice | grep IOPlatformUUID",
-        { encoding: "utf-8", timeout: 5000 }
+        { encoding: "utf-8", timeout: 10000 }
       );
       const match = result.match(/"IOPlatformUUID"\s*=\s*"([^"]+)"/);
       return match ? match[1] : null;
@@ -83,7 +83,7 @@ function getDiskSerial(): string | null {
         "cat /etc/machine-id 2>/dev/null || cat /var/lib/dbus/machine-id 2>/dev/null",
         {
           encoding: "utf-8",
-          timeout: 5000,
+          timeout: 10000,
         }
       );
       return result.trim() || null;
@@ -115,6 +115,14 @@ function getStableMacAddresses(): string[] {
       /^ham/i, // Hamachi
       /^vEthernet/i, // Hyper-V
       /^Bluetooth/i, // Bluetooth adapters
+      /^tun/i, // VPN tunnels (OpenVPN, etc.)
+      /^tap/i, // VPN taps
+      /^ppp/i, // Point-to-point (Dial-up/VPN)
+      /^utun/i, // macOS VPN tunnels
+      /^wg/i, // WireGuard
+      /^ipsec/i, // IPSec
+      /^forti/i, // Fortinet
+      /^tailscale/i, // Tailscale
     ];
 
     for (const [name, addrs] of Object.entries(interfaces)) {

@@ -101,6 +101,7 @@ export const licenseActivation = createTable("license_activation", {
 
   // Expiration
   expiresAt: integer("expires_at", { mode: "timestamp_ms" }),
+  trialEnd: integer("trial_end", { mode: "timestamp_ms" }),
 
   // Timestamps
   activatedAt: integer("activated_at", { mode: "timestamp_ms" })

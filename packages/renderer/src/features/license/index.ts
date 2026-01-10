@@ -7,6 +7,10 @@
 // Components
 export { LicenseActivationScreen } from "./components/license-activation-screen.js";
 export { LicenseStatusBadge } from "./components/license-status-badge.js";
+export { LicenseInfoModal } from "./components/license-info-modal.js";
+
+// Pages
+export { LicenseInfoPage } from "./pages/license-info-page.js";
 
 // Hooks
 export { useLicense } from "./hooks/use-license.js";

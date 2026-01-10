@@ -50,4 +50,36 @@ export const licenseAPI = {
    * Initialize the license system (called on app start)
    */
   initialize: () => ipcRenderer.invoke("license:initialize"),
+
+  /**
+   * Listen for license events (disabled, reactivated, etc.)
+   * @param callback - Function to call when license events occur
+   * @returns Cleanup function to remove the listener
+   */
+  onLicenseEvent: (
+    callback: (event: string, data: any) => void
+  ): (() => void) => {
+    const channels = [
+      "license:disabled",
+      "license:reactivated",
+      "license:planChanged",
+      "license:cancelScheduled",
+      "license:sseConnected",
+    ];
+
+    const handlers = channels.map((channel) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: any) => {
+        callback(channel, data);
+      };
+      ipcRenderer.on(channel, handler);
+      return { channel, handler };
+    });
+
+    // Return cleanup function
+    return () => {
+      handlers.forEach(({ channel, handler }) => {
+        ipcRenderer.removeListener(channel, handler);
+      });
+    };
+  },
 };

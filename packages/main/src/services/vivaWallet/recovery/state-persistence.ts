@@ -6,6 +6,7 @@
 import { getLogger } from "../../../utils/logger.js";
 import type { TransactionStateMachine } from "../transaction-state-machine.js";
 import type { Terminal, VivaWalletSaleRequest } from "../types.js";
+import { getDatabase } from "../../../database/index.js";
 
 const logger = getLogger("StatePersistence");
 
@@ -120,7 +121,6 @@ export class StatePersistence {
    */
   async getAllStates(): Promise<PersistentTransactionState[]> {
     try {
-      const { getDatabase } = await import("../../../database/index.js");
       const db = await getDatabase();
 
       const stored = db.settings.getSetting(this.STORAGE_KEY);
@@ -143,7 +143,6 @@ export class StatePersistence {
     states: PersistentTransactionState[]
   ): Promise<void> {
     try {
-      const { getDatabase } = await import("../../../database/index.js");
       const db = await getDatabase();
 
       // Clean up old states (older than 24 hours)

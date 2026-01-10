@@ -9,7 +9,11 @@ import {
 import { ProtectedRoute, PublicRoute } from "@/components";
 import { AuthPage } from "@/features/auth";
 import { DashboardView } from "@/features/dashboard";
-import { LicenseActivationScreen, useLicenseContext } from "@/features/license";
+import {
+  LicenseActivationScreen,
+  LicenseInfoPage,
+  useLicenseContext,
+} from "@/features/license";
 import { Loader2 } from "lucide-react";
 
 /**
@@ -48,6 +52,14 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <DashboardView />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/license"
+          element={
+            <ProtectedRoute>
+              <LicenseInfoPage />
             </ProtectedRoute>
           }
         />

@@ -11,7 +11,7 @@
 import { ipcMain, BrowserWindow } from "electron";
 import { eq } from "drizzle-orm";
 import { getDrizzle } from "../database/drizzle.js";
-import { licenseActivation, licenseValidationLog } from "../database/schema.js";
+import { licenseActivation, licenseValidationLog, terminals } from "../database/schema.js";
 import { getLogger } from "../utils/logger.js";
 import {
   generateMachineFingerprint,
@@ -112,6 +112,7 @@ async function storeLocalActivation(data: {
   businessName: string | null;
   subscriptionStatus: string;
   expiresAt: string | null;
+  trialEnd: string | null;
 }) {
   const drizzle = getDrizzle();
 
@@ -136,6 +137,7 @@ async function storeLocalActivation(data: {
       businessName: data.businessName,
       subscriptionStatus: data.subscriptionStatus,
       expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
+      trialEnd: data.trialEnd ? new Date(data.trialEnd) : null,
       isActive: true,
       activatedAt: new Date(),
       lastHeartbeat: new Date(),
@@ -149,7 +151,10 @@ async function storeLocalActivation(data: {
 /**
  * Update last heartbeat timestamp
  */
-async function updateHeartbeat(subscriptionStatus?: string) {
+async function updateHeartbeat(
+  subscriptionStatus?: string,
+  trialEnd?: string | null
+) {
   const drizzle = getDrizzle();
   const updates: Record<string, any> = {
     lastHeartbeat: new Date(),
@@ -158,6 +163,10 @@ async function updateHeartbeat(subscriptionStatus?: string) {
 
   if (subscriptionStatus) {
     updates.subscriptionStatus = subscriptionStatus;
+  }
+
+  if (trialEnd !== undefined) {
+    updates.trialEnd = trialEnd ? new Date(trialEnd) : null;
   }
 
   await drizzle
@@ -193,14 +202,23 @@ function isWithinGracePeriod(lastHeartbeat: Date | null): boolean {
  * Start periodic heartbeat
  * Now runs every 15 minutes as backup to SSE real-time events
  */
-function startHeartbeatTimer(licenseKey: string) {
+function startHeartbeatTimer(licenseKey: string, customIntervalMs?: number) {
   // Clear existing timer
   if (heartbeatTimer) {
     clearInterval(heartbeatTimer);
   }
 
-  // Schedule heartbeat every 15 minutes (with some randomization to prevent thundering herd)
-  const interval = HEARTBEAT_INTERVAL_MS + Math.random() * 5 * 60 * 1000; // 15-20 minutes
+  // Use custom interval if provided, otherwise default to 15 minutes
+  // During trial: Server returns 2 minutes (120000ms)
+  // After trial: Server returns 15 minutes (900000ms)
+  const baseInterval = customIntervalMs || HEARTBEAT_INTERVAL_MS;
+  const interval = baseInterval + Math.random() * 5 * 60 * 1000; // Add 0-5 min randomization
+
+  console.log(
+    `[Heartbeat Timer] Starting with interval: ${baseInterval}ms (${
+      baseInterval / 60000
+    } minutes)`
+  );
 
   heartbeatTimer = setInterval(async () => {
     try {
@@ -209,8 +227,23 @@ function startHeartbeatTimer(licenseKey: string) {
       if (result.success) {
         consecutiveHeartbeatFailures = 0; // Reset failure counter
         const previousStatus = (await getLocalActivation())?.subscriptionStatus;
-        await updateHeartbeat(result.data?.subscriptionStatus);
+        await updateHeartbeat(
+          result.data?.subscriptionStatus,
+          result.data?.trialEnd
+        );
         await logValidationAttempt("heartbeat", "success", licenseKey);
+
+        // 🔄 DYNAMIC INTERVAL: Update timer if server returns new interval
+        if (
+          result.data?.heartbeatIntervalMs &&
+          result.data.heartbeatIntervalMs !== baseInterval
+        ) {
+          console.log(
+            `[Heartbeat Timer] Server requested new interval: ${result.data.heartbeatIntervalMs}ms`
+          );
+          startHeartbeatTimer(licenseKey, result.data.heartbeatIntervalMs);
+          return; // Exit - new timer will continue
+        }
 
         // 🔴 CRITICAL: Enforce shouldDisable flag
         if (result.data?.shouldDisable) {
@@ -320,10 +353,16 @@ function emitLicenseEvent(channel: string, data: object): void {
  * (Phase 4: Added event acknowledgment tracking)
  */
 async function handleSSEEvent(event: SubscriptionEvent): Promise<void> {
+  console.log(`[SSE EVENT HANDLER] Event received: ${event.type}`, {
+    eventId: event.id,
+  });
   logger.info(`SSE event received: ${event.type}`, { eventId: event.id });
 
   const activation = await getLocalActivation();
   if (!activation) {
+    console.log(
+      "[SSE EVENT HANDLER] No local activation found - skipping event"
+    );
     logger.warn("SSE event received but no local activation");
 
     // Send acknowledgment as "skipped"
@@ -359,24 +398,32 @@ async function handleSSEEvent(event: SubscriptionEvent): Promise<void> {
 
         logger.warn("Subscription cancelled via SSE", {
           immediate: data.cancelImmediately,
+          reason: data.reason,
         });
 
         if (data.cancelImmediately) {
-          // Immediate cancellation - disable license
+          // Immediate cancellation - disable license NOW
+          logger.error("License deactivated due to immediate cancellation");
+
           await deactivateLocalLicense(activation.id);
           stopHeartbeatTimer();
           disconnectSSEClient();
 
           emitLicenseEvent("license:disabled", {
             reason: data.reason || "Subscription cancelled",
-            gracePeriodEnd: data.gracePeriodEnd,
+            gracePeriodEnd: null,
+            immediate: true,
           });
         } else {
-          // Scheduled cancellation - update status and notify
-          await updateHeartbeat("cancelling");
+          // Scheduled cancellation - still has access until grace period ends
+          logger.warn("Subscription will cancel at period end");
+
+          await updateHeartbeat("cancelled");
+
           emitLicenseEvent("license:cancelScheduled", {
             cancelAt: data.gracePeriodEnd,
             reason: data.reason,
+            gracePeriodEnd: data.gracePeriodEnd,
           });
         }
         break;
@@ -406,6 +453,7 @@ async function handleSSEEvent(event: SubscriptionEvent): Promise<void> {
           newStatus: string;
           shouldDisable: boolean;
           gracePeriodRemaining: number | null;
+          trialEnd?: string | null;
         };
 
         logger.info(
@@ -423,8 +471,8 @@ async function handleSSEEvent(event: SubscriptionEvent): Promise<void> {
             previousStatus: data.previousStatus,
           });
         } else {
-          // Update status
-          await updateHeartbeat(data.newStatus);
+          // Update status and trial end date
+          await updateHeartbeat(data.newStatus, data.trialEnd);
 
           emitLicenseEvent("license:statusChanged", {
             previousStatus: data.previousStatus,
@@ -477,16 +525,27 @@ async function handleSSEEvent(event: SubscriptionEvent): Promise<void> {
           reason: string;
         };
 
+        console.log("[LICENSE REVOKED EVENT] Received license_revoked event!");
+        console.log("[LICENSE REVOKED EVENT] Reason:", data.reason);
+        console.log("[LICENSE REVOKED EVENT] Activation ID:", activation.id);
         logger.error("License revoked by server");
 
         await deactivateLocalLicense(activation.id);
+        console.log("[LICENSE REVOKED EVENT] License deactivated locally");
+
         stopHeartbeatTimer();
+        console.log("[LICENSE REVOKED EVENT] Heartbeat timer stopped");
+
         disconnectSSEClient();
+        console.log("[LICENSE REVOKED EVENT] SSE client disconnected");
 
         emitLicenseEvent("license:disabled", {
           reason: data.reason,
           revoked: true,
         });
+        console.log(
+          "[LICENSE REVOKED EVENT] Emitted license:disabled event to UI"
+        );
         break;
       }
 
@@ -529,32 +588,19 @@ async function handleSSEEvent(event: SubscriptionEvent): Promise<void> {
           `Plan changed: ${data.previousPlanId} -> ${data.newPlanId}`
         );
 
-        // Determine maxTerminals based on plan
-        const maxTerminalsMap: Record<string, number> = {
-          basic: 1,
-          professional: 5,
-          enterprise: -1, // Unlimited
-        };
-        const maxTerminals = maxTerminalsMap[data.newPlanId] || 1;
+        // ⚠️ NOTE: Plan changes now require reactivation with a new license key
+        // The license_revoked event will follow this event and handle deactivation
+        // This event is mainly for logging and UI notifications
 
-        // Update local activation with new plan
-        const drizzle = getDrizzle();
-        await drizzle
-          .update(licenseActivation)
-          .set({
-            planId: data.newPlanId,
-            planName:
-              data.newPlanId.charAt(0).toUpperCase() + data.newPlanId.slice(1),
-            features: data.newFeatures,
-            maxTerminals,
-          })
-          .where(eq(licenseActivation.id, activation.id));
+        logger.warn(
+          "Plan change detected - license revocation will follow. User will need to reactivate with new license key."
+        );
 
         emitLicenseEvent("license:planChanged", {
           previousPlanId: data.previousPlanId,
           newPlanId: data.newPlanId,
           newFeatures: data.newFeatures,
-          maxTerminals,
+          requiresReactivation: true,
         });
         break;
       }
@@ -641,6 +687,78 @@ function initializeSSE(
       emitLicenseEvent("license:sseConnected", { connected: false });
     });
 
+    // 🔴 NEW: Handle 401 Unauthorized - license may be revoked
+    client.on(
+      "license_validation_required",
+      async (data: { reason: string; statusCode: number }) => {
+        console.log(
+          "[LICENSE] SSE returned 401 - triggering immediate validation",
+          data
+        );
+        logger.warn(
+          "SSE connection rejected - license may be revoked, triggering immediate validation"
+        );
+
+        try {
+          const result = await sendHeartbeat(licenseKey);
+
+          console.log("[LICENSE] Heartbeat result:", {
+            success: result.success,
+            shouldDisable: result.data?.shouldDisable,
+            subscriptionStatus: result.data?.subscriptionStatus,
+            message: result.message,
+          });
+
+          // License is revoked if:
+          // 1. Heartbeat fails AND shouldDisable is true, OR
+          // 2. Heartbeat succeeds AND shouldDisable is true
+          const shouldDeactivate = result.data?.shouldDisable === true;
+
+          if (shouldDeactivate) {
+            console.log(
+              "[LICENSE] ⛔ License validation confirmed: license should be disabled"
+            );
+            logger.error("License validation confirmed: license is revoked");
+
+            // Stop timers
+            stopHeartbeatTimer();
+            disconnectSSEClient();
+
+            // Deactivate locally
+            const activation = await getLocalActivation();
+            if (activation) {
+              await deactivateLocalLicense(activation.id);
+              console.log("[LICENSE] ✅ Local license deactivated");
+            }
+
+            // Notify renderer process
+            emitLicenseEvent("license:disabled", {
+              reason:
+                result.message ||
+                "License has been revoked (plan changed or cancelled)",
+              subscriptionStatus: result.data?.subscriptionStatus || "revoked",
+            });
+            console.log(
+              "[LICENSE] ✅ UI notified - should show activation screen"
+            );
+          } else {
+            console.log(
+              "[LICENSE] License is still valid, SSE rejection may be transient"
+            );
+            logger.info(
+              "License still valid, continuing reconnection attempts"
+            );
+          }
+        } catch (error) {
+          console.error(
+            "[LICENSE] Failed to validate license after 401:",
+            error
+          );
+          logger.error("Failed to validate license after 401:", error);
+        }
+      }
+    );
+
     // Start connection
     client.connect();
   } catch (error) {
@@ -691,6 +809,7 @@ export function registerLicenseHandlers() {
           businessName: activation.businessName,
           subscriptionStatus: activation.subscriptionStatus,
           expiresAt: activation.expiresAt?.toISOString() || null,
+          trialEnd: activation.trialEnd?.toISOString() || null,
           activatedAt: activation.activatedAt?.toISOString(),
           lastHeartbeat: activation.lastHeartbeat?.toISOString(),
           daysSinceHeartbeat,
@@ -746,7 +865,7 @@ export function registerLicenseHandlers() {
         await storeLocalActivation({
           licenseKey: licenseKey.toUpperCase().trim(),
           machineIdHash,
-          terminalName: terminalName || result.data.businessName || "Terminal",
+          terminalName: result.data.terminalName, // Use terminal name from server response
           activationId: result.data.activationId,
           planId: result.data.planId,
           planName: result.data.planName,
@@ -755,6 +874,7 @@ export function registerLicenseHandlers() {
           businessName: result.data.businessName,
           subscriptionStatus: result.data.subscriptionStatus,
           expiresAt: result.data.expiresAt,
+          trialEnd: result.data.trialEnd,
         });
 
         // Log successful activation
@@ -771,8 +891,6 @@ export function registerLicenseHandlers() {
         if (terminalName) {
           try {
             const drizzle = getDrizzle();
-            const { terminals } = await import("../database/schema.js");
-            const { eq } = await import("drizzle-orm");
 
             // Get current user's business to find their terminal
             const [terminal] = drizzle
@@ -1058,6 +1176,33 @@ export function registerLicenseHandlers() {
           "success",
           activation.licenseKey
         );
+
+        // 🔴 CRITICAL: Check if server wants us to disable
+        if (result.data?.shouldDisable) {
+          logger.error(
+            "Manual heartbeat: Server indicated license should be disabled"
+          );
+
+          // Stop timers
+          stopHeartbeatTimer();
+          disconnectSSEClient();
+
+          // Deactivate locally
+          await deactivateLocalLicense(activation.id);
+
+          // Notify renderer process
+          emitLicenseEvent("license:disabled", {
+            reason: "License no longer valid on server",
+            subscriptionStatus: result.data?.subscriptionStatus,
+            gracePeriodRemaining: result.data?.gracePeriodRemaining,
+          });
+
+          return {
+            success: false,
+            message: "License has been deactivated",
+            data: result.data,
+          };
+        }
       } else {
         await logValidationAttempt(
           "heartbeat",
@@ -1066,6 +1211,25 @@ export function registerLicenseHandlers() {
           undefined,
           result.message
         );
+
+        // 🔴 CRITICAL: If heartbeat fails and indicates we should disable, do it
+        if (result.data?.shouldDisable) {
+          logger.error("Manual heartbeat failed: License should be disabled");
+
+          // Stop timers
+          stopHeartbeatTimer();
+          disconnectSSEClient();
+
+          // Deactivate locally
+          await deactivateLocalLicense(activation.id);
+
+          // Notify renderer process
+          emitLicenseEvent("license:disabled", {
+            reason: result.message || "License validation failed",
+            subscriptionStatus: result.data?.subscriptionStatus,
+            gracePeriodRemaining: result.data?.gracePeriodRemaining,
+          });
+        }
       }
 
       return result;

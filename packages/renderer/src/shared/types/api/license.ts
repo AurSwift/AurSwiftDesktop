@@ -17,6 +17,7 @@ export interface LicenseStatus {
     businessName: string | null;
     subscriptionStatus: string;
     expiresAt: string | null;
+    trialEnd: string | null;
     activatedAt: string;
     lastHeartbeat: string;
     daysSinceHeartbeat: number | null;
@@ -38,6 +39,8 @@ export interface LicenseActivationResult {
     expiresAt: string | null;
     subscriptionStatus: string;
     businessName: string | null;
+    terminalName: string; // Terminal name from activation
+    trialEnd: string | null;
   };
 }
 
@@ -110,7 +113,10 @@ export interface LicenseAPI {
   /**
    * Activate a license key
    */
-  activate: (licenseKey: string, terminalName?: string) => Promise<LicenseActivationResult>;
+  activate: (
+    licenseKey: string,
+    terminalName?: string
+  ) => Promise<LicenseActivationResult>;
 
   /**
    * Validate the current license (online check)
@@ -141,4 +147,11 @@ export interface LicenseAPI {
    * Initialize the license system (called on app start)
    */
   initialize: () => Promise<LicenseInitResult>;
+
+  /**
+   * Listen for real-time license events (disabled, reactivated, etc.)
+   * @param callback - Function to call when license events occur
+   * @returns Cleanup function to remove the listener
+   */
+  onLicenseEvent: (callback: (event: string, data: any) => void) => () => void;
 }

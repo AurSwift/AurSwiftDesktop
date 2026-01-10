@@ -12,8 +12,8 @@ import semver from "semver";
 import fs from "fs";
 import { getDatabaseAge, formatDatabaseAge } from "./db-validator.js";
 
-import { getLogger } from '../../utils/logger.js';
-const logger = getLogger('db-compatibility');
+import { getLogger } from "../../utils/logger.js";
+const logger = getLogger("db-compatibility");
 
 export interface CompatibilityResult {
   compatible: boolean;
@@ -109,7 +109,7 @@ export function checkDatabaseCompatibility(
 
       if (versionTableExists) {
         const versionRow = db
-          .prepare("SELECT version FROM _app_version WHERE id = 1")
+          .prepare("SELECT version FROM _app_version LIMIT 1")
           .get() as { version: string } | undefined;
 
         if (versionRow) {
@@ -136,7 +136,9 @@ export function checkDatabaseCompatibility(
       ];
 
       // For now, just check if we can read from migrations table
-      const testQuery = db.prepare("SELECT COUNT(*) as count FROM __drizzle_migrations");
+      const testQuery = db.prepare(
+        "SELECT COUNT(*) as count FROM __drizzle_migrations"
+      );
       testQuery.get();
     } catch (error) {
       schemaValid = false;
@@ -247,7 +249,7 @@ export function getDatabaseVersionInfo(db: Database.Database): {
 
       if (versionTableExists) {
         const versionRow = db
-          .prepare("SELECT version FROM _app_version WHERE id = 1")
+          .prepare("SELECT version FROM _app_version LIMIT 1")
           .get() as { version: string } | undefined;
 
         if (versionRow) {
@@ -268,7 +270,9 @@ export function getDatabaseVersionInfo(db: Database.Database): {
 
       if (migrationsTableExists) {
         const migrations = db
-          .prepare("SELECT id, created_at FROM __drizzle_migrations ORDER BY id DESC")
+          .prepare(
+            "SELECT id, created_at FROM __drizzle_migrations ORDER BY id DESC"
+          )
           .all() as Array<{ id: number; created_at: number }>;
 
         migrationCount = migrations.length;
@@ -282,7 +286,9 @@ export function getDatabaseVersionInfo(db: Database.Database): {
     }
 
     // Get SQLite version (not app version, but useful for debugging)
-    const sqliteVersion = db.prepare("SELECT sqlite_version() as version").get() as {
+    const sqliteVersion = db
+      .prepare("SELECT sqlite_version() as version")
+      .get() as {
       version: string;
     };
 
@@ -297,4 +303,3 @@ export function getDatabaseVersionInfo(db: Database.Database): {
     return {};
   }
 }
-

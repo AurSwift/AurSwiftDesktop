@@ -6,6 +6,7 @@
 import { ipcMain, dialog } from "electron";
 import { getLogger } from "../utils/logger.js";
 import { validateSessionAndPermission } from "../utils/authHelpers.js";
+import { getDatabase } from "../database/index.js";
 import { PERMISSIONS } from "@app/shared/constants/permissions";
 import {
   exportToCSV,
@@ -65,9 +66,7 @@ export function registerReportsExportHandlers() {
     ) => {
       try {
         // Validate session and check REPORTS_READ permission
-        const db = await import("../database/index.js").then((m) =>
-          m.getDatabase()
-        );
+        const db = await getDatabase();
         const auth = await validateSessionAndPermission(
           db,
           sessionToken,
@@ -133,9 +132,7 @@ export function registerReportsExportHandlers() {
     ) => {
       try {
         // Validate session and check REPORTS_READ permission
-        const db = await import("../database/index.js").then((m) =>
-          m.getDatabase()
-        );
+        const db = await getDatabase();
         const auth = await validateSessionAndPermission(
           db,
           sessionToken,

@@ -3,14 +3,17 @@
  *
  * Compact badge component for dashboard header showing current subscription plan.
  * Displays plan name and status with appropriate visual indicators.
+ * Clickable to navigate to detailed license information page.
  */
 
+import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { useLicenseContext } from "@/features/license";
 import { Shield, AlertCircle, WifiOff, Clock } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 
 export function LicenseHeaderBadge() {
+  const navigate = useNavigate();
   const { licenseStatus, isActivated, isLoading, planName } =
     useLicenseContext();
 
@@ -96,8 +99,9 @@ export function LicenseHeaderBadge() {
   return (
     <Badge
       variant="outline"
+      onClick={() => navigate("/license")}
       className={cn(
-        "text-xs flex items-center gap-1 px-2 py-1 font-medium",
+        "text-xs flex items-center gap-1 px-2 py-1 font-medium cursor-pointer hover:opacity-80 transition-opacity",
         config.className
       )}
     >

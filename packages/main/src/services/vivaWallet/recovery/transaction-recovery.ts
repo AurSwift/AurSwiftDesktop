@@ -12,6 +12,8 @@ import type {
   VivaWalletTransactionResponse,
   TransactionStatus,
 } from "../types.js";
+import { getDatabase } from "../../../database/index.js";
+import { VivaWalletConfigManager } from "../config.js";
 
 const logger = getLogger("TransactionRecovery");
 
@@ -251,7 +253,6 @@ export class PendingTransactionStorage {
     transaction: PendingTransaction
   ): Promise<void> {
     try {
-      const { getDatabase } = await import("../../../database/index.js");
       const db = await getDatabase();
 
       const pending = await this.getPendingTransactions();
@@ -282,7 +283,6 @@ export class PendingTransactionStorage {
    */
   async getPendingTransactions(): Promise<PendingTransaction[]> {
     try {
-      const { getDatabase } = await import("../../../database/index.js");
       const db = await getDatabase();
 
       const stored = db.settings.getSetting(this.STORAGE_KEY);
@@ -303,7 +303,6 @@ export class PendingTransactionStorage {
    */
   async removePendingTransaction(transactionId: string): Promise<void> {
     try {
-      const { getDatabase } = await import("../../../database/index.js");
       const db = await getDatabase();
 
       const pending = await this.getPendingTransactions();
@@ -349,7 +348,6 @@ export class PendingTransactionStorage {
    */
   private async deserializeTransaction(data: any): Promise<PendingTransaction> {
     // Load terminal from config
-    const { VivaWalletConfigManager } = await import("../config.js");
     const configManager = new VivaWalletConfigManager();
     const config = await configManager.loadConfig();
     const terminalConfig = config.terminals.find(

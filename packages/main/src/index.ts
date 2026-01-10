@@ -20,6 +20,8 @@ import {
   shouldMigrateLogPath,
   migrateLogsFromOldPath,
 } from "./utils/log-path-migration.js";
+import { emailService } from "./services/email-service.js";
+import { ExpiryNotificationService } from "./services/expiryNotificationService.js";
 
 const logger = getLogger("app-init");
 
@@ -96,7 +98,6 @@ export async function initApp(initConfig: AppInitConfig) {
   await import("./services/vivaWallet/index.js");
 
   // Initialize email service (with console mode by default - can be configured via settings)
-  const { emailService } = await import("./services/email-service.js");
   await emailService.initialize({
     provider: "smtp",
     smtp: {
@@ -113,9 +114,6 @@ export async function initApp(initConfig: AppInitConfig) {
   });
 
   // Initialize expiry notification service
-  const { ExpiryNotificationService } = await import(
-    "./services/expiryNotificationService.js"
-  );
   const expiryService = new ExpiryNotificationService(db);
 
   // Helper function to handle auto-closing shifts and clocking out TimeShifts

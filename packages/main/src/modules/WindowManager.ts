@@ -6,9 +6,14 @@ import {
   shell,
   app as electronApp,
   screen,
+  dialog,
 } from "electron";
 import type { AppInitConfig } from "../AppInitConfig.js";
 import type { UpdateCheckResult } from "electron-updater";
+import electronUpdater from "electron-updater";
+import { getAutoUpdaterInstance } from "../index.js";
+
+const { autoUpdater } = electronUpdater;
 import { join } from "node:path";
 
 import { getLogger } from "../utils/logger.js";
@@ -71,10 +76,6 @@ class WindowManager implements AppModule {
           {
             label: "Check for Updates...",
             click: async () => {
-              // Dynamically import to avoid circular dependencies
-              const { getAutoUpdaterInstance } = await import("../index.js");
-              const { dialog } = await import("electron");
-
               const updaterInstance = getAutoUpdaterInstance();
 
               if (updaterInstance) {
@@ -139,8 +140,6 @@ class WindowManager implements AppModule {
                 }
               } else {
                 // Fallback: AutoUpdater not available (e.g., in development mode)
-                const { autoUpdater } = await import("electron-updater");
-
                 try {
                   autoUpdater.channel = "latest";
                   const result = await autoUpdater.checkForUpdates();
@@ -207,15 +206,12 @@ class WindowManager implements AppModule {
             label: "View Update Error...",
             click: async () => {
               // Get the autoUpdater instance
-              const { getAutoUpdaterInstance } = await import("../index.js");
               const updaterInstance = getAutoUpdaterInstance();
 
               if (updaterInstance) {
                 updaterInstance.showLastErrorDialog();
               } else {
-                const { dialog } = await import("electron");
-                dialog
-                  .showMessageBox({
+                dialog.showMessageBox({
                     type: "info",
                     title: "Auto-Updater Not Available",
                     message: "Auto-updater is not enabled",
@@ -381,7 +377,6 @@ class WindowManager implements AppModule {
           logger.error("   npm run dev (in root directory)\n");
 
           // Show error dialog to user
-          const { dialog } = await import("electron");
           await dialog.showErrorBox(
             "Development Server Not Running",
             `The frontend development server is not running.\n\n` +

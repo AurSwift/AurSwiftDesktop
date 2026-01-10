@@ -537,18 +537,17 @@ export class DBManager {
         .get();
 
       if (!versionTableExists) {
-        // Create version tracking table
+        // Create version tracking table (matching Drizzle schema)
         db.exec(`
           CREATE TABLE IF NOT EXISTS _app_version (
-            id INTEGER PRIMARY KEY CHECK (id = 1),
-            version TEXT NOT NULL,
+            version TEXT PRIMARY KEY NOT NULL,
             updated_at INTEGER NOT NULL
           );
         `);
 
         // Store current version
         db.prepare(
-          "INSERT OR REPLACE INTO _app_version (id, version, updated_at) VALUES (1, ?, ?)"
+          "INSERT OR REPLACE INTO _app_version (version, updated_at) VALUES (?, ?)"
         ).run(appVersion, Date.now());
 
         return false; // First time tracking, no downgrade
@@ -556,13 +555,13 @@ export class DBManager {
 
       // Get stored version
       const storedVersion = db
-        .prepare("SELECT version FROM _app_version WHERE id = 1")
+        .prepare("SELECT version FROM _app_version LIMIT 1")
         .get() as { version: string } | undefined;
 
       if (!storedVersion) {
         // No version stored, store current and continue
         db.prepare(
-          "INSERT OR REPLACE INTO _app_version (id, version, updated_at) VALUES (1, ?, ?)"
+          "INSERT OR REPLACE INTO _app_version (version, updated_at) VALUES (?, ?)"
         ).run(appVersion, Date.now());
         return false;
       }
@@ -574,9 +573,10 @@ export class DBManager {
       );
 
       if (!isDowngrade) {
-        // Update stored version to current
+        // Update stored version to current (delete old and insert new since version is the primary key)
+        db.prepare("DELETE FROM _app_version").run();
         db.prepare(
-          "UPDATE _app_version SET version = ?, updated_at = ? WHERE id = 1"
+          "INSERT INTO _app_version (version, updated_at) VALUES (?, ?)"
         ).run(appVersion, Date.now());
       }
 

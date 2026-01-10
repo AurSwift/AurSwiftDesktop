@@ -10,6 +10,12 @@ import {
   sql as drizzleSql,
 } from "drizzle-orm";
 import * as schema from "../schema.js";
+import { getLogger } from "../../utils/logger.js";
+import { shiftDataValidator } from "../../utils/shiftDataValidator.js";
+import { breakComplianceValidator } from "../../utils/breakComplianceValidator.js";
+import { getDatabase } from "../index.js";
+
+const logger = getLogger("timeTrackingManager");
 
 export class TimeTrackingManager {
   private db: DrizzleDB;
@@ -61,9 +67,6 @@ export class TimeTrackingManager {
 
       if (businessTerminal) {
         validTerminalId = businessTerminal.id;
-        const logger = (await import("../../utils/logger.js")).getLogger(
-          "timeTrackingManager"
-        );
         logger.warn(
           `[createClockEvent] Terminal ${data.terminalId} does not exist, using business terminal ${validTerminalId}`
         );
@@ -83,9 +86,6 @@ export class TimeTrackingManager {
           })
           .run();
         validTerminalId = defaultTerminalId;
-        const logger = (await import("../../utils/logger.js")).getLogger(
-          "timeTrackingManager"
-        );
         logger.info(
           `[createClockEvent] Created default terminal ${validTerminalId} for business ${data.businessId}`
         );
@@ -111,14 +111,8 @@ export class TimeTrackingManager {
     };
 
     // Validate clock event data
-    const { shiftDataValidator } = await import(
-      "../../utils/shiftDataValidator.js"
-    );
     const validation = shiftDataValidator.validateClockEvent(clockEvent);
     if (!validation.valid) {
-      const logger = (await import("../../utils/logger.js")).getLogger(
-        "timeTrackingManager"
-      );
       logger.warn(
         `[createClockEvent] Clock event validation warnings: ${validation.warnings.join(
           ", "
@@ -151,9 +145,6 @@ export class TimeTrackingManager {
           }
         );
       } catch (error) {
-        const logger = (await import("../../utils/logger.js")).getLogger(
-          "timeTrackingManager"
-        );
         logger.error("[createClockEvent] Failed to audit log:", error);
       }
     }
@@ -313,9 +304,6 @@ export class TimeTrackingManager {
     };
 
     // Validate shift status transition
-    const { shiftDataValidator } = await import(
-      "../../utils/shiftDataValidator.js"
-    );
     const statusValidation = shiftDataValidator.validateShiftStatusTransition(
       shift.status,
       "ended"
@@ -333,9 +321,6 @@ export class TimeTrackingManager {
         breaks
       );
     if (breakDurationValidation.warnings.length > 0) {
-      const logger = (await import("../../utils/logger.js")).getLogger(
-        "timeTrackingManager"
-      );
       logger.warn(
         `[completeShift] Break duration validation warnings: ${breakDurationValidation.warnings.join(
           ", "
@@ -353,7 +338,6 @@ export class TimeTrackingManager {
 
     // Audit log shift completion
     try {
-      const { getDatabase } = await import("../index.js");
       const dbInstance = await getDatabase();
       await dbInstance.audit.createAuditLog({
         action: "shift_completed",
@@ -369,9 +353,6 @@ export class TimeTrackingManager {
         },
       });
     } catch (error) {
-      const logger = (await import("../../utils/logger.js")).getLogger(
-        "timeTrackingManager"
-      );
       logger.error("[completeShift] Failed to audit log:", error);
     }
 
@@ -496,10 +477,6 @@ export class TimeTrackingManager {
     }
 
     // Check break compliance requirements
-    const { breakComplianceValidator } = await import(
-      "../../utils/breakComplianceValidator.js"
-    );
-    const { getDatabase } = await import("../index.js");
     const db = await getDatabase();
     const compliance = await breakComplianceValidator.validateBreakStart(
       shift as any,
@@ -509,9 +486,6 @@ export class TimeTrackingManager {
 
     // Log warnings but don't block break
     if (compliance.warnings.length > 0) {
-      const logger = (await import("../../utils/logger.js")).getLogger(
-        "timeTrackingManager"
-      );
       logger.warn(
         `[startBreak] Break compliance warnings for shift ${
           data.shiftId
@@ -545,9 +519,6 @@ export class TimeTrackingManager {
     };
 
     // Validate break data before inserting
-    const { shiftDataValidator } = await import(
-      "../../utils/shiftDataValidator.js"
-    );
     const validation = shiftDataValidator.validateBreak(breakRecord as Break);
     if (!validation.valid) {
       throw new Error(
@@ -555,9 +526,6 @@ export class TimeTrackingManager {
       );
     }
     if (validation.warnings.length > 0) {
-      const logger = (await import("../../utils/logger.js")).getLogger(
-        "timeTrackingManager"
-      );
       logger.warn(
         `[startBreak] Break validation warnings: ${validation.warnings.join(
           ", "
@@ -592,9 +560,6 @@ export class TimeTrackingManager {
         },
       });
     } catch (error) {
-      const logger = (await import("../../utils/logger.js")).getLogger(
-        "timeTrackingManager"
-      );
       logger.error("[startBreak] Failed to audit log:", error);
     }
 
@@ -632,18 +597,12 @@ export class TimeTrackingManager {
     const duration_seconds = Math.floor((endTimeMs - startTimeMs) / 1000); // Duration in seconds
 
     // Validate break compliance
-    const { breakComplianceValidator } = await import(
-      "../../utils/breakComplianceValidator.js"
-    );
     const compliance = breakComplianceValidator.validateBreakEnd(
       breakRecord,
       shift as any
     );
 
     // Log violations and warnings
-    const logger = (await import("../../utils/logger.js")).getLogger(
-      "timeTrackingManager"
-    );
     if (compliance.violations.length > 0) {
       logger.warn(
         `[endBreak] Break compliance violations for break ${breakId}: ${compliance.violations.join(
@@ -673,9 +632,6 @@ export class TimeTrackingManager {
     };
 
     // Validate updated break data
-    const { shiftDataValidator } = await import(
-      "../../utils/shiftDataValidator.js"
-    );
     const updatedBreakRecord = {
       ...breakRecord,
       ...updatedBreak,
@@ -704,7 +660,6 @@ export class TimeTrackingManager {
 
     // Audit log break end
     try {
-      const { getDatabase } = await import("../index.js");
       const db = await getDatabase();
       await db.audit.createAuditLog({
         action: "break_ended",

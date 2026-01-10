@@ -1,0 +1,1 @@
+ALTER TABLE `license_activation` ADD `trial_end` integer;

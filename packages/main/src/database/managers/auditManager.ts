@@ -1,6 +1,9 @@
 import type { DrizzleDB } from "../drizzle.js";
 import { eq, and, desc, gte, lte, sql as drizzleSql } from "drizzle-orm";
 import * as schema from "../schema.js";
+import { getLogger } from "../../utils/logger.js";
+
+const logger = getLogger("auditManager");
 
 export class AuditManager {
   private db: DrizzleDB;
@@ -51,8 +54,6 @@ export class AuditManager {
         validTerminalId = data.terminalId;
       } else {
         // Terminal doesn't exist - log warning but continue without terminal_id
-        const { getLogger } = await import("../../utils/logger.js");
-        const logger = getLogger("auditManager");
         logger.warn(
           `[createAuditLog] Terminal ID ${data.terminalId} does not exist, omitting from audit log`
         );

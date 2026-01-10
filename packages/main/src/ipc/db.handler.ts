@@ -1,6 +1,9 @@
 // Cash Drawer IPC Handlers
-import { ipcMain } from "electron";
-import { getDatabase } from "../database/index.js";
+import { ipcMain, dialog, BrowserWindow, app as electronApp } from "electron";
+import fs from "fs/promises";
+import path from "path";
+import Database from "better-sqlite3";
+import { getDatabase, closeDatabase } from "../database/index.js";
 import { getLogger } from "../utils/logger.js";
 
 const logger = getLogger("dbHandlers");
@@ -28,10 +31,6 @@ export function registerDbHandlers() {
   // Database Backup IPC Handler - Save database to user-selected location
   ipcMain.handle("database:backup", async (event) => {
     try {
-      const { dialog, BrowserWindow } = await import("electron");
-      const fs = await import("fs/promises");
-      const path = await import("path");
-
       const db = await getDatabase();
       const info = db.getDatabaseInfo();
 
@@ -102,9 +101,6 @@ export function registerDbHandlers() {
       const info = db.getDatabaseInfo();
 
       // Create automatic backup before emptying
-      const fs = await import("fs/promises");
-      const path = await import("path");
-
       const timestamp = new Date()
         .toISOString()
         .replace(/[:.]/g, "-")
@@ -173,11 +169,6 @@ export function registerDbHandlers() {
   // Database Import IPC Handler - Import database from a file
   ipcMain.handle("database:import", async (event) => {
     try {
-      const { dialog, app: electronApp } = await import("electron");
-      const fs = await import("fs/promises");
-      const path = await import("path");
-      const Database = (await import("better-sqlite3")).default;
-
       // Show open file dialog to select database file
       const result = await dialog.showOpenDialog({
         title: "Select Database File to Import",
@@ -359,7 +350,6 @@ export function registerDbHandlers() {
       }
 
       // Close current database connection
-      const { closeDatabase } = await import("../database/index.js");
       closeDatabase();
       logger.info("Database connection closed");
 
@@ -461,10 +451,7 @@ export function registerDbHandlers() {
       // The renderer will make auth/settings calls before the reload happens
       // We need a fresh connection to the new database file RIGHT NOW
       try {
-        const { getDatabase: reinitDatabase } = await import(
-          "../database/index.js"
-        );
-        await reinitDatabase();
+        await getDatabase();
         logger.info(
           "✅ Database reinitialized successfully with imported file"
         );
@@ -480,10 +467,7 @@ export function registerDbHandlers() {
             await fs.copyFile(backupPath, info.path);
             logger.info("Restored backup after failed reinitialization");
             // Try to reinitialize with the backup
-            const { getDatabase: reinitBackup } = await import(
-              "../database/index.js"
-            );
-            await reinitBackup();
+            await getDatabase();
           } catch (restoreError) {
             logger.error(
               "Failed to restore and reinitialize backup:",
@@ -516,10 +500,7 @@ export function registerDbHandlers() {
 
       // Try to reinitialize database if import failed
       try {
-        const { getDatabase: getNewDatabase } = await import(
-          "../database/index.js"
-        );
-        await getNewDatabase();
+        await getDatabase();
       } catch (reinitError) {
         logger.error(
           "Failed to reinitialize database after error:",
@@ -538,7 +519,6 @@ export function registerDbHandlers() {
   // App Version IPC Handler - Get application version
   ipcMain.handle("app:getVersion", async () => {
     try {
-      const { app: electronApp } = await import("electron");
       return { success: true, version: electronApp.getVersion() };
     } catch (error) {
       logger.error("Error getting app version:", error);
@@ -553,12 +533,9 @@ export function registerDbHandlers() {
   // App Restart IPC Handler - Restart the application
   ipcMain.handle("app:restart", async () => {
     try {
-      const { app: electronApp } = await import("electron");
-
       logger.info("Restarting application...");
 
       // Close database connection before restart
-      const { closeDatabase } = await import("../database/index.js");
       closeDatabase();
 
       // Small delay to ensure cleanup completes
@@ -582,12 +559,9 @@ export function registerDbHandlers() {
   // App Quit IPC Handler - Close the application
   ipcMain.handle("app:quit", async () => {
     try {
-      const { app: electronApp } = await import("electron");
-
       logger.info("Quitting application...");
 
       // Close database connection before quit
-      const { closeDatabase } = await import("../database/index.js");
       closeDatabase();
 
       // Quit the application

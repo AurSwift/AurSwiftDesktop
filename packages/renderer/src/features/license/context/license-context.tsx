@@ -7,7 +7,10 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useLicense, type LicenseStatus } from "../hooks/use-license.js";
-import { LicenseContext, type LicenseContextValue } from "./license-context-types.js";
+import {
+  LicenseContext,
+  type LicenseContextValue,
+} from "./license-context-types.js";
 
 export function LicenseProvider({ children }: { children: React.ReactNode }) {
   const {
@@ -18,8 +21,10 @@ export function LicenseProvider({ children }: { children: React.ReactNode }) {
     hasFeature: licenseHasFeature,
     initialize: licenseInitialize,
   } = useLicense();
-  
-  const [licenseStatus, setLicenseStatus] = useState<LicenseStatus | null>(null);
+
+  const [licenseStatus, setLicenseStatus] = useState<LicenseStatus | null>(
+    null
+  );
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Refresh license status
@@ -39,6 +44,59 @@ export function LicenseProvider({ children }: { children: React.ReactNode }) {
 
     init();
   }, [licenseInitialize, getStatus]);
+
+  // Listen for real-time license events (revocation, reactivation, etc.)
+  useEffect(() => {
+    if (!window.licenseAPI?.onLicenseEvent) {
+      return;
+    }
+
+    const cleanup = window.licenseAPI.onLicenseEvent(
+      async (eventType, data) => {
+        console.log(`[LicenseContext] Received ${eventType} event:`, data);
+
+        // Handle different event types
+        switch (eventType) {
+          case "license:disabled":
+            // License was revoked or cancelled - immediately refresh status
+            console.warn(
+              "[LicenseContext] License disabled, refreshing status"
+            );
+            await refreshStatus();
+            break;
+
+          case "license:reactivated":
+            // License was reactivated - refresh status
+            console.log(
+              "[LicenseContext] License reactivated, refreshing status"
+            );
+            await refreshStatus();
+            break;
+
+          case "license:planChanged":
+            // Plan was changed - refresh status
+            console.log("[LicenseContext] Plan changed, refreshing status");
+            await refreshStatus();
+            break;
+
+          case "license:cancelScheduled":
+            // Subscription cancelled but still in grace period
+            console.log(
+              "[LicenseContext] Cancellation scheduled, refreshing status"
+            );
+            await refreshStatus();
+            break;
+
+          default:
+            // Other events (e.g., license:sseConnected) - can be handled if needed
+            break;
+        }
+      }
+    );
+
+    // Cleanup on unmount
+    return cleanup;
+  }, [refreshStatus]);
 
   // Activate license
   const activate = useCallback(

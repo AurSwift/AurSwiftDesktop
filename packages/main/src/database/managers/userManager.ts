@@ -11,6 +11,9 @@ import {
   pinLoginSchema,
   validateInput,
 } from "../validation/authSchemas.js";
+import { getDatabase } from "../index.js";
+import { shiftRequirementResolver } from "../../utils/shiftRequirementResolver.js";
+import { scheduleValidator } from "../../utils/scheduleValidator.js";
 
 export interface AuthResponse {
   success: boolean;
@@ -894,10 +897,6 @@ export class UserManager {
 
       // Resolve mode if time tracking is available
       if (this.timeTrackingManager) {
-        const { shiftRequirementResolver } = await import(
-          "../../utils/shiftRequirementResolver.js"
-        );
-        const { getDatabase } = await import("../index.js");
         const db = await getDatabase();
         const shiftRequirement = await shiftRequirementResolver.resolve(
           user,
@@ -924,9 +923,6 @@ export class UserManager {
           }
 
           // Validate schedule using scheduleValidator (includes timing validation)
-          const { scheduleValidator } = await import(
-            "../../utils/scheduleValidator.js"
-          );
           const scheduleValidation = await scheduleValidator.validateClockIn(
             user.id,
             userWithBusiness.businessId,
@@ -1002,7 +998,6 @@ export class UserManager {
           if (!activeShift) {
             try {
               // Create clock-in event linked to schedule (with audit logging)
-              const { getDatabase } = await import("../index.js");
               const dbInstance = await getDatabase();
               // Use terminalId if provided, otherwise let createClockEvent handle it
               // (it will find/create a default terminal for the business)
@@ -1193,7 +1188,6 @@ export class UserManager {
             }
 
             // Create clock-out event linked to schedule (if shift has one)
-            const { getDatabase } = await import("../index.js");
             const dbInstance = await getDatabase();
             const clockOutEvent =
               await this.timeTrackingManager.createClockEvent({

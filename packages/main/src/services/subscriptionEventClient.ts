@@ -138,6 +138,13 @@ export class SubscriptionEventClient extends EventEmitter {
       this.licenseKey
     )}?machineId=${encodeURIComponent(this.machineIdHash)}`;
 
+    console.log("[SSE CLIENT] Connecting to SSE endpoint...");
+    console.log(
+      "[SSE CLIENT] License Key:",
+      this.licenseKey.substring(0, 15) + "..."
+    );
+    console.log("[SSE CLIENT] Full URL:", url);
+
     logger.info("Connecting to SSE endpoint:", {
       licenseKey: this.licenseKey.substring(0, 15) + "...",
       machineIdHash: this.machineIdHash.substring(0, 20) + "...",
@@ -173,12 +180,30 @@ export class SubscriptionEventClient extends EventEmitter {
               errorBody += chunk.toString();
             });
             response.on("end", () => {
+              console.error("[SSE CLIENT] ❌ Connection rejected by server!", {
+                statusCode: response.statusCode,
+                statusMessage: response.statusMessage,
+                errorBody: errorBody.substring(0, 500),
+                url: `${parsedUrl.hostname}${parsedUrl.pathname}`,
+              });
               logger.error("SSE connection failed", {
                 statusCode: response.statusCode,
                 statusMessage: response.statusMessage,
                 errorBody: errorBody.substring(0, 500),
                 url: `${parsedUrl.hostname}${parsedUrl.pathname}`,
               });
+
+              // 🔴 CRITICAL: If we get 401, the license is likely revoked
+              // Emit event to trigger immediate validation instead of waiting for next heartbeat
+              if (response.statusCode === 401) {
+                console.log(
+                  "[SSE CLIENT] 401 Unauthorized - license may be revoked, triggering immediate validation"
+                );
+                this.emit("license_validation_required", {
+                  reason: "SSE connection rejected with 401",
+                  statusCode: 401,
+                });
+              }
             });
             this.handleDisconnect();
             return;
@@ -188,6 +213,12 @@ export class SubscriptionEventClient extends EventEmitter {
           this.connected = true;
           this.reconnectDelay = INITIAL_RECONNECT_DELAY_MS;
           this.reconnectAttempts = 0;
+
+          console.log("[SSE CLIENT] ✅ Connection established successfully!");
+          console.log(
+            "[SSE CLIENT] Listening for events on license:",
+            this.licenseKey.substring(0, 15) + "..."
+          );
 
           logger.info("SSE connection established");
           this.emit("connected");
@@ -211,11 +242,13 @@ export class SubscriptionEventClient extends EventEmitter {
           });
 
           response.on("end", () => {
+            console.log("[SSE CLIENT] Connection ended by server");
             logger.info("SSE connection ended");
             this.handleDisconnect();
           });
 
           response.on("error", (error) => {
+            console.error("[SSE CLIENT] Response error:", error);
             logger.error("SSE response error:", error);
             this.handleDisconnect();
           });
@@ -223,6 +256,7 @@ export class SubscriptionEventClient extends EventEmitter {
       );
 
       this.httpRequest.on("error", (error) => {
+        console.error("[SSE CLIENT] Request error:", error);
         logger.error("SSE request error:", error);
         this.isConnecting = false;
         this.handleDisconnect();
@@ -230,6 +264,7 @@ export class SubscriptionEventClient extends EventEmitter {
 
       this.httpRequest.end();
     } catch (error) {
+      console.error("[SSE CLIENT] Failed to create connection:", error);
       logger.error("Failed to create SSE connection:", error);
       this.isConnecting = false;
       this.scheduleReconnect();
@@ -269,6 +304,12 @@ export class SubscriptionEventClient extends EventEmitter {
     eventId: string
   ): void {
     try {
+      console.log("[SSE CLIENT] Received SSE message:", {
+        eventType,
+        eventId,
+        dataPreview: data.substring(0, 100),
+      });
+
       // Handle heartbeat - these are not stored as events
       if (eventType === "heartbeat" || eventType === "heartbeat_ack") {
         this.lastHeartbeat = new Date();
@@ -277,8 +318,11 @@ export class SubscriptionEventClient extends EventEmitter {
         return;
       }
 
+      console.log("[SSE CLIENT] Processing non-heartbeat event:", eventType);
+
       // Deduplicate events
       if (eventId && this.processedEvents.has(eventId)) {
+        console.log("[SSE CLIENT] Skipping duplicate event:", eventId);
         logger.debug("Skipping duplicate event:", eventId);
         return;
       }
@@ -300,9 +344,14 @@ export class SubscriptionEventClient extends EventEmitter {
       // Track last event timestamp for missed event fetching
       this.lastEventTimestamp = new Date(event.timestamp);
 
+      console.log("[SSE CLIENT] Emitting event to handlers:", {
+        type: eventType,
+        id: eventId,
+      });
       logger.info("SSE event received:", { type: eventType, id: eventId });
       this.emit("event", event);
     } catch (error) {
+      console.error("[SSE CLIENT] Failed to parse SSE event:", error);
       logger.error("Failed to parse SSE event:", error);
     }
   }

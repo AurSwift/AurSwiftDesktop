@@ -7,6 +7,8 @@ import {
 } from "../utils/authHelpers.js";
 import { PERMISSIONS } from "@app/shared/constants/permissions";
 import { transactionValidator } from "../utils/transactionValidator.js";
+import { vivaWalletService } from "../services/vivaWallet/index.js";
+import { emailService } from "../services/email-service.js";
 const logger = getLogger("transactionHandlers");
 
 export function registerTransactionHandlers() {
@@ -382,9 +384,6 @@ export function registerTransactionHandlers() {
 
           // Get connected terminal ID from Viva Wallet service
           try {
-            const { vivaWalletService } = await import(
-              "../services/vivaWallet/index.js"
-            );
             const connectedTerminal = vivaWalletService.getConnectedTerminal();
             if (connectedTerminal) {
               vivaWalletTerminalId = connectedTerminal.id;
@@ -843,10 +842,6 @@ export function registerTransactionHandlers() {
       // Process Viva Wallet refund if applicable
       if (shouldAttemptVivaWalletRefund) {
         try {
-          // Dynamically import to avoid circular dependencies
-          const { vivaWalletService } = await import(
-            "../services/vivaWallet/index.js"
-          );
           const connectedTerminal = vivaWalletService.getConnectedTerminal();
 
           if (connectedTerminal) {
@@ -1188,7 +1183,6 @@ export function registerTransactionHandlers() {
         };
 
         // Send email using email service
-        const { emailService } = await import("../services/email-service.js");
         const emailSent = await emailService.sendTransactionReceipt(emailData);
 
         if (!emailSent) {

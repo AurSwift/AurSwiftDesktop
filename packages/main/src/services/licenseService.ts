@@ -183,6 +183,7 @@ export interface HeartbeatResponse {
     subscriptionStatus: string;
     shouldDisable: boolean;
     gracePeriodRemaining: number | null;
+    heartbeatIntervalMs?: number; // Dynamic interval from server
   };
 }
 
@@ -498,9 +499,14 @@ export async function sendHeartbeat(
         };
       }
 
+      // 🔴 CRITICAL FIX: Pass through the server's data object which contains shouldDisable
+      // The server returns { success: false, message: "...", data: { shouldDisable: true, ... } }
+      // result.data is the FULL server response, so we need result.data.data for the inner data
+      const serverResponse = result.data as HeartbeatResponse | undefined;
       return {
         success: false,
         message: result.error || "Heartbeat failed",
+        data: serverResponse?.data,
       };
     }
 

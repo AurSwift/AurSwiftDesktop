@@ -15,21 +15,9 @@
 import path from "path";
 import fs from "fs";
 import { app } from "electron";
+import { getLogger } from "./logger.js";
 
-// Lazy-load logger to avoid circular dependency issues during migration
-// The logger will be initialized after the migration check, so it's safe
-let loggerInstance: ReturnType<typeof import("./logger.js").getLogger> | null =
-  null;
-
-async function getLoggerInstance() {
-  if (!loggerInstance) {
-    // Use dynamic import to avoid circular dependency
-    // This ensures logger is only loaded when needed, after migration check
-    const loggerModule = await import("./logger.js");
-    loggerInstance = loggerModule.getLogger("log-path-migration");
-  }
-  return loggerInstance;
-}
+const logger = getLogger("log-path-migration");
 
 export interface LogMigrationResult {
   migrated: boolean;
@@ -155,7 +143,7 @@ export async function migrateLogsFromOldPath(
     // Create new log directory if it doesn't exist
     if (!fs.existsSync(newPath)) {
       fs.mkdirSync(newPath, { recursive: true });
-      (await getLoggerInstance()).info(
+      logger.info(
         `📁 Created new log directory: ${newPath}`
       );
     }
@@ -179,14 +167,14 @@ export async function migrateLogsFromOldPath(
             // Old file is larger - backup new file and move old one
             const backupPath = `${newFilePath}.backup-${Date.now()}`;
             fs.renameSync(newFilePath, backupPath);
-            (await getLoggerInstance()).info(
+            logger.info(
               `📦 Backed up existing log file: ${backupPath}`
             );
             fs.copyFileSync(oldFilePath, newFilePath);
             filesMoved++;
           } else {
             // New file is same size or larger - skip this file
-            (await getLoggerInstance()).debug(
+            logger.debug(
               `⏭️  Skipping ${file} - newer version already exists`
             );
           }
@@ -199,7 +187,7 @@ export async function migrateLogsFromOldPath(
         const errorMessage =
           error instanceof Error ? error.message : String(error);
         errors.push(`Failed to move ${file}: ${errorMessage}`);
-        (await getLoggerInstance()).warn(
+        logger.warn(
           `⚠️  Failed to move log file ${file}: ${errorMessage}`
         );
       }
@@ -230,7 +218,7 @@ export async function migrateLogsFromOldPath(
           const remainingFiles = fs.readdirSync(oldPath);
           if (remainingFiles.length === 0) {
             fs.rmdirSync(oldPath);
-            (await getLoggerInstance()).info(
+            logger.info(
               `🗑️  Removed empty old log directory: ${oldPath}`
             );
           }
@@ -238,7 +226,7 @@ export async function migrateLogsFromOldPath(
           // Ignore directory removal errors (might not be empty)
         }
       } catch (error) {
-        (await getLoggerInstance()).warn(
+        logger.warn(
           `⚠️  Failed to remove old logs: ${error}`
         );
         // Don't fail migration if cleanup fails
