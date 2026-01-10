@@ -21,9 +21,7 @@ import {
   Download,
   Trash2,
   Calendar,
-  FileText,
   Brain,
-  Activity,
 } from "lucide-react";
 import { PERMISSIONS } from "@app/shared/constants/permissions";
 import type { FeatureConfig } from "../types/feature-config";

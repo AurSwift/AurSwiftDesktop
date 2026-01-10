@@ -5,7 +5,7 @@
  * Shows upgrade badge when feature is unavailable.
  */
 
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useFeatureAccess } from "../hooks/use-subscription-features";
 import { UpgradeBadge } from "./upgrade-badge";
 
