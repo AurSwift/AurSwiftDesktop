@@ -15,14 +15,19 @@ import {
   BarChart3,
   TrendingUp,
   ShoppingCart,
+  ShoppingBag,
   Package,
   Upload,
   Download,
   Trash2,
   Calendar,
+  FileText,
+  Brain,
+  Activity,
 } from "lucide-react";
 import { PERMISSIONS } from "@app/shared/constants/permissions";
 import type { FeatureConfig } from "../types/feature-config";
+import type { ServerFeatureFlag } from "@/features/subscription/config/plan-features";
 
 /**
  * Feature Registry
@@ -42,6 +47,7 @@ export const FEATURE_REGISTRY: FeatureConfig[] = [
     permissions: [PERMISSIONS.USERS_MANAGE],
     category: "management",
     order: 1,
+    // Available to all plans (no subscription requirement)
     actions: [
       {
         id: "manage-users",
@@ -81,7 +87,7 @@ export const FEATURE_REGISTRY: FeatureConfig[] = [
     id: "management-actions",
     title: "Inventory Actions",
     description: "Store operations and oversight",
-    icon: Settings,
+    icon: ShoppingBag,
     permissions: [
       PERMISSIONS.SALES_WRITE,
       PERMISSIONS.INVENTORY_MANAGE,
@@ -90,6 +96,7 @@ export const FEATURE_REGISTRY: FeatureConfig[] = [
     ],
     category: "actions",
     order: 2,
+    // Available to all plans (no subscription requirement)
     actions: [
       {
         id: "new-sale",
@@ -133,6 +140,7 @@ export const FEATURE_REGISTRY: FeatureConfig[] = [
     permissions: [PERMISSIONS.SETTINGS_MANAGE],
     category: "settings",
     order: 3,
+    // Available to all plans (no subscription requirement)
     actions: [
       {
         id: "general-settings",
@@ -169,6 +177,7 @@ export const FEATURE_REGISTRY: FeatureConfig[] = [
     permissions: [PERMISSIONS.SETTINGS_MANAGE], // Only admins typically have this
     category: "settings",
     order: 4,
+    // Available to all plans (no subscription requirement)
     actions: [
       {
         id: "import-database",
@@ -206,6 +215,7 @@ export const FEATURE_REGISTRY: FeatureConfig[] = [
     permissions: [PERMISSIONS.SALES_WRITE, PERMISSIONS.USERS_MANAGE],
     category: "actions",
     order: 5,
+    // Available to all plans (no subscription requirement)
     actions: [
       {
         id: "quick-new-sale",
@@ -221,6 +231,56 @@ export const FEATURE_REGISTRY: FeatureConfig[] = [
         icon: Users,
         onClick: () => {},
         permissions: [PERMISSIONS.USERS_MANAGE],
+      },
+    ],
+  },
+
+  // ============================================================================
+  // Advanced Reporting & Analytics
+  // ============================================================================
+  {
+    id: "advanced-reporting-analytics",
+    title: "Advanced Reporting & Analytics",
+    description: "Comprehensive business intelligence and analytics",
+    icon: Brain,
+    permissions: [PERMISSIONS.REPORTS_READ, PERMISSIONS.ANALYTICS_VIEW],
+    category: "reports",
+    order: 6,
+    requiredPlan: "professional",
+    requiredFeatures: ["advanced_reporting" as ServerFeatureFlag],
+    upgradePrompt: {
+      message:
+        "Upgrade to Professional plan to access advanced reporting, analytics, and business intelligence features",
+      planId: "professional",
+    },
+    actions: [
+      {
+        id: "sales-reports",
+        label: "Sales Reports",
+        icon: BarChart3,
+        onClick: () => {},
+        permissions: [PERMISSIONS.REPORTS_READ],
+      },
+      {
+        id: "staff-reports",
+        label: "Staff Reports",
+        icon: Users,
+        onClick: () => {},
+        permissions: [PERMISSIONS.REPORTS_READ],
+      },
+      {
+        id: "inventory-reports",
+        label: "Inventory Reports",
+        icon: Package,
+        onClick: () => {},
+        permissions: [PERMISSIONS.REPORTS_READ],
+      },
+      {
+        id: "business-intelligence",
+        label: "Business Intelligence",
+        icon: Brain,
+        onClick: () => {},
+        permissions: [PERMISSIONS.ANALYTICS_VIEW],
       },
     ],
   },

@@ -155,8 +155,8 @@ export interface ActivationResponse {
     expiresAt: string | null;
     subscriptionStatus: string;
     businessName: string | null;
-    terminalName?: string;
-    trialEnd?: string | null;
+    terminalName: string; // Required field from server
+    trialEnd: string | null; // Required field from server (nullable)
   };
 }
 
@@ -186,7 +186,7 @@ export interface HeartbeatResponse {
     shouldDisable: boolean;
     gracePeriodRemaining: number | null;
     heartbeatIntervalMs?: number; // Dynamic interval from server
-    trialEnd?: string | null;
+    trialEnd: string | null; // Required field from server (nullable)
   };
 }
 
@@ -498,6 +498,7 @@ export async function sendHeartbeat(
             subscriptionStatus: "offline",
             shouldDisable: false,
             gracePeriodRemaining: null,
+            trialEnd: null, // No trial info available offline
           },
         };
       }

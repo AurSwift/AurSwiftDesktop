@@ -6,6 +6,7 @@
  */
 
 import type { LucideIcon } from "lucide-react";
+import type { PlanId, ServerFeatureFlag } from "@/features/subscription/config/plan-features";
 
 export type FeatureCategory = "actions" | "management" | "reports" | "settings" | "stats";
 
@@ -26,6 +27,14 @@ export interface FeatureStats {
   icon?: LucideIcon;
 }
 
+/**
+ * Upgrade prompt configuration for features that require subscription upgrade
+ */
+export interface UpgradePrompt {
+  message: string; // User-friendly message explaining upgrade requirement
+  planId: PlanId; // Plan to upgrade to
+}
+
 export interface FeatureConfig {
   id: string; // Unique identifier
   title: string; // Card title
@@ -38,5 +47,10 @@ export interface FeatureConfig {
   stats?: FeatureStats; // Optional stats to display
   order?: number; // Display order
   gridCols?: 1 | 2 | 3 | 4; // Grid column span
+  
+  // Subscription plan requirements
+  requiredPlan?: PlanId; // Minimum plan required (if not set, available to all)
+  requiredFeatures?: ServerFeatureFlag[]; // Required feature flags from subscription
+  upgradePrompt?: UpgradePrompt; // Upgrade prompt configuration
 }
 

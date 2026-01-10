@@ -25,17 +25,17 @@ export function LicenseHeaderBadge() {
   const getPlanBadgeConfig = () => {
     const { subscriptionStatus, expiresAt } = licenseStatus;
 
-    // Active subscription - show in green
+    // Active subscription - show in sky blue
     if (subscriptionStatus === "active") {
       return {
         icon: Shield,
         text: planName || "Licensed",
         className:
-          "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800",
+          "bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-800",
       };
     }
 
-    // Trial period - show in green with days remaining
+    // Trial period - show in sky blue with days remaining
     if (subscriptionStatus === "trialing") {
       let trialText = `${planName || "Licensed"} - Trial`;
 
@@ -60,7 +60,7 @@ export function LicenseHeaderBadge() {
         icon: Clock,
         text: trialText,
         className:
-          "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800",
+          "bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-800",
       };
     }
 
