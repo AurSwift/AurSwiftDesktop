@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.30.0](https://github.com/AurSwift/AurSwift/compare/v1.29.0...v1.30.0) (2026-01-11)
+
+
+* feat update application icons for improved branding and consistency ([](https://github.com/AurSwift/AurSwift/commit/e95c71297b481fae7b32e04cf8e08196a563ef71))
+
+
+### feat
+
+* display application version in license activation screen ([](https://github.com/AurSwift/AurSwift/commit/2a8fd76a5f93af340ccb7dd9a0e9b8daba60c5fc))
+* enhance feature visibility and subscription handling in dashboard components ([](https://github.com/AurSwift/AurSwift/commit/59c6223d9c56ece8b1f48a1793eba6f6e34e4828))
+
+
+### fix
+
+* update application icon for improved branding ([](https://github.com/AurSwift/AurSwift/commit/4759f59fc402e38074031517bc482a5019b808a2))
+* update application icon for improved branding consistency ([](https://github.com/AurSwift/AurSwift/commit/0340bd6bfb5e79822104cf60213f332b7bba5a42))
+
+
+### refactor
+
+* clean up unused imports and improve type imports in feature components ([](https://github.com/AurSwift/AurSwift/commit/bb2b816c94219d02239c6874fabb905534f51064))
+* remove deprecated add-trial-end-column migration and clean up feature-gate component formatting ([](https://github.com/AurSwift/AurSwift/commit/f83dcf6cd90377a644beb7e40197bf905d02fb37))
+
 # [1.29.0](https://github.com/AurSwift/AurSwift/compare/v1.28.0...v1.29.0) (2026-01-10)
 
 
