@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.30.1](https://github.com/AurSwift/AurSwift/compare/v1.30.0...v1.30.1) (2026-01-11)
+
+
+### fix
+
+* remove update checker from Help menu in WindowManager ([](https://github.com/AurSwift/AurSwift/commit/dfe9670e5d570ff21c3a57b04fd5024ea94a4442))
+
+
+### refactor
+
+* replace framer-motion with CSS animations for improved performance and consistency ([](https://github.com/AurSwift/AurSwift/commit/eb275b181ef2cb9eb71a44830e6aaa040cf85594))
+
 # [1.30.0](https://github.com/AurSwift/AurSwift/compare/v1.29.0...v1.30.0) (2026-01-11)
 
 
