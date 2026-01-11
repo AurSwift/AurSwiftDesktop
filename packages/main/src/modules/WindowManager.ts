@@ -96,7 +96,7 @@ class WindowManager implements AppModule {
                 })
                 .then((result: { response: number }) => {
                   if (result.response === 1) {
-                    shell.openExternal("https://github.com/Sam231221/aurswift");
+                    shell.openExternal("https://github.com/AurSwift/AurSwift");
                   }
                 });
             },

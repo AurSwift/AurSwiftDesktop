@@ -62,7 +62,7 @@ export class AutoUpdater implements AppModule {
   readonly #REMIND_LATER_INTERVAL = 2 * 60 * 60 * 1000;
   readonly #MAX_POSTPONE_COUNT = 3;
   readonly #MAX_UPDATE_CHECK_ERROR_NOTIFICATIONS = 3; // Max times to show update check failed notification
-  readonly #GITHUB_REPO_URL = "https://github.com/Sam231221/aurswift";
+  readonly #GITHUB_REPO_URL = "https://github.com/AurSwift/AurSwift";
   readonly #GITHUB_RELEASES_URL = `${this.#GITHUB_REPO_URL}/releases`;
   readonly #STARTUP_DELAY = 5 * 1000; // 5 seconds delay for startup check
   readonly #CACHE_DURATION = 15 * 60 * 1000; // 15 minutes cache duration
