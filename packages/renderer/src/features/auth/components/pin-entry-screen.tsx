@@ -198,7 +198,7 @@ export function PinEntryScreen({
               key={num}
               onClick={() => onPinInput(num.toString())}
               disabled={isLoading || pin.length >= 4}
-              className="h-12 sm:h-14 lg:h-16 text-lg sm:text-xl lg:text-2xl font-semibold bg-gray-200 hover:bg-gray-300 text-gray-900 border-0 rounded-lg transition-all disabled:opacity-50 touch-manipulation"
+              className="h-12 sm:h-14 lg:h-16 text-lg sm:text-xl lg:text-2xl font-semibold bg-gray-200 hover:bg-gray-300 active:bg-blue-400 active:text-white text-gray-900 border-0 rounded-lg transition-colors duration-150 disabled:opacity-50 touch-manipulation"
             >
               {num}
             </Button>
@@ -206,7 +206,7 @@ export function PinEntryScreen({
           <Button
             onClick={() => onPinInput("0")}
             disabled={isLoading || pin.length >= 4}
-            className="h-12 sm:h-14 lg:h-16 text-lg sm:text-xl lg:text-2xl font-semibold bg-gray-200 hover:bg-gray-300 text-gray-900 border-0 rounded-lg col-span-3 disabled:opacity-50 touch-manipulation"
+            className="h-12 sm:h-14 lg:h-16 text-lg sm:text-xl lg:text-2xl font-semibold bg-gray-200 hover:bg-gray-300 active:bg-blue-400 active:text-white text-gray-900 border-0 rounded-lg col-span-3 disabled:opacity-50 touch-manipulation transition-colors duration-150"
           >
             0
           </Button>
@@ -218,7 +218,7 @@ export function PinEntryScreen({
             onClick={onBack}
             disabled={isLoading}
             variant="outline"
-            className="h-11 sm:h-12 text-xs sm:text-sm font-medium bg-gray-200 hover:bg-gray-300 text-gray-900 border-0 rounded-lg touch-manipulation"
+            className="h-11 sm:h-12 text-xs sm:text-sm font-medium bg-gray-200 hover:bg-gray-300 active:bg-gray-400 active:text-white text-gray-900 border-0 rounded-lg touch-manipulation transition-colors duration-150"
           >
             <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
             BACK
@@ -226,7 +226,7 @@ export function PinEntryScreen({
           <Button
             onClick={onDeletePin}
             disabled={isLoading || pin.length === 0}
-            className="h-11 sm:h-12 text-xs sm:text-sm font-medium bg-red-100 hover:bg-red-200 text-red-700 border-0 rounded-lg disabled:opacity-50 touch-manipulation"
+            className="h-11 sm:h-12 text-xs sm:text-sm font-medium bg-red-100 hover:bg-red-200 active:bg-red-400 active:text-white text-red-700 border-0 rounded-lg disabled:opacity-50 touch-manipulation transition-colors duration-150"
           >
             <Delete className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
             DELETE
