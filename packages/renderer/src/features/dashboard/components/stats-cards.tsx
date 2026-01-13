@@ -12,12 +12,16 @@ import {
   DollarSign,
   ShoppingCart,
   TrendingUp,
-  Users,
   Package,
 } from "lucide-react";
 import { useUserPermissions } from "../hooks/use-user-permissions";
 import { useDashboardStatistics } from "../hooks/use-dashboard-statistics";
 import { PERMISSIONS } from "@app/shared/constants/permissions";
+import { useAuth } from "@/shared/hooks";
+import { useState, useEffect, useCallback } from "react";
+import { getLogger } from "@/shared/utils/logger";
+
+const logger = getLogger("manager-stats-cards");
 
 interface StatsCardsProps {
   className?: string;
@@ -193,10 +197,42 @@ export function StatsCards({ className = "", onActionClick }: StatsCardsProps) {
 /**
  * Manager Stats Cards
  *
- * Specialized stats cards for manager dashboard.
+ * Specialized stats cards for manager dashboard with real data from backend.
  */
 export const ManagerStatsCards = ({ className = "", onActionClick }: StatsCardsProps) => {
-  const { hasPermission, isLoading } = useUserPermissions();
+  const { hasPermission, isLoading: permissionsLoading } = useUserPermissions();
+  const { statistics, isLoading: statisticsLoading } = useDashboardStatistics();
+  const { user } = useAuth();
+  const [lowStockCount, setLowStockCount] = useState<number>(0);
+  const [isLoadingLowStock, setIsLoadingLowStock] = useState(true);
+
+  // Fetch low stock count
+  const fetchLowStockCount = useCallback(async () => {
+    if (!user?.businessId) {
+      setIsLoadingLowStock(false);
+      return;
+    }
+
+    try {
+      setIsLoadingLowStock(true);
+      const response = await window.productAPI.getStats(user.businessId);
+      if (response.success && response.data) {
+        setLowStockCount(response.data.lowStockCount || 0);
+        logger.info(
+          `[ManagerStatsCards] Loaded low stock count: ${response.data.lowStockCount}`
+        );
+      }
+    } catch (error) {
+      logger.error("[ManagerStatsCards] Failed to load low stock count:", error);
+      setLowStockCount(0);
+    } finally {
+      setIsLoadingLowStock(false);
+    }
+  }, [user?.businessId]);
+
+  useEffect(() => {
+    fetchLowStockCount();
+  }, [fetchLowStockCount]);
 
   // Handle Go To Sales button click
   const handleGoToSales = () => {
@@ -205,6 +241,8 @@ export const ManagerStatsCards = ({ className = "", onActionClick }: StatsCardsP
       onActionClick("management-actions", "new-sale");
     }
   };
+
+  const isLoading = permissionsLoading || statisticsLoading;
 
   if (isLoading) {
     return (
@@ -230,35 +268,40 @@ export const ManagerStatsCards = ({ className = "", onActionClick }: StatsCardsP
   const stats = [
     {
       id: "weekly-revenue",
-      title: "Weekly Revenue",
-      value: "$8,642.30",
-      change: "+18% from last week",
+      title: "Monthly Revenue",
+      value: statistics
+        ? formatCurrency(statistics.revenue.current)
+        : "£0.00",
+      change: statistics
+        ? `${formatPercentageChange(
+            statistics.revenue.changePercent
+          )} from last month`
+        : "Loading...",
       icon: DollarSign,
       permission: PERMISSIONS.REPORTS_READ,
-    },
-    {
-      id: "staff-performance",
-      title: "Staff Performance",
-      value: "94%",
-      change: "Above target",
-      icon: Users,
-      permission: PERMISSIONS.USERS_MANAGE,
+      isLoading: statisticsLoading,
     },
     {
       id: "low-stock",
       title: "Low Stock Items",
-      value: "7",
-      change: "Need reordering",
+      value: isLoadingLowStock ? "..." : lowStockCount.toString(),
+      change: isLoadingLowStock
+        ? "Loading..."
+        : lowStockCount === 0
+        ? "All items in stock"
+        : `${lowStockCount} ${lowStockCount === 1 ? "item" : "items"} need reordering`,
       icon: Package,
       permission: PERMISSIONS.INVENTORY_MANAGE,
+      isLoading: isLoadingLowStock,
     },
     {
       id: "discounts",
-      title: "Discounts Applied",
-      value: "$342.15",
-      change: "This week",
+      title: "Sales Today",
+      value: statistics ? statistics.salesToday.toString() : "0",
+      change: statistics ? "Transactions completed" : "Loading...",
       icon: TrendingUp,
-      permission: PERMISSIONS.DISCOUNTS_APPLY,
+      permission: PERMISSIONS.REPORTS_READ,
+      isLoading: statisticsLoading,
     },
   ];
 
@@ -286,9 +329,19 @@ export const ManagerStatsCards = ({ className = "", onActionClick }: StatsCardsP
               <Icon className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
             </CardHeader>
             <CardContent>
-              <div className="text-xl sm:text-2xl font-bold">{stat.value}</div>
+              <div className="text-xl sm:text-2xl font-bold">
+                {stat.isLoading ? (
+                  <span className="animate-pulse">...</span>
+                ) : (
+                  stat.value
+                )}
+              </div>
               <p className="text-[10px] sm:text-xs text-muted-foreground">
-                {stat.change}
+                {stat.isLoading ? (
+                  <span className="animate-pulse">Loading...</span>
+                ) : (
+                  stat.change
+                )}
               </p>
             </CardContent>
           </Card>

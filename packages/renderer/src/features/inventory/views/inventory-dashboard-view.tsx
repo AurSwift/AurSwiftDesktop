@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
@@ -11,7 +11,6 @@ import {
   Tag,
   PackageCheck,
 } from "lucide-react";
-import type { Category } from "../hooks/use-product-data";
 
 interface ProductDashboardViewProps {
   productStats: {
@@ -22,7 +21,7 @@ interface ProductDashboardViewProps {
     outOfStockCount: number;
     totalInventoryValue: number;
   };
-  categories: Category[];
+  categoryCount: number;
   onBack: () => void;
   onManageProducts: () => void;
   onManageCategories: () => void;
@@ -32,12 +31,44 @@ interface ProductDashboardViewProps {
 
 const ProductDashboardView: React.FC<ProductDashboardViewProps> = ({
   productStats,
-  categories,
+  categoryCount,
   onBack,
   onManageProducts,
   onManageCategories,
   onManageBatches,
 }) => {
+  const [navigating, setNavigating] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Debounced navigation handler to prevent rapid clicks
+  const handleNavigate = useCallback(
+    (handler: () => void) => {
+      if (navigating) return; // Prevent multiple clicks
+      
+      // Clear any existing timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      
+      setNavigating(true);
+      handler();
+      
+      // Reset after a short delay to allow navigation to complete
+      timeoutRef.current = setTimeout(() => {
+        setNavigating(false);
+      }, 300);
+    },
+    [navigating]
+  );
+
+  // Create handlers with debouncing
+  const debouncedOnBack = useCallback(() => handleNavigate(onBack), [handleNavigate, onBack]);
+  const debouncedOnManageProducts = useCallback(() => handleNavigate(onManageProducts), [handleNavigate, onManageProducts]);
+  const debouncedOnManageCategories = useCallback(() => handleNavigate(onManageCategories), [handleNavigate, onManageCategories]);
+  const debouncedOnManageBatches = useCallback(() => {
+    if (onManageBatches) handleNavigate(onManageBatches);
+  }, [handleNavigate, onManageBatches]);
+
   return (
     <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
@@ -51,7 +82,11 @@ const ProductDashboardView: React.FC<ProductDashboardViewProps> = ({
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:space-x-4">
-          <Button onClick={onBack} className="w-full sm:w-auto">
+          <Button
+            onClick={debouncedOnBack}
+            disabled={navigating}
+            className="w-full sm:w-auto"
+          >
             Go to dashboard
           </Button>
 
@@ -97,7 +132,7 @@ const ProductDashboardView: React.FC<ProductDashboardViewProps> = ({
             <div>
               <p className="text-xs sm:text-sm text-gray-600">Categories</p>
               <p className="text-xl sm:text-2xl font-bold text-gray-900">
-                {categories.length}
+                {categoryCount}
               </p>
               <p className="text-xs sm:text-sm text-gray-500 mt-1">
                 Menu categories
@@ -158,7 +193,8 @@ const ProductDashboardView: React.FC<ProductDashboardViewProps> = ({
             <Button
               variant="outline"
               className="w-full justify-start"
-              onClick={onManageProducts}
+              onClick={debouncedOnManageProducts}
+              disabled={navigating}
             >
               <Package className="w-4 h-4 mr-3" />
               <span className="text-sm sm:text-base">Manage Products</span>
@@ -167,7 +203,8 @@ const ProductDashboardView: React.FC<ProductDashboardViewProps> = ({
             <Button
               variant="outline"
               className="w-full justify-start"
-              onClick={onManageCategories}
+              onClick={debouncedOnManageCategories}
+              disabled={navigating}
             >
               <Tag className="w-4 h-4 mr-3" />
               <span className="text-sm sm:text-base">Manage Categories</span>
@@ -176,7 +213,8 @@ const ProductDashboardView: React.FC<ProductDashboardViewProps> = ({
             <Button
               variant="outline"
               className="w-full justify-start"
-              onClick={onManageBatches}
+              onClick={debouncedOnManageBatches}
+              disabled={navigating}
             >
               <PackageCheck className="w-4 h-4 mr-3" />
               <span className="text-sm sm:text-base">
@@ -209,7 +247,8 @@ const ProductDashboardView: React.FC<ProductDashboardViewProps> = ({
               <Button
                 size="sm"
                 variant="outline"
-                onClick={onManageProducts}
+                onClick={debouncedOnManageProducts}
+                disabled={navigating}
                 className="w-full"
               >
                 View Low Stock Products
@@ -222,4 +261,4 @@ const ProductDashboardView: React.FC<ProductDashboardViewProps> = ({
   );
 };
 
-export default ProductDashboardView;
+export default React.memo(ProductDashboardView);

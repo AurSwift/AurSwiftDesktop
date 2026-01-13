@@ -77,6 +77,9 @@ const ProductManagementView: React.FC<ProductManagementViewProps> = ({
     totalInventoryValue: 0,
   });
   const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryStats, setCategoryStats] = useState<{
+    totalCategories: number;
+  }>({ totalCategories: 0 });
   const [vatCategories, setVatCategories] = useState<VatCategory[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -184,7 +187,21 @@ const ProductManagementView: React.FC<ProductManagementViewProps> = ({
     }
   }, [user?.businessId]);
 
-  // Load categories
+  // Load category statistics (optimized - count only)
+  const loadCategoryStats = useCallback(async () => {
+    if (!user?.businessId) return;
+
+    try {
+      const response = await window.categoryAPI.getStats(user.businessId);
+      if (response.success && response.data) {
+        setCategoryStats({ totalCategories: response.data.totalCategories });
+      }
+    } catch (error) {
+      logger.error("Error loading category stats:", error);
+    }
+  }, [user?.businessId]);
+
+  // Load categories (full list - only when needed)
   const loadCategories = useCallback(async () => {
     if (!user?.businessId) return;
 
@@ -227,9 +244,9 @@ const ProductManagementView: React.FC<ProductManagementViewProps> = ({
 
   useEffect(() => {
     loadProductStats();
-    loadCategories();
+    loadCategoryStats();
     loadVatCategories();
-  }, [loadProductStats, loadCategories, loadVatCategories]);
+  }, [loadProductStats, loadCategoryStats, loadVatCategories]);
 
   // Reset to page 1 when filters change (but NOT when page changes)
   useEffect(() => {
@@ -237,7 +254,7 @@ const ProductManagementView: React.FC<ProductManagementViewProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, filterCategory, filterStock, filterStatus]);
 
-  // Reload categories when returning from category management
+  // Load categories when navigating to category management view
   useEffect(() => {
     setIsDrawerOpen(false);
     if (
@@ -245,8 +262,9 @@ const ProductManagementView: React.FC<ProductManagementViewProps> = ({
       user?.businessId
     ) {
       loadCategories();
+      loadCategoryStats();
     }
-  }, [currentView, user?.businessId, loadCategories]);
+  }, [currentView, user?.businessId, loadCategories, loadCategoryStats]);
 
   // Initialize default view if none is selected
   useEffect(() => {
@@ -347,15 +365,26 @@ const ProductManagementView: React.FC<ProductManagementViewProps> = ({
     [user, loadProducts, loadProductStats]
   );
 
-  const handleEditProduct = useCallback((product: Product) => {
-    setEditingProduct(product);
-    setIsDrawerOpen(true);
-  }, []);
+  const handleEditProduct = useCallback(
+    async (product: Product) => {
+      setEditingProduct(product);
+      // Load categories if not already loaded (needed for product form)
+      if (categories.length === 0 && user?.businessId) {
+        await loadCategories();
+      }
+      setIsDrawerOpen(true);
+    },
+    [categories.length, user?.businessId, loadCategories]
+  );
 
-  const openAddProductDrawer = useCallback(() => {
+  const openAddProductDrawer = useCallback(async () => {
     setEditingProduct(null);
+    // Load categories if not already loaded (needed for product form)
+    if (categories.length === 0 && user?.businessId) {
+      await loadCategories();
+    }
     setIsDrawerOpen(true);
-  }, []);
+  }, [categories.length, user?.businessId, loadCategories]);
 
   const handleSaveProduct = useCallback(() => {
     // Invalidate caches on product create/update
@@ -397,7 +426,7 @@ const ProductManagementView: React.FC<ProductManagementViewProps> = ({
       productDashboard: (
         <ProductDashboardView
           productStats={productStats}
-          categories={categories}
+          categoryCount={categoryStats.totalCategories}
           onBack={goToMainDashboard}
           onManageProducts={() => navigateTo(INVENTORY_ROUTES.PRODUCT_LIST)}
           onManageCategories={() =>
@@ -457,6 +486,7 @@ const ProductManagementView: React.FC<ProductManagementViewProps> = ({
     navigateToMainView,
     goToDashboard,
     productStats,
+    categoryStats,
     categories,
     products,
     loading,

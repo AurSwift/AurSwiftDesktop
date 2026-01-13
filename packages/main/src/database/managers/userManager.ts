@@ -431,6 +431,7 @@ export class UserManager {
         address: schema.users.address,
         primaryRoleId: schema.users.primaryRoleId,
         roleName: schema.roles.name,
+        roleId: schema.roles.id,
       })
       .from(schema.users)
       .leftJoin(schema.roles, eq(schema.users.primaryRoleId, schema.roles.id))
@@ -443,9 +444,19 @@ export class UserManager {
       .orderBy(desc(schema.users.createdAt))
       .all();
 
-    // Return users with primary role information from RBAC system
-    // No longer includes deprecated 'role' field - use primaryRole.name instead
-    return usersWithRoles;
+    // Transform to include nested primaryRole object for proper role resolution
+    // This ensures getUserRoleName() works correctly on the frontend
+    const transformedUsers = usersWithRoles.map((user) => ({
+      ...user,
+      primaryRole: user.roleName
+        ? {
+            id: user.roleId,
+            name: user.roleName,
+          }
+        : null,
+    }));
+
+    return transformedUsers;
   }
 
   //CRUD
