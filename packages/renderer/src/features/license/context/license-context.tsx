@@ -11,6 +11,9 @@ import {
   LicenseContext,
   type LicenseContextValue,
 } from "./license-context-types.js";
+import { getLogger } from "@/shared/utils/logger";
+
+const logger = getLogger("LicenseContext");
 
 export function LicenseProvider({ children }: { children: React.ReactNode }) {
   const {
@@ -53,37 +56,31 @@ export function LicenseProvider({ children }: { children: React.ReactNode }) {
 
     const cleanup = window.licenseAPI.onLicenseEvent(
       async (eventType, data) => {
-        console.log(`[LicenseContext] Received ${eventType} event:`, data);
+        logger.debug(`Received ${eventType} event:`, data);
 
         // Handle different event types
         switch (eventType) {
           case "license:disabled":
             // License was revoked or cancelled - immediately refresh status
-            console.warn(
-              "[LicenseContext] License disabled, refreshing status"
-            );
+            logger.warn("License disabled, refreshing status");
             await refreshStatus();
             break;
 
           case "license:reactivated":
             // License was reactivated - refresh status
-            console.log(
-              "[LicenseContext] License reactivated, refreshing status"
-            );
+            logger.info("License reactivated, refreshing status");
             await refreshStatus();
             break;
 
           case "license:planChanged":
             // Plan was changed - refresh status
-            console.log("[LicenseContext] Plan changed, refreshing status");
+            logger.info("Plan changed, refreshing status");
             await refreshStatus();
             break;
 
           case "license:cancelScheduled":
             // Subscription cancelled but still in grace period
-            console.log(
-              "[LicenseContext] Cancellation scheduled, refreshing status"
-            );
+            logger.info("Cancellation scheduled, refreshing status");
             await refreshStatus();
             break;
 

@@ -104,13 +104,13 @@ export function SaveBasketModal({
           if (Barcode) {
             setBarcodeComponent(() => Barcode);
           } else {
-            console.warn("Barcode component not found in module");
+            logger.warn("Barcode component not found in module");
           }
         }
       } catch (error) {
         // Package not installed - component will show fallback
         if (mounted) {
-          console.warn("react-barcode not installed, using fallback", error);
+          logger.warn("react-barcode not installed, using fallback", error);
         }
       }
     })();

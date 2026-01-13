@@ -63,9 +63,4 @@ void displayName;
 void minAge;
 void label;
 
-console.log('✅ All type imports successful!');
-console.log('User:', displayName);
-console.log('Product:', testProduct.name);
-console.log('Age restriction:', label, 'requires', minAge, 'years');
-
 export {};

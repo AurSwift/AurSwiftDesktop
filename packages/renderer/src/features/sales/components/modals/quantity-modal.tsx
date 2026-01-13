@@ -21,6 +21,9 @@ import { Label } from "@/components/ui/label";
 import type { CartItemWithProduct } from "@/types/features/cart";
 import { getEffectiveSalesUnit } from "@/shared/hooks/use-sales-unit-settings";
 import { useSalesUnitSettings } from "@/shared/hooks/use-sales-unit-settings";
+import { getLogger } from "@/shared/utils/logger";
+
+const logger = getLogger("QuantityModal");
 
 interface QuantityModalProps {
   isOpen: boolean;
@@ -77,7 +80,7 @@ export function QuantityModal({
         await onConfirm(undefined, w);
       }
     } catch (error) {
-      console.error("Error updating quantity:", error);
+      logger.error("Error updating quantity:", error);
     } finally {
       setIsSubmitting(false);
     }
