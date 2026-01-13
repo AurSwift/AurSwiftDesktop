@@ -123,15 +123,34 @@ export function DashboardLayout({ children, subtitle }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b bg-gradient-to-r from-background via-primary/5 to-background backdrop-blur-sm sticky top-0 z-50 shadow-sm">
         <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-                <Store className="w-4 h-4 text-primary-foreground" />
+              <div className="relative w-10 h-10 rounded-xl overflow-hidden ring-2 ring-primary/20 shadow-md bg-black flex items-center justify-center">
+                <img
+                  src="/logo.png"
+                  alt="AuraSwift Logo"
+                  className="w-full h-full object-contain p-1"
+                  onError={(e) => {
+                    // Fallback to icon if logo fails to load
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const fallback = target.nextElementSibling as HTMLElement;
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
+                <div className="hidden w-full h-full items-center justify-center">
+                  <Store className="w-5 h-5 text-primary-foreground" />
+                </div>
               </div>
               <div>
-                <h1 className="text-lg font-bold">aurswift</h1>
+                <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                  AuraSwift
+                </h1>
+                <p className="text-[10px] text-muted-foreground/60 -mt-1">
+                  EPOS System
+                </p>
               </div>
             </div>
             <div className="hidden md:block h-6 w-px bg-border" />
