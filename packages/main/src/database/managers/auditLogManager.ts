@@ -1,6 +1,9 @@
 import type { DrizzleDB } from "../drizzle.js";
 import { eq, and, desc, lt, sql as drizzleSql } from "drizzle-orm";
 import * as schema from "../schema.js";
+import { getLogger } from "../../utils/logger.js";
+
+const logger = getLogger("auditLogManager");
 
 export class AuditLogManager {
   private db: DrizzleDB;
@@ -152,7 +155,7 @@ export class AuditLogManager {
 
       return result.changes;
     } catch (error) {
-      console.error("Failed to cleanup old audit logs:", error);
+      logger.error("Failed to cleanup old audit logs:", error);
       return 0;
     }
   }

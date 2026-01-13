@@ -17,6 +17,9 @@ import { app, dialog } from "electron";
 import fs from "fs/promises";
 import path from "path";
 import Database from "better-sqlite3";
+import { getLogger } from "../utils/logger.js";
+
+const logger = getLogger("dataExportService");
 
 export interface ExportOptions {
   format: "json" | "sqlite" | "both";
@@ -66,7 +69,7 @@ export async function exportLocalData(
       )
       .all() as Array<{ name: string }>;
 
-    console.log(`[DATA EXPORT] Found ${tables.length} tables to export`);
+    logger.info(`Found ${tables.length} tables to export`);
 
     // Filter tables based on options
     const tablesToExport = tables
@@ -104,14 +107,9 @@ export async function exportLocalData(
           exportedTables.push(tableName);
           totalRecords += rows.length;
 
-          console.log(
-            `[DATA EXPORT] Exported ${rows.length} rows from ${tableName}`
-          );
+          logger.debug(`Exported ${rows.length} rows from ${tableName}`);
         } catch (error) {
-          console.error(
-            `[DATA EXPORT] Failed to export table ${tableName}:`,
-            error
-          );
+          logger.error(`Failed to export table ${tableName}:`, error);
         }
       }
 
@@ -124,7 +122,7 @@ export async function exportLocalData(
       await fs.writeFile(jsonPath, JSON.stringify(jsonData, null, 2), "utf-8");
       exportedFiles.push(jsonPath);
 
-      console.log(`[DATA EXPORT] JSON export saved to: ${jsonPath}`);
+      logger.info(`JSON export saved to: ${jsonPath}`);
     }
 
     // ========================================================================
@@ -140,7 +138,7 @@ export async function exportLocalData(
       await backupDatabase(db, backupPath);
       exportedFiles.push(backupPath);
 
-      console.log(`[DATA EXPORT] SQLite backup saved to: ${backupPath}`);
+      logger.info(`SQLite backup saved to: ${backupPath}`);
     }
 
     return {
@@ -151,7 +149,7 @@ export async function exportLocalData(
       recordCount: totalRecords,
     };
   } catch (error) {
-    console.error("[DATA EXPORT] Export failed:", error);
+    logger.error("Export failed:", error);
 
     return {
       success: false,
@@ -175,13 +173,11 @@ async function backupDatabase(
       // Wait for backup to complete
       backup
         .then(() => {
-          console.log(
-            `[DATA EXPORT] Database backup completed: ${destinationPath}`
-          );
+          logger.info(`Database backup completed: ${destinationPath}`);
           resolve();
         })
         .catch((error: Error) => {
-          console.error("[DATA EXPORT] Database backup failed:", error);
+          logger.error("Database backup failed:", error);
           reject(error);
         });
     } catch (error) {
@@ -258,7 +254,7 @@ export async function showExportDialog(
       };
     }
   } catch (error) {
-    console.error("[DATA EXPORT] Dialog failed:", error);
+    logger.error("Export dialog failed:", error);
 
     return {
       success: false,
@@ -274,7 +270,7 @@ export async function autoExportOnEvent(
   db: Database.Database,
   event: "subscription_cancelled" | "license_revoked" | "grace_period_ending"
 ): Promise<void> {
-  console.log(`[DATA EXPORT] Auto-export triggered by event: ${event}`);
+  logger.info(`Auto-export triggered by event: ${event}`);
 
   try {
     // Show dialog based on event
@@ -286,10 +282,7 @@ export async function autoExportOnEvent(
 
     await showExportDialog(db, reason);
   } catch (error) {
-    console.error(
-      `[DATA EXPORT] Auto-export failed for event ${event}:`,
-      error
-    );
+    logger.error(`Auto-export failed for event ${event}:`, error);
   }
 }
 
@@ -300,9 +293,7 @@ export function scheduleAutomaticBackups(
   db: Database.Database,
   intervalHours: number = 24
 ): NodeJS.Timeout {
-  console.log(
-    `[DATA EXPORT] Scheduling automatic backups every ${intervalHours} hours`
-  );
+  logger.info(`Scheduling automatic backups every ${intervalHours} hours`);
 
   const intervalMs = intervalHours * 60 * 60 * 1000;
 
@@ -314,14 +305,12 @@ export function scheduleAutomaticBackups(
       });
 
       if (result.success) {
-        console.log(
-          `[DATA EXPORT] Automatic backup completed: ${result.filePath}`
-        );
+        logger.info(`Automatic backup completed: ${result.filePath}`);
       } else {
-        console.error("[DATA EXPORT] Automatic backup failed:", result.error);
+        logger.error("Automatic backup failed:", result.error);
       }
     } catch (error) {
-      console.error("[DATA EXPORT] Automatic backup error:", error);
+      logger.error("Automatic backup error:", error);
     }
   }, intervalMs);
 
@@ -330,7 +319,7 @@ export function scheduleAutomaticBackups(
     format: "sqlite",
     destination: path.join(app.getPath("userData"), "backups"),
   }).catch((error) => {
-    console.error("[DATA EXPORT] Initial backup failed:", error);
+    logger.error("Initial backup failed:", error);
   });
 
   return backupInterval;
@@ -369,16 +358,16 @@ export async function cleanupOldBackups(
 
     for (const file of filesToDelete) {
       await fs.unlink(file.path);
-      console.log(`[DATA EXPORT] Deleted old backup: ${file.name}`);
+      logger.debug(`Deleted old backup: ${file.name}`);
     }
 
-    console.log(
-      `[DATA EXPORT] Cleanup complete. Kept ${Math.min(
+    logger.info(
+      `Cleanup complete. Kept ${Math.min(
         filesWithStats.length,
         keepCount
       )} backups, deleted ${filesToDelete.length}`
     );
   } catch (error) {
-    console.error("[DATA EXPORT] Backup cleanup failed:", error);
+    logger.error("Backup cleanup failed:", error);
   }
 }

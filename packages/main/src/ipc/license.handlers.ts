@@ -253,8 +253,8 @@ function startHeartbeatTimer(licenseKey: string, customIntervalMs?: number) {
   const baseInterval = customIntervalMs || HEARTBEAT_INTERVAL_MS;
   const interval = baseInterval + Math.random() * 5 * 60 * 1000; // Add 0-5 min randomization
 
-  console.log(
-    `[Heartbeat Timer] Starting with interval: ${baseInterval}ms (${
+  logger.info(
+    `Heartbeat timer starting with interval: ${baseInterval}ms (${
       baseInterval / 60000
     } minutes)`
   );
@@ -277,8 +277,8 @@ function startHeartbeatTimer(licenseKey: string, customIntervalMs?: number) {
           result.data?.heartbeatIntervalMs &&
           result.data.heartbeatIntervalMs !== baseInterval
         ) {
-          console.log(
-            `[Heartbeat Timer] Server requested new interval: ${result.data.heartbeatIntervalMs}ms`
+          logger.info(
+            `Server requested new heartbeat interval: ${result.data.heartbeatIntervalMs}ms`
           );
           startHeartbeatTimer(licenseKey, result.data.heartbeatIntervalMs);
           return; // Exit - new timer will continue
@@ -392,17 +392,11 @@ function emitLicenseEvent(channel: string, data: object): void {
  * (Phase 4: Added event acknowledgment tracking)
  */
 async function handleSSEEvent(event: SubscriptionEvent): Promise<void> {
-  console.log(`[SSE EVENT HANDLER] Event received: ${event.type}`, {
-    eventId: event.id,
-  });
   logger.info(`SSE event received: ${event.type}`, { eventId: event.id });
 
   const activation = await getLocalActivation();
   if (!activation) {
-    console.log(
-      "[SSE EVENT HANDLER] No local activation found - skipping event"
-    );
-    logger.warn("SSE event received but no local activation");
+    logger.warn("SSE event received but no local activation - skipping event");
 
     // Send acknowledgment as "skipped"
     try {
@@ -564,27 +558,25 @@ async function handleSSEEvent(event: SubscriptionEvent): Promise<void> {
           reason: string;
         };
 
-        console.log("[LICENSE REVOKED EVENT] Received license_revoked event!");
-        console.log("[LICENSE REVOKED EVENT] Reason:", data.reason);
-        console.log("[LICENSE REVOKED EVENT] Activation ID:", activation.id);
-        logger.error("License revoked by server");
+        logger.error("License revoked by server", {
+          reason: data.reason,
+          activationId: activation.id,
+        });
 
         await deactivateLocalLicense(activation.id);
-        console.log("[LICENSE REVOKED EVENT] License deactivated locally");
+        logger.info("License deactivated locally");
 
         stopHeartbeatTimer();
-        console.log("[LICENSE REVOKED EVENT] Heartbeat timer stopped");
+        logger.info("Heartbeat timer stopped");
 
         disconnectSSEClient();
-        console.log("[LICENSE REVOKED EVENT] SSE client disconnected");
+        logger.info("SSE client disconnected");
 
         emitLicenseEvent("license:disabled", {
           reason: data.reason,
           revoked: true,
         });
-        console.log(
-          "[LICENSE REVOKED EVENT] Emitted license:disabled event to UI"
-        );
+        logger.info("Emitted license:disabled event to UI");
         break;
       }
 
@@ -730,18 +722,15 @@ function initializeSSE(
     client.on(
       "license_validation_required",
       async (data: { reason: string; statusCode: number }) => {
-        console.log(
-          "[LICENSE] SSE returned 401 - triggering immediate validation",
-          data
-        );
         logger.warn(
-          "SSE connection rejected - license may be revoked, triggering immediate validation"
+          "SSE returned 401 - triggering immediate validation",
+          data
         );
 
         try {
           const result = await sendHeartbeat(licenseKey);
 
-          console.log("[LICENSE] Heartbeat result:", {
+          logger.debug("Heartbeat result", {
             success: result.success,
             shouldDisable: result.data?.shouldDisable,
             subscriptionStatus: result.data?.subscriptionStatus,
@@ -754,10 +743,7 @@ function initializeSSE(
           const shouldDeactivate = result.data?.shouldDisable === true;
 
           if (shouldDeactivate) {
-            console.log(
-              "[LICENSE] ⛔ License validation confirmed: license should be disabled"
-            );
-            logger.error("License validation confirmed: license is revoked");
+            logger.error("License validation confirmed: license should be disabled");
 
             // Stop timers
             stopHeartbeatTimer();
@@ -767,7 +753,7 @@ function initializeSSE(
             const activation = await getLocalActivation();
             if (activation) {
               await deactivateLocalLicense(activation.id);
-              console.log("[LICENSE] ✅ Local license deactivated");
+              logger.info("Local license deactivated");
             }
 
             // Notify renderer process
@@ -777,22 +763,13 @@ function initializeSSE(
                 "License has been revoked (plan changed or cancelled)",
               subscriptionStatus: result.data?.subscriptionStatus || "revoked",
             });
-            console.log(
-              "[LICENSE] ✅ UI notified - should show activation screen"
-            );
+            logger.info("UI notified - should show activation screen");
           } else {
-            console.log(
-              "[LICENSE] License is still valid, SSE rejection may be transient"
-            );
             logger.info(
-              "License still valid, continuing reconnection attempts"
+              "License is still valid, SSE rejection may be transient - continuing reconnection attempts"
             );
           }
         } catch (error) {
-          console.error(
-            "[LICENSE] Failed to validate license after 401:",
-            error
-          );
           logger.error("Failed to validate license after 401:", error);
         }
       }
