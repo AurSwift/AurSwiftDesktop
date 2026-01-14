@@ -281,7 +281,7 @@ export function LicenseActivationScreen({
               {/* Activate Button */}
               <Button
                 onClick={handleActivate}
-                disabled={isLoading || isSuccess || licenseKey.length < 20}
+                disabled={isLoading || isSuccess || licenseKey.length < 28}
                 className="w-full text-sm sm:text-base h-11 sm:h-12"
                 size="lg"
               >
