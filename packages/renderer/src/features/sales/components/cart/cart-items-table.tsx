@@ -70,7 +70,7 @@ export function CartItemsTable({
       <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
         <Table>
           <TableBody>
-            <AnimatePresence>
+            <AnimatePresence as="fragment">
               {loading ? (
                 <TableRow>
                   <TableCell
