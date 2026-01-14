@@ -265,17 +265,32 @@ async function deactivateLocalLicense(
 // Track if we're currently in offline mode (last heartbeat/connection attempt failed)
 let isCurrentlyOffline = false;
 let lastConnectionError: string | null = null;
+// Track SSE connection status - if SSE is connected, we're definitely online
+let isSseConnected = false;
 
 /**
  * Quick check if the license server is reachable
- * Uses a simple HEAD request with short timeout
+ * Uses SSE connection status first, then falls back to HTTP check
  */
 async function checkServerConnectivity(): Promise<boolean> {
+  // If SSE is connected, we're definitely online - no need for HTTP check
+  if (isSseConnected) {
+    logger.debug("checkServerConnectivity: SSE is connected, returning online");
+    isCurrentlyOffline = false;
+    lastConnectionError = null;
+    return true;
+  }
+
+  logger.debug("checkServerConnectivity: SSE not connected, checking via HTTP");
+
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
-    const response = await fetch(`${LICENSE_API_URL}/health`, {
+    // Use the same base URL as the license service
+    const apiBaseUrl = process.env.LICENSE_API_URL || "http://localhost:3000";
+
+    const response = await fetch(`${apiBaseUrl}/api/health`, {
       method: "HEAD",
       signal: controller.signal,
     });
@@ -876,11 +891,15 @@ function initializeSSE(
     // Handle connection state changes
     client.on("connected", () => {
       logger.info("SSE connected - real-time subscription sync enabled");
+      isSseConnected = true;
+      isCurrentlyOffline = false;
+      lastConnectionError = null;
       emitLicenseEvent("license:sseConnected", { connected: true });
     });
 
     client.on("disconnected", () => {
       logger.warn("SSE disconnected - falling back to polling");
+      isSseConnected = false;
       emitLicenseEvent("license:sseConnected", { connected: false });
     });
 

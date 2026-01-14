@@ -146,8 +146,16 @@ export function LicenseProvider({ children }: { children: React.ReactNode }) {
             await refreshStatus();
             break;
 
+          case "license:sseConnected":
+            // SSE connection state changed - refresh status to update online/offline state
+            if (data && (data as { connected: boolean }).connected) {
+              logger.info("SSE connected, refreshing status");
+              await refreshStatus();
+            }
+            break;
+
           default:
-            // Other events (e.g., license:sseConnected) - can be handled if needed
+            // Other events - can be handled if needed
             break;
         }
       }
