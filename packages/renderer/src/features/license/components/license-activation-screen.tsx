@@ -161,39 +161,65 @@ export function LicenseActivationScreen({
 
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-lg space-y-6">
-          {/* Logo/Header */}
-          <div className="text-center space-y-2">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-              <KeyRound className="w-8 h-8 text-primary" />
+        <div className="w-full max-w-lg space-y-8">
+          {/* Branded Logo/Header Section */}
+          <div className="text-center space-y-4">
+            {/* Logo Container with Black Background */}
+            <div className="flex justify-center mb-4 sm:mb-6">
+              <div className="relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 rounded-2xl bg-black flex items-center justify-center shadow-2xl ring-4 ring-primary/20 overflow-hidden">
+                <img
+                  src="/logo.png"
+                  alt="AuraSwift Logo"
+                  className="w-full h-full object-contain p-3 sm:p-4 md:p-5 lg:p-6"
+                  onError={(e) => {
+                    // Fallback to key icon if logo fails to load
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = "none";
+                    const fallback = target.nextElementSibling as HTMLElement;
+                    if (fallback) fallback.style.display = "flex";
+                  }}
+                />
+                <div className="hidden w-full h-full items-center justify-center">
+                  <KeyRound className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 text-white" />
+                </div>
+              </div>
             </div>
-            <h1 className="text-3xl font-bold tracking-tight">aurswift EPOS</h1>
-            <p className="text-sm text-muted-foreground">
-              Version {getAppVersion()}
-            </p>
-            <p className="text-muted-foreground">
-              Enter your license key to activate this terminal
-            </p>
+            {/* Brand Name and Version */}
+            <div className="space-y-2">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold tracking-tight bg-gradient-to-r from-primary via-primary/90 to-primary/70 bg-clip-text text-transparent">
+                Aurswift EPOS
+              </h1>
+              <p className="text-sm sm:text-base md:text-base text-muted-foreground font-medium">
+                Version {getAppVersion()}
+              </p>
+            </div>
           </div>
 
           {/* Activation Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <KeyRound className="w-5 h-5" />
+          <Card className="shadow-xl border-2">
+            <CardHeader className="space-y-1 pb-2">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl md:text-xl">
+                <KeyRound className="w-5 h-5 text-primary" />
                 License Activation
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm pb-0">
                 Find your license key in your aurswift dashboard at{" "}
-                <span className="font-medium text-primary">aurswift.com</span>
+                <a
+                  href="https://aurswift.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-primary hover:underline"
+                >
+                  aurswift.com
+                </a>
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-1">
               {/* Success State */}
               {isSuccess && (
                 <Alert className="border-green-200 bg-green-50 dark:bg-green-900/20">
-                  <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  <AlertDescription className="text-green-700 dark:text-green-400">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                  <AlertDescription className="text-sm sm:text-base text-green-700 dark:text-green-400">
                     License activated successfully! Redirecting...
                   </AlertDescription>
                 </Alert>
@@ -202,16 +228,18 @@ export function LicenseActivationScreen({
               {/* Error State */}
               {(activationError || error) && !isSuccess && (
                 <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
+                  <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <AlertDescription className="text-sm sm:text-base">
                     {activationError || error}
                   </AlertDescription>
                 </Alert>
               )}
 
               {/* License Key Input */}
-              <div className="space-y-2">
-                <Label htmlFor="license-key">License Key</Label>
+              <div className="space-y-1">
+                <Label htmlFor="license-key" className="text-sm sm:text-base">
+                  License Key
+                </Label>
                 <Input
                   ref={licenseInputRef}
                   id="license-key"
@@ -221,25 +249,22 @@ export function LicenseActivationScreen({
                   onChange={(e) => handleLicenseKeyChange(e.target.value)}
                   onKeyDown={handleKeyDown}
                   onFocus={() => setKeyboardVisible(true)}
-                  className="font-mono text-lg tracking-wider"
+                  className="font-mono text-base sm:text-lg md:text-lg tracking-wider h-11 sm:h-12"
                   disabled={isLoading || isSuccess}
                   autoFocus
                 />
-                <p className="text-xs text-muted-foreground">
-                  Format: AUR-PRO-V2-XXXXXXXX-XX
-                </p>
               </div>
 
               {/* Terminal Name Input */}
-              <div className="space-y-2">
-                <Label htmlFor="terminal-name">
+              <div className="space-y-1">
+                <Label htmlFor="terminal-name" className="text-sm sm:text-base">
                   Terminal Name{" "}
-                  <span className="text-muted-foreground font-normal">
+                  <span className="text-muted-foreground font-normal text-xs sm:text-sm">
                     (optional)
                   </span>
                 </Label>
                 <div className="relative">
-                  <Monitor className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Monitor className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
                   <Input
                     id="terminal-name"
                     type="text"
@@ -247,7 +272,7 @@ export function LicenseActivationScreen({
                     value={terminalName}
                     onChange={(e) => setTerminalName(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    className="pl-10"
+                    className="pl-10 sm:pl-11 text-sm sm:text-base h-11 sm:h-12"
                     disabled={isLoading || isSuccess}
                   />
                 </div>
@@ -257,22 +282,22 @@ export function LicenseActivationScreen({
               <Button
                 onClick={handleActivate}
                 disabled={isLoading || isSuccess || licenseKey.length < 20}
-                className="w-full"
+                className="w-full text-sm sm:text-base h-11 sm:h-12"
                 size="lg"
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin" />
                     Activating...
                   </>
                 ) : isSuccess ? (
                   <>
-                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                    <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                     Activated!
                   </>
                 ) : (
                   <>
-                    <KeyRound className="w-4 h-4 mr-2" />
+                    <KeyRound className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                     Activate License
                   </>
                 )}
@@ -297,13 +322,13 @@ export function LicenseActivationScreen({
           )}
 
           {/* Help Link */}
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-xs sm:text-sm md:text-base text-muted-foreground">
             Need help?{" "}
             <a
               href="https://aurswift.com/support"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary hover:underline"
+              className="text-primary hover:underline font-medium"
             >
               Contact Support
             </a>
