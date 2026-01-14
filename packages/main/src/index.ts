@@ -35,8 +35,27 @@ const logger = getLogger("app-init");
 // Global reference to autoUpdater instance for menu access
 let autoUpdaterInstance: ReturnType<typeof autoUpdater> | null = null;
 
+// Store pending system notifications to send when window is ready
+let pendingSystemNotifications: Array<{ type: string; message: string }> = [];
+
 export function getAutoUpdaterInstance() {
   return autoUpdaterInstance;
+}
+
+/**
+ * Queue a system notification to be sent to renderer when window is ready
+ */
+export function queueSystemNotification(type: string, message: string) {
+  pendingSystemNotifications.push({ type, message });
+}
+
+/**
+ * Get and clear pending system notifications
+ */
+export function getPendingSystemNotifications() {
+  const notifications = [...pendingSystemNotifications];
+  pendingSystemNotifications = []; // Clear after reading
+  return notifications;
 }
 
 export async function initApp(initConfig: AppInitConfig) {
@@ -98,7 +117,7 @@ export async function initApp(initConfig: AppInitConfig) {
   await import("./services/vivaWallet/index.js");
 
   // Initialize email service (with console mode by default - can be configured via settings)
-  await emailService.initialize({
+  const emailInitResult = await emailService.initialize({
     provider: "smtp",
     smtp: {
       host: "smtp.gmail.com", // Your SMTP host
@@ -112,6 +131,11 @@ export async function initApp(initConfig: AppInitConfig) {
     fromEmail: "aurswiftassistanceteam@gmail.com",
     fromName: "AurSwift POS",
   });
+
+  // Queue notification if email service is degraded
+  if (emailInitResult.degraded && emailInitResult.message) {
+    queueSystemNotification("warning", emailInitResult.message);
+  }
 
   // Initialize expiry notification service
   const expiryService = new ExpiryNotificationService(db);

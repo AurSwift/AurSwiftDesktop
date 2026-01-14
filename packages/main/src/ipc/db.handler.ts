@@ -1,4 +1,4 @@
-// Cash Drawer IPC Handlers
+// Database IPC Handlers
 import { ipcMain, dialog, BrowserWindow, app as electronApp } from "electron";
 import fs from "fs/promises";
 import path from "path";
@@ -7,7 +7,258 @@ import { getDatabase, closeDatabase } from "../database/index.js";
 import { getLogger } from "../utils/logger.js";
 
 const logger = getLogger("dbHandlers");
-// let db: any = null; // Removed: Always get fresh DB reference
+
+// ============================================================================
+// LICENSE DATA PRESERVATION HELPERS
+// ============================================================================
+
+interface LicenseBackupData {
+  licenseActivation: any | null;
+  licenseValidationLogs: any[];
+}
+
+/**
+ * Extract license data from a database file before import/replacement
+ * This ensures license data persists across database operations
+ */
+function extractLicenseData(dbPath: string): LicenseBackupData | null {
+  try {
+    const db = new Database(dbPath, { readonly: true });
+
+    // Check if license tables exist
+    const tables = db
+      .prepare(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('license_activation', 'license_validation_log')"
+      )
+      .all() as Array<{ name: string }>;
+
+    const tableNames = tables.map((t) => t.name);
+    let licenseActivation = null;
+    let licenseValidationLogs: any[] = [];
+
+    // Extract license activation (only active one)
+    if (tableNames.includes("license_activation")) {
+      try {
+        licenseActivation = db
+          .prepare(
+            "SELECT * FROM license_activation WHERE is_active = 1 LIMIT 1"
+          )
+          .get();
+
+        if (licenseActivation) {
+          logger.info(
+            `Extracted license activation for key: ${(
+              licenseActivation as any
+            ).license_key?.substring(0, 15)}...`
+          );
+        }
+      } catch (err) {
+        logger.warn("Could not extract license activation:", err);
+      }
+    }
+
+    // Extract recent validation logs (last 100 for audit trail)
+    if (tableNames.includes("license_validation_log")) {
+      try {
+        licenseValidationLogs = db
+          .prepare(
+            "SELECT * FROM license_validation_log ORDER BY timestamp DESC LIMIT 100"
+          )
+          .all();
+
+        logger.info(
+          `Extracted ${licenseValidationLogs.length} license validation logs`
+        );
+      } catch (err) {
+        logger.warn("Could not extract license validation logs:", err);
+      }
+    }
+
+    db.close();
+
+    if (!licenseActivation && licenseValidationLogs.length === 0) {
+      return null;
+    }
+
+    return { licenseActivation, licenseValidationLogs };
+  } catch (error) {
+    logger.error("Failed to extract license data:", error);
+    return null;
+  }
+}
+
+/**
+ * Restore license data to a database after import/replacement
+ */
+function restoreLicenseData(
+  dbPath: string,
+  backupData: LicenseBackupData
+): boolean {
+  try {
+    const db = new Database(dbPath);
+
+    // Start transaction for atomic operation
+    const transaction = db.transaction(() => {
+      // Restore license activation if we have one
+      if (backupData.licenseActivation) {
+        const activation = backupData.licenseActivation;
+
+        // First, deactivate any existing activations in the imported database
+        try {
+          db.prepare(
+            "UPDATE license_activation SET is_active = 0 WHERE is_active = 1"
+          ).run();
+        } catch (err) {
+          // Table might not exist - will be created by upsert
+        }
+
+        // Check if license_activation table exists, create if not
+        const tableExists = db
+          .prepare(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='license_activation'"
+          )
+          .get();
+
+        if (!tableExists) {
+          logger.warn(
+            "license_activation table doesn't exist in imported database - skipping restoration"
+          );
+          logger.info("License will need to be re-activated after import");
+        } else {
+          // Check if this license key already exists
+          const existing = db
+            .prepare("SELECT id FROM license_activation WHERE license_key = ?")
+            .get(activation.license_key);
+
+          if (existing) {
+            // Update existing record
+            db.prepare(
+              `
+              UPDATE license_activation SET
+                machine_id_hash = ?,
+                terminal_name = ?,
+                activation_id = ?,
+                plan_id = ?,
+                plan_name = ?,
+                max_terminals = ?,
+                features = ?,
+                business_name = ?,
+                is_active = 1,
+                subscription_status = ?,
+                expires_at = ?,
+                trial_end = ?,
+                activated_at = ?,
+                last_heartbeat = ?,
+                last_validated_at = ?,
+                updated_at = ?
+              WHERE license_key = ?
+            `
+            ).run(
+              activation.machine_id_hash,
+              activation.terminal_name,
+              activation.activation_id,
+              activation.plan_id,
+              activation.plan_name,
+              activation.max_terminals,
+              activation.features,
+              activation.business_name,
+              activation.subscription_status,
+              activation.expires_at,
+              activation.trial_end,
+              activation.activated_at,
+              activation.last_heartbeat,
+              activation.last_validated_at,
+              Date.now(),
+              activation.license_key
+            );
+          } else {
+            // Insert new record
+            db.prepare(
+              `
+              INSERT INTO license_activation (
+                license_key, machine_id_hash, terminal_name, activation_id,
+                plan_id, plan_name, max_terminals, features, business_name,
+                is_active, subscription_status, expires_at, trial_end,
+                activated_at, last_heartbeat, last_validated_at, created_at, updated_at
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?)
+            `
+            ).run(
+              activation.license_key,
+              activation.machine_id_hash,
+              activation.terminal_name,
+              activation.activation_id,
+              activation.plan_id,
+              activation.plan_name,
+              activation.max_terminals,
+              activation.features,
+              activation.business_name,
+              activation.subscription_status,
+              activation.expires_at,
+              activation.trial_end,
+              activation.activated_at,
+              activation.last_heartbeat,
+              activation.last_validated_at,
+              activation.created_at || Date.now(),
+              Date.now()
+            );
+          }
+
+          logger.info(
+            `Restored license activation for key: ${activation.license_key?.substring(
+              0,
+              15
+            )}...`
+          );
+        }
+      }
+
+      // Restore recent validation logs (for audit trail)
+      if (backupData.licenseValidationLogs.length > 0) {
+        const logTableExists = db
+          .prepare(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='license_validation_log'"
+          )
+          .get();
+
+        if (logTableExists) {
+          const insertLog = db.prepare(`
+            INSERT OR IGNORE INTO license_validation_log (
+              action, status, license_key, machine_id_hash, error_message, server_response, timestamp
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+          `);
+
+          for (const log of backupData.licenseValidationLogs) {
+            try {
+              insertLog.run(
+                log.action,
+                log.status,
+                log.license_key,
+                log.machine_id_hash,
+                log.error_message,
+                log.server_response,
+                log.timestamp
+              );
+            } catch (err) {
+              // Ignore duplicate entries
+            }
+          }
+
+          logger.info(
+            `Restored ${backupData.licenseValidationLogs.length} validation log entries`
+          );
+        }
+      }
+    });
+
+    transaction();
+    db.close();
+
+    return true;
+  } catch (error) {
+    logger.error("Failed to restore license data:", error);
+    return false;
+  }
+}
 
 export function registerDbHandlers() {
   ipcMain.handle("database:getInfo", async () => {
@@ -243,6 +494,7 @@ export function registerDbHandlers() {
 
         // Validate aurswift schema - check for required tables
         const tableNames = tables.map((t: any) => t.name);
+        // Core business tables required for a valid aurswift database
         const requiredTables = [
           "users",
           "businesses",
@@ -251,6 +503,10 @@ export function registerDbHandlers() {
           "transactions",
           "sessions",
         ];
+
+        // License tables are NOT required in imported databases
+        // They will be created by migrations and re-activation will restore license
+        // This allows importing older backups that pre-date the license system
 
         const missingTables = requiredTables.filter(
           (table) => !tableNames.includes(table)
@@ -331,11 +587,25 @@ export function registerDbHandlers() {
 
       // Backup current database
       let backupCreated = false;
+      let licenseBackup: LicenseBackupData | null = null;
+
       if (info.exists) {
         try {
           await fs.copyFile(info.path, backupPath);
           logger.info(`Current database backed up to: ${backupPath}`);
           backupCreated = true;
+
+          // 🔐 CRITICAL: Extract license data BEFORE replacing database
+          // This ensures license persists across database imports
+          logger.info("Extracting license data from current database...");
+          licenseBackup = extractLicenseData(info.path);
+          if (licenseBackup?.licenseActivation) {
+            logger.info(
+              "✅ License data extracted - will be restored after import"
+            );
+          } else {
+            logger.info("No active license found in current database");
+          }
         } catch (backupError) {
           logger.error("Failed to create backup:", backupError);
           return {
@@ -455,6 +725,20 @@ export function registerDbHandlers() {
         logger.info(
           "✅ Database reinitialized successfully with imported file"
         );
+
+        // 🔐 CRITICAL: Restore license data AFTER database is reinitialized
+        // This ensures user doesn't need to re-enter license key after import
+        if (licenseBackup?.licenseActivation) {
+          logger.info("Restoring license data to imported database...");
+          const restored = restoreLicenseData(info.path, licenseBackup);
+          if (restored) {
+            logger.info("✅ License data restored successfully");
+          } else {
+            logger.warn(
+              "⚠️ License restoration failed - user may need to re-activate"
+            );
+          }
+        }
       } catch (reinitError) {
         logger.error(
           "❌ Failed to reinitialize database after import:",
@@ -492,8 +776,11 @@ export function registerDbHandlers() {
           importSize,
           backupPath: info.exists ? backupPath : undefined,
           newSize: newStats.size,
+          licensePreserved: !!licenseBackup?.licenseActivation,
         },
-        message: "Database imported successfully",
+        message: licenseBackup?.licenseActivation
+          ? "Database imported successfully. Your license has been preserved."
+          : "Database imported successfully",
       };
     } catch (error) {
       logger.error("Database import error:", error);

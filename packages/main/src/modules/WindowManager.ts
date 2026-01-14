@@ -238,6 +238,21 @@ class WindowManager implements AppModule {
       await browserWindow.loadFile(this.#renderer.path);
     }
 
+    // Send any queued system notifications after window loads
+    browserWindow.webContents.once("did-finish-load", () => {
+      try {
+        const { getPendingSystemNotifications } = require("../index.js");
+        const notifications = getPendingSystemNotifications();
+        notifications.forEach(
+          (notification: { type: string; message: string }) => {
+            browserWindow.webContents.send("system:notification", notification);
+          }
+        );
+      } catch (error) {
+        // Ignore if function not available
+      }
+    });
+
     return browserWindow;
   }
 

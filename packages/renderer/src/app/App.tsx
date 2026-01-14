@@ -15,6 +15,43 @@ import {
   useLicenseContext,
 } from "@/features/license";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+
+/**
+ * System notification listener
+ * Handles system-level notifications from main process
+ */
+function useSystemNotifications() {
+  useEffect(() => {
+    // Check if API is available (preload script loaded)
+    if (!window.systemNotificationsAPI?.onNotification) {
+      return;
+    }
+
+    const cleanup = window.systemNotificationsAPI.onNotification(
+      (data: { type: string; message: string }) => {
+        switch (data.type) {
+          case "warning":
+            toast.warning(data.message, { duration: 5000 });
+            break;
+          case "error":
+            toast.error(data.message, { duration: 5000 });
+            break;
+          case "info":
+            toast.info(data.message, { duration: 5000 });
+            break;
+          case "success":
+            toast.success(data.message, { duration: 5000 });
+            break;
+          default:
+            toast(data.message, { duration: 5000 });
+        }
+      }
+    );
+
+    return cleanup;
+  }, []);
+}
 
 /**
  * Loading screen shown while checking license status
@@ -74,6 +111,9 @@ function AppContent() {
 function AppWithLicenseCheck() {
   const { isLoading, isActivated, refreshStatus } = useLicenseContext();
   const [showActivation, setShowActivation] = useState(false);
+
+  // Listen for system notifications
+  useSystemNotifications();
 
   useEffect(() => {
     // Once loading is complete, determine if we need activation

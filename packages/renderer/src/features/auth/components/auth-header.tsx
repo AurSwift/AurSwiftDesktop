@@ -1,8 +1,9 @@
-import { BatteryFull, Bell, Store, Wifi, Power } from "lucide-react";
+import { BatteryFull, Bell, Store, Power } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getAppVersion } from "@/shared/utils/version";
 import { Button } from "@/components/ui/button";
 import { getLogger } from "@/shared/utils/logger";
+import { WiFiStatusIcon } from "@/features/license";
 
 const logger = getLogger("auth-header");
 
@@ -57,7 +58,7 @@ export function AuthHeader() {
       {/* Right: Status Area */}
       <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 min-w-0">
         <span className="hidden md:inline-flex items-center gap-1.5 lg:gap-2 text-gray-400">
-          <Wifi className="w-4 h-4 lg:w-5 lg:h-5" aria-label="Network Status" />
+          <WiFiStatusIcon />
           <BatteryFull
             className="w-4 h-4 lg:w-5 lg:h-5"
             aria-label="Battery Status"

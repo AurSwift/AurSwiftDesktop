@@ -29,20 +29,82 @@ export function LicenseProvider({ children }: { children: React.ReactNode }) {
     null
   );
   const [isInitialized, setIsInitialized] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Clear error
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
 
   // Refresh license status
   const refreshStatus = useCallback(async () => {
-    const status = await getStatus();
-    setLicenseStatus(status);
-  }, [getStatus]);
-
-  // Initialize on mount (only once)
-  useEffect(() => {
-    const init = async () => {
-      await licenseInitialize();
+    try {
       const status = await getStatus();
       setLicenseStatus(status);
-      setIsInitialized(true);
+      setError(null); // Clear any previous errors on successful refresh
+    } catch (err) {
+      logger.error("Failed to refresh license status:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to refresh license status"
+      );
+    }
+  }, [getStatus]);
+
+  // Initialize on mount with retry logic
+  useEffect(() => {
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY_MS = 1000;
+
+    const init = async (): Promise<void> => {
+      try {
+        logger.info("Initializing license system...");
+        const result = await licenseInitialize();
+
+        if (!result.success && result.message) {
+          // Initialization returned an error but didn't throw
+          // This could be network issue, grace period expired, etc.
+          logger.warn("License initialization warning:", result.message);
+
+          // Only set error if it's a critical issue (not just "not activated")
+          if (
+            !result.message.includes("not activated") &&
+            !result.message.includes("No local activation")
+          ) {
+            setError(result.message);
+          }
+        }
+
+        const status = await getStatus();
+        setLicenseStatus(status);
+        setIsInitialized(true);
+        logger.info("License system initialized successfully");
+      } catch (err) {
+        logger.error(
+          `License initialization failed (attempt ${
+            retryCount + 1
+          }/${MAX_RETRIES}):`,
+          err
+        );
+
+        // Retry on failure (database might not be ready yet)
+        if (retryCount < MAX_RETRIES - 1) {
+          retryCount++;
+          logger.info(
+            `Retrying license initialization in ${RETRY_DELAY_MS}ms...`
+          );
+          await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+          return init(); // Retry
+        }
+
+        // Max retries exceeded
+        setError(
+          err instanceof Error
+            ? err.message
+            : "License initialization failed after multiple attempts"
+        );
+        setIsInitialized(true); // Mark as initialized even on failure to unblock UI
+      }
     };
 
     init();
@@ -136,6 +198,8 @@ export function LicenseProvider({ children }: { children: React.ReactNode }) {
     isActivated: licenseStatus?.isActivated ?? false,
     isLoading: licenseIsLoading || !isInitialized,
     licenseStatus,
+    error,
+    clearError,
     refreshStatus,
     activate,
     deactivate,

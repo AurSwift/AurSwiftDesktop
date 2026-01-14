@@ -11,7 +11,11 @@
 import { ipcMain, BrowserWindow } from "electron";
 import { eq } from "drizzle-orm";
 import { getDrizzle } from "../database/drizzle.js";
-import { licenseActivation, licenseValidationLog, terminals } from "../database/schema.js";
+import {
+  licenseActivation,
+  licenseValidationLog,
+  terminals,
+} from "../database/schema.js";
 import { getLogger } from "../utils/logger.js";
 import {
   generateMachineFingerprint,
@@ -216,13 +220,78 @@ async function updateHeartbeat(
 
 /**
  * Deactivate a license by ID
+ * IMPORTANT: Preserves license key data for easy re-activation
+ *
+ * @param licenseId - ID of the license to deactivate
+ * @param reason - Reason for deactivation (for logging)
+ * @param preserveForReactivation - If true, keeps license record for one-click reactivation
  */
-async function deactivateLocalLicense(licenseId: number) {
+async function deactivateLocalLicense(
+  licenseId: number,
+  reason?: string,
+  preserveForReactivation: boolean = true
+) {
   const drizzle = getDrizzle();
-  await drizzle
-    .update(licenseActivation)
-    .set({ isActive: false })
-    .where(eq(licenseActivation.id, licenseId));
+
+  if (preserveForReactivation) {
+    // Set isActive=false but keep the record
+    // This allows user to re-activate with one click when internet returns
+    await drizzle
+      .update(licenseActivation)
+      .set({
+        isActive: false,
+        updatedAt: new Date(),
+      })
+      .where(eq(licenseActivation.id, licenseId));
+
+    logger.info(`License deactivated but preserved for re-activation`, {
+      licenseId,
+      reason: reason || "unknown",
+    });
+  } else {
+    // Complete deactivation (e.g., when license is revoked by server)
+    await drizzle
+      .update(licenseActivation)
+      .set({ isActive: false })
+      .where(eq(licenseActivation.id, licenseId));
+
+    logger.info(`License fully deactivated`, {
+      licenseId,
+      reason: reason || "unknown",
+    });
+  }
+}
+
+// Track if we're currently in offline mode (last heartbeat/connection attempt failed)
+let isCurrentlyOffline = false;
+let lastConnectionError: string | null = null;
+
+/**
+ * Quick check if the license server is reachable
+ * Uses a simple HEAD request with short timeout
+ */
+async function checkServerConnectivity(): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+    const response = await fetch(`${LICENSE_API_URL}/health`, {
+      method: "HEAD",
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+    isCurrentlyOffline = !response.ok;
+    if (response.ok) {
+      lastConnectionError = null;
+    }
+    return response.ok;
+  } catch (error) {
+    isCurrentlyOffline = true;
+    lastConnectionError =
+      error instanceof Error ? error.message : "Connection failed";
+    return false;
+  }
 }
 
 /**
@@ -235,6 +304,54 @@ function isWithinGracePeriod(lastHeartbeat: Date | null): boolean {
     lastHeartbeat.getTime() + OFFLINE_GRACE_PERIOD_MS
   );
   return now < gracePeriodEnd;
+}
+
+/**
+ * Calculate detailed grace period status for UI
+ *
+ * @returns Grace period information including days remaining and warning level
+ */
+function calculateGracePeriodStatus(lastHeartbeat: Date | null): {
+  withinGracePeriod: boolean;
+  daysRemaining: number | null;
+  warningLevel: "none" | "low" | "high" | "expired";
+  gracePeriodEnd: Date | null;
+} {
+  if (!lastHeartbeat) {
+    return {
+      withinGracePeriod: false,
+      daysRemaining: null,
+      warningLevel: "expired",
+      gracePeriodEnd: null,
+    };
+  }
+
+  const now = new Date();
+  const gracePeriodEnd = new Date(
+    lastHeartbeat.getTime() + OFFLINE_GRACE_PERIOD_MS
+  );
+  const msRemaining = gracePeriodEnd.getTime() - now.getTime();
+  const daysRemaining = msRemaining / (1000 * 60 * 60 * 24);
+  const withinGracePeriod = msRemaining > 0;
+
+  // Progressive warning levels based on days remaining
+  let warningLevel: "none" | "low" | "high" | "expired";
+  if (!withinGracePeriod) {
+    warningLevel = "expired";
+  } else if (daysRemaining <= 1) {
+    warningLevel = "high"; // Less than 1 day - urgent warning
+  } else if (daysRemaining <= 3) {
+    warningLevel = "high"; // Less than 3 days - prominent warning
+  } else {
+    warningLevel = "low"; // 3-7 days - subtle notification
+  }
+
+  return {
+    withinGracePeriod,
+    daysRemaining: withinGracePeriod ? Math.max(0, daysRemaining) : null,
+    warningLevel,
+    gracePeriodEnd,
+  };
 }
 
 /**
@@ -292,10 +409,14 @@ function startHeartbeatTimer(licenseKey: string, customIntervalMs?: number) {
           stopHeartbeatTimer();
           disconnectSSEClient();
 
-          // Deactivate locally
+          // Deactivate locally but preserve for re-activation
           const activation = await getLocalActivation();
           if (activation) {
-            await deactivateLocalLicense(activation.id);
+            await deactivateLocalLicense(
+              activation.id,
+              "subscription_expired",
+              true
+            );
           }
 
           // Notify renderer process
@@ -328,12 +449,56 @@ function startHeartbeatTimer(licenseKey: string, customIntervalMs?: number) {
           result.message
         );
 
+        // 🔴 CONTINUOUS GRACE PERIOD CHECK: Verify grace period during long-running sessions
+        // This catches the case where app runs continuously but loses internet for >7 days
+        const activation = await getLocalActivation();
+        if (activation && !isWithinGracePeriod(activation.lastHeartbeat)) {
+          logger.warn(
+            "Grace period expired during long-running session - disabling license"
+          );
+
+          // Stop timers
+          stopHeartbeatTimer();
+          disconnectSSEClient();
+
+          // Deactivate locally BUT preserve for easy re-activation
+          await deactivateLocalLicense(
+            activation.id,
+            "grace_period_expired",
+            true
+          );
+
+          // Notify renderer process
+          emitLicenseEvent("license:disabled", {
+            reason:
+              "Offline grace period expired. Please reconnect to verify your license.",
+            gracePeriodExpired: true,
+          });
+          return;
+        }
+
         // Notify user after consecutive failures
         if (consecutiveHeartbeatFailures >= MAX_CONSECUTIVE_FAILURES) {
+          // Calculate remaining grace period for user notification
+          const gracePeriodRemaining = activation?.lastHeartbeat
+            ? Math.max(
+                0,
+                (activation.lastHeartbeat.getTime() +
+                  OFFLINE_GRACE_PERIOD_MS -
+                  Date.now()) /
+                  1000 /
+                  60 /
+                  60 /
+                  24
+              )
+            : 0;
+
           emitLicenseEvent("license:connectionIssue", {
             failureCount: consecutiveHeartbeatFailures,
             message:
               "Unable to verify license. Please check your internet connection.",
+            gracePeriodRemainingDays:
+              Math.round(gracePeriodRemaining * 10) / 10,
           });
         }
       }
@@ -563,7 +728,8 @@ async function handleSSEEvent(event: SubscriptionEvent): Promise<void> {
           activationId: activation.id,
         });
 
-        await deactivateLocalLicense(activation.id);
+        // Server explicitly revoked - do NOT preserve for reactivation
+        await deactivateLocalLicense(activation.id, "server_revocation", false);
         logger.info("License deactivated locally");
 
         stopHeartbeatTimer();
@@ -722,10 +888,7 @@ function initializeSSE(
     client.on(
       "license_validation_required",
       async (data: { reason: string; statusCode: number }) => {
-        logger.warn(
-          "SSE returned 401 - triggering immediate validation",
-          data
-        );
+        logger.warn("SSE returned 401 - triggering immediate validation", data);
 
         try {
           const result = await sendHeartbeat(licenseKey);
@@ -743,7 +906,9 @@ function initializeSSE(
           const shouldDeactivate = result.data?.shouldDisable === true;
 
           if (shouldDeactivate) {
-            logger.error("License validation confirmed: license should be disabled");
+            logger.error(
+              "License validation confirmed: license should be disabled"
+            );
 
             // Stop timers
             stopHeartbeatTimer();
@@ -802,8 +967,10 @@ export function registerLicenseHandlers() {
         };
       }
 
-      // Check if within grace period if offline
-      const withinGracePeriod = isWithinGracePeriod(activation.lastHeartbeat);
+      // Calculate detailed grace period status
+      const gracePeriodStatus = calculateGracePeriodStatus(
+        activation.lastHeartbeat
+      );
 
       // Calculate days since last heartbeat
       const daysSinceHeartbeat = activation.lastHeartbeat
@@ -812,6 +979,18 @@ export function registerLicenseHandlers() {
               (24 * 60 * 60 * 1000)
           )
         : null;
+
+      // Check current connectivity (quick check)
+      const isOnline = await checkServerConnectivity();
+
+      // Determine if in offline mode:
+      // 1. Currently offline (can't reach server), OR
+      // 2. Has stale heartbeat data (more than 0 days since heartbeat)
+      const isOfflineMode =
+        !isOnline ||
+        (gracePeriodStatus.withinGracePeriod &&
+          daysSinceHeartbeat !== null &&
+          daysSinceHeartbeat > 0);
 
       return {
         success: true,
@@ -829,8 +1008,22 @@ export function registerLicenseHandlers() {
           activatedAt: activation.activatedAt?.toISOString(),
           lastHeartbeat: activation.lastHeartbeat?.toISOString(),
           daysSinceHeartbeat,
-          withinGracePeriod,
+          withinGracePeriod: gracePeriodStatus.withinGracePeriod,
           gracePeriodDays: 7,
+
+          // Enhanced offline/grace period status
+          isOfflineMode,
+          isOnline, // Expose current connectivity status
+          gracePeriodRemainingDays: gracePeriodStatus.daysRemaining,
+          gracePeriodWarningLevel: isOfflineMode
+            ? gracePeriodStatus.warningLevel === "none"
+              ? "low"
+              : gracePeriodStatus.warningLevel
+            : "none",
+          canRetryConnection: isOfflineMode, // Can retry if offline
+          lastConnectionAttempt:
+            activation.lastValidatedAt?.toISOString() || null,
+          connectionError: lastConnectionError, // Include error message if any
         },
       };
     } catch (error) {
@@ -1127,11 +1320,133 @@ export function registerLicenseHandlers() {
         },
       };
     } catch (error) {
-      logger.error("Failed to get machine info:", error);
+      logger.error("Get machine info error:", error);
       return {
         success: false,
         message:
           error instanceof Error ? error.message : "Failed to get machine info",
+      };
+    }
+  });
+
+  /**
+   * Retry connection to license server
+   * Manual reconnect attempt when in offline mode
+   */
+  ipcMain.handle("license:retryConnection", async () => {
+    try {
+      const activation = await getLocalActivation();
+
+      if (!activation) {
+        return {
+          success: false,
+          message: "No license found to retry",
+        };
+      }
+
+      if (activation.isActive) {
+        // License is active - try to send heartbeat to verify connection
+        logger.info("Retrying connection to license server...");
+
+        const result = await sendHeartbeat(activation.licenseKey);
+
+        if (result.success) {
+          // Connection successful! Update heartbeat
+          await updateHeartbeat(
+            result.data?.subscriptionStatus,
+            result.data?.trialEnd
+          );
+
+          logger.info("Connection retry successful - back online");
+
+          emitLicenseEvent("license:connectionRestored", {
+            subscriptionStatus: result.data?.subscriptionStatus,
+          });
+
+          return {
+            success: true,
+            message: "Connection restored successfully",
+            data: {
+              subscriptionStatus: result.data?.subscriptionStatus,
+              isOnline: true,
+            },
+          };
+        } else {
+          logger.warn("Connection retry failed:", result.message);
+
+          return {
+            success: false,
+            message: result.message || "Unable to reach license server",
+            canRetry: true,
+          };
+        }
+      } else {
+        // License is inactive - attempt re-activation with stored key
+        logger.info(
+          "License inactive - attempting re-activation with stored key..."
+        );
+
+        const machineIdHash = generateMachineFingerprint();
+        const result = await activateLicense({
+          licenseKey: activation.licenseKey,
+          terminalName: activation.terminalName,
+        });
+
+        if (result.success && result.data) {
+          // Re-activation successful!
+          await storeLocalActivation({
+            licenseKey: activation.licenseKey,
+            machineIdHash,
+            terminalName: result.data.terminalName || activation.terminalName,
+            activationId: result.data.activationId,
+            planId: result.data.planId,
+            planName: result.data.planName,
+            maxTerminals: result.data.maxTerminals,
+            features: result.data.features,
+            businessName: result.data.businessName,
+            subscriptionStatus: result.data.subscriptionStatus,
+            expiresAt: result.data.expiresAt,
+            trialEnd: result.data.trialEnd ?? null,
+          });
+
+          // Restart timers
+          const apiBaseUrl =
+            process.env.LICENSE_API_URL || "http://localhost:3000";
+          initializeSSE(activation.licenseKey, machineIdHash, apiBaseUrl);
+          startHeartbeatTimer(activation.licenseKey);
+
+          logger.info("Re-activation successful after offline period");
+
+          emitLicenseEvent("license:reactivated", {
+            planId: result.data.planId,
+            subscriptionStatus: result.data.subscriptionStatus,
+          });
+
+          return {
+            success: true,
+            message: "License re-activated successfully",
+            data: {
+              planId: result.data.planId,
+              subscriptionStatus: result.data.subscriptionStatus,
+            },
+          };
+        } else {
+          logger.warn("Re-activation failed:", result.message);
+
+          return {
+            success: false,
+            message: result.message || "Unable to re-activate license",
+            canRetry: true,
+          };
+        }
+      }
+    } catch (error) {
+      logger.error("Connection retry error:", error);
+      return {
+        success: false,
+        message:
+          error instanceof Error ? error.message : "Failed to retry connection",
+        canRetry: true,
       };
     }
   });
@@ -1322,8 +1637,12 @@ export function registerLicenseHandlers() {
           // network interfaces changed, VPN adapters were added/removed, etc.
           const isNotActivatedError =
             validationResult.message?.toLowerCase().includes("not activated") ||
-            validationResult.message?.toLowerCase().includes("machine not found") ||
-            validationResult.message?.toLowerCase().includes("not activated on this device");
+            validationResult.message
+              ?.toLowerCase()
+              .includes("machine not found") ||
+            validationResult.message
+              ?.toLowerCase()
+              .includes("not activated on this device");
 
           if (fingerprintChanged || isNotActivatedError) {
             logger.info(
@@ -1346,14 +1665,17 @@ export function registerLicenseHandlers() {
                 await storeLocalActivation({
                   licenseKey: activation.licenseKey,
                   machineIdHash,
-                  terminalName: reactivationResult.data.terminalName || activation.terminalName,
+                  terminalName:
+                    reactivationResult.data.terminalName ||
+                    activation.terminalName,
                   activationId: reactivationResult.data.activationId,
                   planId: reactivationResult.data.planId,
                   planName: reactivationResult.data.planName,
                   maxTerminals: reactivationResult.data.maxTerminals,
                   features: reactivationResult.data.features,
                   businessName: reactivationResult.data.businessName,
-                  subscriptionStatus: reactivationResult.data.subscriptionStatus,
+                  subscriptionStatus:
+                    reactivationResult.data.subscriptionStatus,
                   expiresAt: reactivationResult.data.expiresAt,
                   trialEnd: reactivationResult.data.trialEnd ?? null,
                 });
@@ -1378,12 +1700,16 @@ export function registerLicenseHandlers() {
                     planName: reactivationResult.data.planName,
                     features: reactivationResult.data.features,
                     businessName: reactivationResult.data.businessName,
-                    subscriptionStatus: reactivationResult.data.subscriptionStatus,
+                    subscriptionStatus:
+                      reactivationResult.data.subscriptionStatus,
                     sseEnabled: true,
                   },
                 };
               } else {
-                logger.warn("Auto-reactivation failed:", reactivationResult.message);
+                logger.warn(
+                  "Auto-reactivation failed:",
+                  reactivationResult.message
+                );
                 await logValidationAttempt(
                   "fingerprint_migration",
                   "failed",

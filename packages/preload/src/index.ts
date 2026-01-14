@@ -21,6 +21,7 @@ import {
   scaleAPI,
   appAPI,
   vivaWalletAPI,
+  systemNotificationsAPI,
 } from "./api/system.js";
 import { ageVerificationAPI } from "./api/ageVerification.js";
 import { batchesAPI } from "./api/batches.js";
@@ -81,6 +82,10 @@ contextBridge.exposeInMainWorld("businessAPI", businessAPI);
 contextBridge.exposeInMainWorld("terminalsAPI", terminalsAPI);
 contextBridge.exposeInMainWorld("licenseAPI", licenseAPI);
 contextBridge.exposeInMainWorld("reportsExportAPI", reportsExportAPI);
+contextBridge.exposeInMainWorld(
+  "systemNotificationsAPI",
+  systemNotificationsAPI
+);
 
 // Generic IPC send function for testing and general IPC communication
 export const send = (channel: string, ...args: any[]) =>

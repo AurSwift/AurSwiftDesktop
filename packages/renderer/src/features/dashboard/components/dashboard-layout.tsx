@@ -15,6 +15,7 @@ import { useAuth } from "@/shared/hooks/use-auth";
 import { ClockOutWarningDialog } from "@/features/auth/components/clock-out-warning-dialog";
 import { userHasAnyRole } from "@/shared/utils/rbac-helpers";
 import { LicenseHeaderBadge } from "./license-header-badge";
+import { WiFiStatusIcon } from "@/features/license";
 
 import { getLogger } from "@/shared/utils/logger";
 const logger = getLogger("dashboard-layout");
@@ -168,6 +169,7 @@ export function DashboardLayout({ children, subtitle }: DashboardLayoutProps) {
             <Button variant="ghost" size="sm">
               <Settings className="w-4 h-4" />
             </Button>
+            <WiFiStatusIcon size={18} />
             <LicenseHeaderBadge />
             <div className="flex items-center gap-3 pl-3 border-l">
               <div className="flex items-center gap-2">

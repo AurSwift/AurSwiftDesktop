@@ -99,8 +99,11 @@ class EmailService {
 
   /**
    * Initialize email service with configuration
+   * @returns Status object indicating if service is in degraded mode
    */
-  async initialize(config: EmailConfig): Promise<void> {
+  async initialize(
+    config: EmailConfig
+  ): Promise<{ success: boolean; degraded: boolean; message?: string }> {
     this.config = config;
 
     if (config.provider === "smtp" && config.smtp) {
@@ -111,7 +114,11 @@ class EmailService {
       } catch (error) {
         logger.warn("nodemailer not installed, falling back to console mode");
         this.config = { ...config, provider: "console" };
-        return;
+        return {
+          success: true,
+          degraded: true,
+          message: "Email service unavailable - nodemailer not installed",
+        };
       }
 
       this.transporter = nodemailerModule.createTransport({
@@ -125,18 +132,38 @@ class EmailService {
       try {
         await this.transporter.verify();
         logger.info("Email service initialized successfully (SMTP)");
+        return { success: true, degraded: false };
       } catch (error) {
-        logger.error("Failed to verify SMTP connection:", error);
-        throw new Error("SMTP connection failed");
+        logger.warn(
+          "Failed to verify SMTP connection (possibly offline), email sending will be attempted when needed:",
+          error
+        );
+        // Don't throw - allow the service to continue in degraded mode
+        // Emails will fail when attempted, but app will still work
+        logger.info(
+          "Email service initialized in degraded mode - emails may fail until network is restored"
+        );
+        return {
+          success: true,
+          degraded: true,
+          message:
+            "Email service offline - emails will not be sent until network is restored",
+        };
       }
     } else if (config.provider === "console") {
       logger.info(
         "Email service initialized (console mode - emails will be logged)"
       );
+      return { success: true, degraded: false };
     } else {
       logger.warn(
         `Email provider ${config.provider} not yet implemented, using console mode`
       );
+      return {
+        success: true,
+        degraded: true,
+        message: `Email provider ${config.provider} not implemented`,
+      };
     }
   }
 
@@ -569,9 +596,15 @@ Thank you for shopping with ${businessName}!
       .map(
         (item) => `
       <tr>
-        <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.name}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity || 1}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">£${item.totalPrice.toFixed(2)}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee;">${
+          item.name
+        }</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${
+          item.quantity || 1
+        }</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">£${item.totalPrice.toFixed(
+          2
+        )}</td>
       </tr>
     `
       )
@@ -612,7 +645,9 @@ Thank you for shopping with ${businessName}!
 
   <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
     <div style="margin-bottom: 20px;">
-      <p style="margin: 5px 0;"><strong>Order Ref:</strong> ${data.receiptNumber}</p>
+      <p style="margin: 5px 0;"><strong>Order Ref:</strong> ${
+        data.receiptNumber
+      }</p>
       <p style="margin: 5px 0;"><strong>Till No:</strong> Till01</p>
     </div>
 
@@ -632,13 +667,19 @@ Thank you for shopping with ${businessName}!
     </div>
 
     <div style="margin: 20px 0;">
-      <p style="margin: 5px 0;"><strong>Grand Total:</strong> £${data.total.toFixed(2)}</p>
+      <p style="margin: 5px 0;"><strong>Grand Total:</strong> £${data.total.toFixed(
+        2
+      )}</p>
       <p style="margin: 5px 0;"><strong>Number Of Items:</strong> ${data.items.reduce(
         (sum, item) => sum + (item.quantity || 1),
         0
       )}</p>
-      <p style="margin: 5px 0;"><strong>Total:</strong> £${data.total.toFixed(2)}</p>
-      <p style="margin: 5px 0;"><strong>VAT Value:</strong> £${data.tax.toFixed(2)}</p>
+      <p style="margin: 5px 0;"><strong>Total:</strong> £${data.total.toFixed(
+        2
+      )}</p>
+      <p style="margin: 5px 0;"><strong>VAT Value:</strong> £${data.tax.toFixed(
+        2
+      )}</p>
     </div>
 
     <div style="margin: 20px 0;">
@@ -686,7 +727,9 @@ Thank you for shopping with ${businessName}!
     const itemsText = data.items
       .map(
         (item) =>
-          `  ${item.name}\n  Qty: ${item.quantity || 1} | Total: £${item.totalPrice.toFixed(2)}`
+          `  ${item.name}\n  Qty: ${
+            item.quantity || 1
+          } | Total: £${item.totalPrice.toFixed(2)}`
       )
       .join("\n\n");
 

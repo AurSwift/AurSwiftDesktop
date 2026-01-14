@@ -8,6 +8,8 @@
 export { LicenseActivationScreen } from "./components/license-activation-screen.js";
 export { LicenseStatusBadge } from "./components/license-status-badge.js";
 export { LicenseInfoModal } from "./components/license-info-modal.js";
+export { OfflineWarningBanner } from "./components/offline-warning-banner.js";
+export { WiFiStatusIcon } from "./components/wifi-status-icon.js";
 
 // Pages
 export { LicenseInfoPage } from "./pages/license-info-page.js";

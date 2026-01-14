@@ -22,6 +22,13 @@ export interface LicenseStatus {
   daysSinceHeartbeat?: number | null;
   withinGracePeriod?: boolean;
   gracePeriodDays?: number;
+
+  // Enhanced offline/grace period status
+  isOfflineMode?: boolean; // True when server unreachable but within grace
+  gracePeriodRemainingDays?: number | null; // Days left in grace period (null if online)
+  gracePeriodWarningLevel?: "none" | "low" | "high" | "expired"; // Progressive warning levels
+  canRetryConnection?: boolean; // Whether user can manually retry connection
+  lastConnectionAttempt?: string | null; // Timestamp of last connection attempt
 }
 
 export interface LicenseActivationResult {
@@ -74,7 +81,8 @@ export function useLicense() {
         ...result.data,
       };
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to get license status";
+      const message =
+        err instanceof Error ? err.message : "Failed to get license status";
       setError(message);
       return null;
     } finally {
@@ -94,7 +102,10 @@ export function useLicense() {
       setError(null);
 
       try {
-        const result = await window.licenseAPI.activate(licenseKey, terminalName);
+        const result = await window.licenseAPI.activate(
+          licenseKey,
+          terminalName
+        );
 
         if (!result.success) {
           setError(result.message || "Activation failed");
@@ -102,7 +113,8 @@ export function useLicense() {
 
         return result;
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Activation failed";
+        const message =
+          err instanceof Error ? err.message : "Activation failed";
         setError(message);
         return { success: false, message };
       } finally {
@@ -152,7 +164,8 @@ export function useLicense() {
 
       return result;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Deactivation failed";
+      const message =
+        err instanceof Error ? err.message : "Deactivation failed";
       setError(message);
       return { success: false, message };
     } finally {
@@ -180,14 +193,17 @@ export function useLicense() {
   /**
    * Check if a feature is enabled
    */
-  const hasFeature = useCallback(async (featureName: string): Promise<boolean> => {
-    try {
-      const result = await window.licenseAPI.hasFeature(featureName);
-      return result.success && result.hasFeature;
-    } catch {
-      return false;
-    }
-  }, []);
+  const hasFeature = useCallback(
+    async (featureName: string): Promise<boolean> => {
+      try {
+        const result = await window.licenseAPI.hasFeature(featureName);
+        return result.success && result.hasFeature;
+      } catch {
+        return false;
+      }
+    },
+    []
+  );
 
   /**
    * Initialize license system
@@ -197,7 +213,8 @@ export function useLicense() {
       const result = await window.licenseAPI.initialize();
       return result;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Initialization failed";
+      const message =
+        err instanceof Error ? err.message : "Initialization failed";
       return { success: false, message, isActivated: false };
     }
   }, []);

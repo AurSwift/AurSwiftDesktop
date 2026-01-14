@@ -175,3 +175,27 @@ export const vivaWalletAPI = {
   testConnection: (terminalId: string) =>
     ipcRenderer.invoke("viva:test-connection", terminalId),
 };
+
+/**
+ * System notifications API
+ * Handles system-level notifications from main process
+ */
+export const systemNotificationsAPI = {
+  /**
+   * Listen for system notifications
+   * @param callback Function to handle notification data
+   * @returns Cleanup function to remove listener
+   */
+  onNotification: (
+    callback: (data: { type: string; message: string }) => void
+  ): (() => void) => {
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      data: { type: string; message: string }
+    ) => callback(data);
+    ipcRenderer.on("system:notification", handler);
+    return () => {
+      ipcRenderer.removeListener("system:notification", handler);
+    };
+  },
+};

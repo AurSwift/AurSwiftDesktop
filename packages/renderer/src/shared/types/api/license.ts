@@ -149,6 +149,16 @@ export interface LicenseAPI {
   initialize: () => Promise<LicenseInitResult>;
 
   /**
+   * Retry connection to license server when in offline/grace period mode
+   */
+  retryConnection: () => Promise<{
+    success: boolean;
+    message: string;
+    canRetry?: boolean;
+    data?: any;
+  }>;
+
+  /**
    * Listen for real-time license events (disabled, reactivated, etc.)
    * @param callback - Function to call when license events occur
    * @returns Cleanup function to remove the listener

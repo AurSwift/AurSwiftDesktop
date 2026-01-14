@@ -47,6 +47,12 @@ export const licenseAPI = {
   sendHeartbeat: () => ipcRenderer.invoke("license:sendHeartbeat"),
 
   /**
+   * Retry connection to license server (manual reconnect attempt)
+   * Useful when app is in offline mode and user wants to try reconnecting
+   */
+  retryConnection: () => ipcRenderer.invoke("license:retryConnection"),
+
+  /**
    * Initialize the license system (called on app start)
    */
   initialize: () => ipcRenderer.invoke("license:initialize"),

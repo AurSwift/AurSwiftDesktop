@@ -278,6 +278,12 @@ export async function getDatabase(): Promise<DatabaseManagers> {
 
           // Delete in order: child tables first, then parent tables
           // This order respects foreign key relationships
+          //
+          // ⚠️ IMPORTANT: The following tables are INTENTIONALLY EXCLUDED to preserve license:
+          // - schema.licenseActivation (license data must persist across database resets)
+          // - schema.licenseValidationLog (audit trail for license operations)
+          // - schema.terminals (device authorization)
+          //
           const tablesToEmpty = [
             // Child tables (with foreign keys) - delete first
             schema.printJobRetries,

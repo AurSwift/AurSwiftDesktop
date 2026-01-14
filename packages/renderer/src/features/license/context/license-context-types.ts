@@ -13,6 +13,10 @@ export interface LicenseContextValue {
   isLoading: boolean;
   licenseStatus: LicenseStatus | null;
 
+  // Error state for initialization/validation failures
+  error: string | null;
+  clearError: () => void;
+
   // Actions
   refreshStatus: () => Promise<void>;
   activate: (licenseKey: string, terminalName?: string) => Promise<boolean>;

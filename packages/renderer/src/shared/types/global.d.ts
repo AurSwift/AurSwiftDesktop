@@ -128,6 +128,13 @@ declare global {
     // Reports Export
     reportsExportAPI: ReportsExportAPI;
 
+    // System Notifications
+    systemNotificationsAPI?: {
+      onNotification: (
+        callback: (data: { type: string; message: string }) => void
+      ) => () => void;
+    };
+
     // Dashboard cache invalidation
     invalidateDashboardCache?: (businessId?: string) => void;
   }
