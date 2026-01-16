@@ -313,7 +313,7 @@ const CashierDashboardView = ({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-xl sm:text-2xl font-bold text-blue-700">
+            <div className="text-xl sm:text-2xl font-bold text-black">
               {shiftStats.totalTransactions || 0}
             </div>
             <div className="flex items-center mt-2 text-xs sm:text-sm text-slate-600">
@@ -335,7 +335,7 @@ const CashierDashboardView = ({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-xl sm:text-2xl font-bold text-amber-700">
+            <div className="text-xl sm:text-2xl font-bold text-black">
               £{cashDrawerBalance.amount.toFixed(2)}
               {cashDrawerBalance.isEstimated && (
                 <span className="text-[10px] sm:text-xs text-amber-600 ml-1">
@@ -343,13 +343,7 @@ const CashierDashboardView = ({
                 </span>
               )}
             </div>
-            <div
-              className={`flex items-center mt-2 text-xs sm:text-sm ${
-                (cashDrawerBalance.variance || 0) >= 0
-                  ? "text-green-600"
-                  : "text-red-600"
-              }`}
-            >
+            <div className="flex items-center mt-2 text-xs sm:text-sm text-black">
               {(cashDrawerBalance.variance || 0) >= 0 ? (
                 <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 shrink-0" />
               ) : (
@@ -392,13 +386,13 @@ const CashierDashboardView = ({
           <CardContent>
             <div className="flex justify-between items-center mb-2 text-xs sm:text-sm">
               <span className="text-slate-600">Refunds:</span>
-              <span className="font-semibold text-red-700">
+              <span className="font-semibold text-black">
                 -£{(shiftStats.totalRefunds || 0).toFixed(2)}
               </span>
             </div>
             <div className="flex justify-between items-center text-xs sm:text-sm">
               <span className="text-slate-600">Voided Transactions:</span>
-              <span className="font-semibold text-red-700">
+              <span className="font-semibold text-black">
                 {shiftStats.totalVoids || 0}
               </span>
             </div>
@@ -417,7 +411,6 @@ const CashierDashboardView = ({
               <ShoppingCart className="w-5 h-5 shrink-0" />
               Quick Actions
             </CardTitle>
-            <p className="text-xs sm:text-sm text-slate-500">Common tasks</p>
           </CardHeader>
           <CardContent className="space-y-3 flex-1">
             {!activeShift && (
@@ -508,13 +501,7 @@ const CashierDashboardView = ({
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <div
-                        className={`font-semibold text-xs sm:text-sm ${
-                          transaction.type === "sale"
-                            ? "text-green-700"
-                            : "text-red-700"
-                        }`}
-                      >
+                      <div className="font-semibold text-xs sm:text-sm text-black">
                         {transaction.type === "sale"
                           ? `+£${Math.abs(transaction.total).toFixed(2)}`
                           : `-£${Math.abs(transaction.total).toFixed(2)}`}
