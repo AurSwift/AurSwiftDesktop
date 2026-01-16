@@ -1,4 +1,4 @@
-import { BatteryFull, Bell, Store, Power } from "lucide-react";
+import { Power } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getAppVersion } from "@/shared/utils/version";
 import { Button } from "@/components/ui/button";
@@ -34,8 +34,21 @@ export function AuthHeader() {
   return (
     <header className="w-full flex items-center justify-between px-2 sm:px-4 lg:px-6 py-2 sm:py-3 border-b border-gray-200 bg-white/90 shadow-sm select-none">
       <div className="flex items-center gap-2 min-w-0">
-        <div className="w-7 h-7 sm:w-8 sm:h-8 bg-primary rounded-xl flex items-center justify-center shrink-0">
-          <Store className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
+        <div className="w-7 h-7 sm:w-8 sm:h-8 bg-primary rounded-sm flex items-center justify-center shrink-0">
+          <div className="relative w-8 h-8 rounded-sm overflow-hidden ring-2 ring-primary/20 shadow-md bg-black flex items-center justify-center">
+            <img
+              src="/logo.png"
+              alt="AurSwift Logo"
+              className="w-full h-full object-contain p-1"
+              onError={(e) => {
+                // Fallback to icon if logo fails to load
+                const target = e.target as HTMLImageElement;
+                target.style.display = "none";
+                const fallback = target.nextElementSibling as HTMLElement;
+                if (fallback) fallback.style.display = "flex";
+              }}
+            />
+          </div>
         </div>
         <div className="min-w-0">
           <div className="relative inline-block">
