@@ -25,6 +25,7 @@ import {
   showUpdateErrorToast,
 } from "../components";
 import { getLogger } from "@/shared/utils/logger";
+import { useLicenseContext } from "@/features/license";
 
 const logger = getLogger("UpdateToastContext");
 
@@ -57,6 +58,12 @@ export function UpdateToastProvider({ children }: UpdateToastProviderProps) {
   const [error, setError] = useState<UpdateError | null>(null);
   const [postponeCount, setPostponeCount] = useState(0);
   const [currentVersion, setCurrentVersion] = useState("1.0.0"); // Default, will be updated from IPC
+
+  // Check if license is activated - suppress update notifications during activation
+  // Note: UpdateToastProvider is inside LicenseProvider, so context should be available
+  // We call the hook unconditionally (React rules) - UpdateToastProvider is nested inside LicenseProvider
+  const licenseContext = useLicenseContext();
+  const isLicenseActivated = licenseContext.isActivated;
 
   // Fetch app version on mount
   useEffect(() => {
@@ -122,6 +129,12 @@ export function UpdateToastProvider({ children }: UpdateToastProviderProps) {
       setUpdateInfo(info);
       setError(null);
 
+      // Suppress update notifications during license activation
+      // This keeps the activation screen focused on its primary task
+      if (!isLicenseActivated) {
+        return;
+      }
+
       // Dismiss any existing toasts FIRST to prevent overlapping
       toast.dismiss("update-available");
       toast.dismiss("download-progress");
@@ -156,7 +169,7 @@ export function UpdateToastProvider({ children }: UpdateToastProviderProps) {
         window.updateAPI.removeAllListeners("update:available");
       }
     };
-  }, [currentVersion]);
+  }, [currentVersion, isLicenseActivated]);
 
   // Listen for download progress
   useEffect(() => {
@@ -165,6 +178,11 @@ export function UpdateToastProvider({ children }: UpdateToastProviderProps) {
     const handleDownloadProgress = (progressData: DownloadProgress) => {
       setState("downloading");
       setProgress(progressData);
+
+      // Suppress download progress notifications during license activation
+      if (!isLicenseActivated) {
+        return;
+      }
 
       // Dismiss other toasts first to prevent overlapping
       toast.dismiss("update-available");
@@ -190,7 +208,7 @@ export function UpdateToastProvider({ children }: UpdateToastProviderProps) {
         window.updateAPI.removeAllListeners("update:download-progress");
       }
     };
-  }, []);
+  }, [isLicenseActivated]);
 
   // Listen for download cancelled
   useEffect(() => {
@@ -231,6 +249,11 @@ export function UpdateToastProvider({ children }: UpdateToastProviderProps) {
       setUpdateInfo(info);
       setProgress(null);
 
+      // Suppress update ready notifications during license activation
+      if (!isLicenseActivated) {
+        return;
+      }
+
       // Dismiss all existing toasts FIRST to prevent overlapping
       toast.dismiss("update-available");
       toast.dismiss("download-progress");
@@ -264,7 +287,7 @@ export function UpdateToastProvider({ children }: UpdateToastProviderProps) {
         window.updateAPI.removeAllListeners("update:downloaded");
       }
     };
-  }, []);
+  }, [isLicenseActivated]);
 
   // Listen for errors
   useEffect(() => {
