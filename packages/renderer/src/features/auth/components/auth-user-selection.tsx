@@ -14,10 +14,7 @@ export function AuthUserSelection() {
   const [selectedUser, setSelectedUser] = useState<UserForLogin | null>(null);
   const [pin, setPin] = useState("");
   const [loginError, setLoginError] = useState("");
-  const [isClockingIn, setIsClockingIn] = useState(false);
-  const [isClockingOut, setIsClockingOut] = useState(false);
-  const [clockMessage, setClockMessage] = useState("");
-  const { login, isLoading, clockIn, clockOut } = useAuth();
+  const { login, isLoading } = useAuth();
 
   // Load users (server-side pattern like categories in product management)
   const loadUsers = useCallback(async () => {
@@ -69,47 +66,6 @@ export function AuthUserSelection() {
     setLoginError("");
   };
 
-  const handleClockIn = async () => {
-    if (!selectedUser) return;
-
-    setIsClockingIn(true);
-    setClockMessage("");
-    try {
-      const response = await window.authAPI.getUserById(selectedUser.id);
-      if (response.success && response.user?.businessId) {
-        const result = await clockIn(selectedUser.id, response.user.businessId);
-        if (result.success) {
-          setClockMessage("✓ Clocked in successfully");
-        } else {
-          setClockMessage(result.message || "Failed to clock in");
-        }
-      }
-    } catch {
-      setClockMessage("Failed to clock in");
-    } finally {
-      setIsClockingIn(false);
-    }
-  };
-
-  const handleClockOut = async () => {
-    if (!selectedUser) return;
-
-    setIsClockingOut(true);
-    setClockMessage("");
-    try {
-      const result = await clockOut(selectedUser.id);
-      if (result.success) {
-        setClockMessage("✓ Clocked out successfully");
-      } else {
-        setClockMessage(result.message || "Failed to clock out");
-      }
-    } catch {
-      setClockMessage("Failed to clock out");
-    } finally {
-      setIsClockingOut(false);
-    }
-  };
-
   // Auto-submit when PIN is complete
   useEffect(() => {
     const handleLogin = async () => {
@@ -139,14 +95,9 @@ export function AuthUserSelection() {
             pin={pin}
             loginError={loginError}
             isLoading={isLoading}
-            isClockingIn={isClockingIn}
-            isClockingOut={isClockingOut}
-            clockMessage={clockMessage}
             onPinInput={handlePinInput}
             onDeletePin={handleDeletePin}
             onBack={handleBack}
-            onClockIn={handleClockIn}
-            onClockOut={handleClockOut}
           />
         )}
       </div>

@@ -11,7 +11,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import type { UserForLogin } from "@/types/domain";
-import { ClockInOutButtons } from "@/features/auth/components/clock-in-out-buttons";
+import type { Schedule, Shift } from "@/types/domain/shift";
 import { getLogger } from "@/shared/utils/logger";
 
 const logger = getLogger("pin-entry-screen");
@@ -21,14 +21,9 @@ interface PinEntryScreenProps {
   pin: string;
   loginError: string;
   isLoading: boolean;
-  isClockingIn: boolean;
-  isClockingOut: boolean;
-  clockMessage: string;
   onPinInput: (digit: string) => void;
   onDeletePin: () => void;
   onBack: () => void;
-  onClockIn: () => Promise<void>;
-  onClockOut: () => Promise<void>;
 }
 
 export function PinEntryScreen({
@@ -36,17 +31,12 @@ export function PinEntryScreen({
   pin,
   loginError,
   isLoading,
-  isClockingIn,
-  isClockingOut,
-  clockMessage,
   onPinInput,
   onDeletePin,
   onBack,
-  onClockIn,
-  onClockOut,
 }: PinEntryScreenProps) {
-  const [schedule, setSchedule] = useState<any>(null);
-  const [activeShift, setActiveShift] = useState<any>(null);
+  const [schedule, setSchedule] = useState<Schedule | null>(null);
+  const [activeShift, setActiveShift] = useState<Shift | null>(null);
   const [isLoadingShiftInfo, setIsLoadingShiftInfo] = useState(false);
   const isCashierOrManager =
     user.roleName === "cashier" || user.roleName === "manager";
@@ -213,7 +203,7 @@ export function PinEntryScreen({
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-3">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3">
           <Button
             onClick={onBack}
             disabled={isLoading}
@@ -232,17 +222,6 @@ export function PinEntryScreen({
             DELETE
           </Button>
         </div>
-
-        {/* Clock In/Out Buttons */}
-        <ClockInOutButtons
-          user={user}
-          isLoading={isLoading}
-          isClockingIn={isClockingIn}
-          isClockingOut={isClockingOut}
-          clockMessage={clockMessage}
-          onClockIn={onClockIn}
-          onClockOut={onClockOut}
-        />
       </div>
     </Card>
   );
