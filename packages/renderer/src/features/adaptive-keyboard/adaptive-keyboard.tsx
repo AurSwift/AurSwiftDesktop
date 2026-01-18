@@ -86,7 +86,7 @@ export function AdaptiveKeyboard({
         }
       }
     },
-    [onInput, onBackspace, onClear, onEnter, onTab, isShifted, isCapsLock]
+    [onInput, onBackspace, onClear, onEnter, onTab, isShifted, isCapsLock],
   );
 
   const currentLayout = LAYOUTS[mode];
@@ -108,6 +108,8 @@ export function AdaptiveKeyboard({
     <div
       className={cn(
         "w-full bg-slate-100 dark:bg-slate-800 border-t-2 border-slate-300 dark:border-slate-600 rounded-t-xl shadow-2xl",
+        // Container query support
+        "@container",
         // Small screens (default)
         "p-1.5",
         // Medium screens
@@ -115,7 +117,7 @@ export function AdaptiveKeyboard({
         // Large screens
         "lg:p-2.5",
         "transition-all duration-300 ease-out",
-        className
+        className,
       )}
       role="application"
       aria-label="Adaptive Virtual Keyboard"
@@ -129,7 +131,7 @@ export function AdaptiveKeyboard({
           // Medium screens
           "md:mb-2 md:gap-1.5",
           // Large screens
-          "lg:mb-2 lg:gap-1.5"
+          "lg:mb-2 lg:gap-1.5",
         )}
       >
         <div className="flex items-center gap-1 md:gap-1.5">
@@ -141,7 +143,7 @@ export function AdaptiveKeyboard({
               // Medium screens
               "md:px-2 md:py-1",
               // Large screens
-              "lg:px-2.5 lg:py-1"
+              "lg:px-2.5 lg:py-1",
             )}
           >
             <span className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4">
@@ -155,7 +157,7 @@ export function AdaptiveKeyboard({
                 // Medium screens
                 "md:text-xs",
                 // Large screens
-                "lg:text-xs"
+                "lg:text-xs",
               )}
             >
               {mode}
@@ -170,7 +172,7 @@ export function AdaptiveKeyboard({
                 // Medium screens
                 "md:px-2 md:py-1",
                 // Large screens
-                "lg:px-2.5 lg:py-1"
+                "lg:px-2.5 lg:py-1",
               )}
             >
               <span
@@ -181,7 +183,7 @@ export function AdaptiveKeyboard({
                   // Medium screens
                   "md:text-xs",
                   // Large screens
-                  "lg:text-xs"
+                  "lg:text-xs",
                 )}
               >
                 {isCapsLock ? "CAPS" : "SHIFT"}
@@ -200,7 +202,7 @@ export function AdaptiveKeyboard({
               // Medium screens
               "md:gap-1 md:p-1",
               // Large screens
-              "lg:gap-1 lg:p-1"
+              "lg:gap-1 lg:p-1",
             )}
           >
             <button
@@ -215,7 +217,7 @@ export function AdaptiveKeyboard({
                 "lg:p-1.5",
                 mode === "qwerty"
                   ? "bg-teal-500 dark:bg-teal-600 text-white"
-                  : "hover:bg-slate-300 dark:hover:bg-slate-600"
+                  : "hover:bg-slate-300 dark:hover:bg-slate-600",
               )}
               aria-label="QWERTY mode"
             >
@@ -233,7 +235,7 @@ export function AdaptiveKeyboard({
                 "lg:p-1.5",
                 mode === "numeric"
                   ? "bg-teal-500 dark:bg-teal-600 text-white"
-                  : "hover:bg-slate-300 dark:hover:bg-slate-600"
+                  : "hover:bg-slate-300 dark:hover:bg-slate-600",
               )}
               aria-label="Numeric mode"
             >
@@ -251,7 +253,7 @@ export function AdaptiveKeyboard({
                 "lg:p-1.5",
                 mode === "symbols"
                   ? "bg-teal-500 dark:bg-teal-600 text-white"
-                  : "hover:bg-slate-300 dark:hover:bg-slate-600"
+                  : "hover:bg-slate-300 dark:hover:bg-slate-600",
               )}
               aria-label="Symbols mode"
             >
@@ -269,7 +271,7 @@ export function AdaptiveKeyboard({
                 // Medium screens
                 "md:p-1",
                 // Large screens
-                "lg:p-1.5"
+                "lg:p-1.5",
               )}
               aria-label="Close keyboard"
             >
@@ -287,7 +289,7 @@ export function AdaptiveKeyboard({
           // Medium screens
           "md:space-y-1",
           // Large screens
-          "lg:space-y-1.5"
+          "lg:space-y-1.5",
         )}
       >
         {currentLayout.map((row, rowIndex) => (
@@ -301,7 +303,7 @@ export function AdaptiveKeyboard({
               "md:gap-1",
               // Large screens
               "lg:gap-1",
-              mode === "numeric" && "max-w-xs mx-auto"
+              mode === "numeric" && "max-w-xs mx-auto",
             )}
           >
             {row.map((key, keyIndex) => {
@@ -317,28 +319,29 @@ export function AdaptiveKeyboard({
                   className={cn(
                     // Width 2 (wide keys)
                     key.width === 2 &&
-                      cn("min-w-[70px]", "md:min-w-[80px]", "lg:min-w-[90px]"),
+                      cn(
+                        "min-w-[70px] md:min-w-20 lg:min-w-[90px]",
+                        "in-[.license-keyboard]:min-w-[58px] in-[.license-keyboard]:md:min-w-[65px] in-[.license-keyboard]:lg:min-w-[75px]",
+                      ),
                     // Width 4
                     key.width === 4 &&
                       cn(
-                        "min-w-[120px]",
-                        "md:min-w-[140px]",
-                        "lg:min-w-[160px]"
+                        "min-w-[120px] md:min-w-[140px] lg:min-w-40",
+                        "in-[.license-keyboard]:min-w-[95px] in-[.license-keyboard]:md:min-w-[110px] in-[.license-keyboard]:lg:min-w-[130px]",
                       ),
                     // Width 5 (extra wide - spacebar)
                     key.width === 5 &&
                       cn(
-                        "min-w-[150px] flex-1 max-w-[220px]",
-                        "md:min-w-[180px] md:max-w-[250px]",
-                        "lg:min-w-[200px] lg:max-w-[280px]"
+                        "min-w-[150px] flex-1 max-w-[220px] md:min-w-[180px] md:max-w-[250px] lg:min-w-[200px] lg:max-w-[280px]",
+                        "in-[.license-keyboard]:min-w-[120px] in-[.license-keyboard]:max-w-[180px] in-[.license-keyboard]:md:min-w-[140px] in-[.license-keyboard]:md:max-w-[200px] in-[.license-keyboard]:lg:min-w-40 in-[.license-keyboard]:lg:max-w-[230px]",
                       ),
                     // Numeric mode specific sizing
                     mode === "numeric" &&
                       cn(
                         "min-h-[50px] min-w-[60px] text-base",
                         "md:min-h-[55px] md:min-w-[65px] md:text-lg",
-                        "lg:min-h-[60px] lg:min-w-[70px] lg:text-lg"
-                      )
+                        "lg:min-h-[60px] lg:min-w-[70px] lg:text-lg",
+                      ),
                   )}
                   ariaLabel={key.action || key.key}
                 >
