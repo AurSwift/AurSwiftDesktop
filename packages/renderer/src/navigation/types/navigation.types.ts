@@ -31,6 +31,18 @@ export interface ViewMetadata {
 }
 
 /**
+ * View chrome configuration
+ * Controls shared UI that wraps a view (header, etc.).
+ */
+export interface ViewChromeConfig {
+  /**
+   * Whether to show the dashboard header for this view.
+   * Defaults to true when omitted.
+   */
+  showDashboardHeader?: boolean;
+}
+
+/**
  * View configuration
  * Defines a view in the navigation system
  */
@@ -45,6 +57,8 @@ export interface ViewConfig {
   component: ComponentType<any>;
   /** View metadata */
   metadata: ViewMetadata;
+  /** Shared chrome configuration */
+  chrome?: ViewChromeConfig;
   /** Required RBAC permissions (any of these) */
   permissions?: string[];
   /** Required roles (any of these) */

@@ -7,8 +7,6 @@
 
 import { useAuth } from "@/shared/hooks";
 import { getUserRoleName } from "@/shared/utils/rbac-helpers";
-import { DashboardLayout } from "@/features/dashboard/components/dashboard-layout";
-import { getRoleDisplayName, getUserDisplayName } from "@/shared/utils/auth";
 import {
   AdminDashboardView,
   CashierDashboardView,
@@ -40,8 +38,6 @@ export function DashboardPageWrapper() {
   }
 
   const role = getUserRoleName(user);
-  const roleDisplayName = getRoleDisplayName(role);
-  const userDisplayName = getUserDisplayName(user);
 
   // Navigation helper
   const handleNavigate = (viewId: string) => {
@@ -51,39 +47,20 @@ export function DashboardPageWrapper() {
   switch (role) {
     case "admin":
       return (
-        <DashboardLayout
-          title={`${roleDisplayName} Dashboard`}
-          subtitle={`Welcome, ${userDisplayName}`}
-        >
-          <AdminDashboardView
-            onFront={() => navigateTo(USERS_ROUTES.MANAGEMENT)}
-            onActionClick={handleActionClick}
-          />
-        </DashboardLayout>
+        <AdminDashboardView
+          onFront={() => navigateTo(USERS_ROUTES.MANAGEMENT)}
+          onActionClick={handleActionClick}
+        />
       );
 
     case "manager":
-      return (
-        <DashboardLayout
-          title={`${roleDisplayName} Dashboard`}
-          subtitle={`Welcome, ${userDisplayName}`}
-        >
-          <ManagerDashboardView onActionClick={handleActionClick} />
-        </DashboardLayout>
-      );
+      return <ManagerDashboardView onActionClick={handleActionClick} />;
 
     case "cashier":
       return (
-        <DashboardLayout
-          title={`${roleDisplayName} Dashboard`}
-          subtitle={`Welcome, ${userDisplayName}`}
-        >
-          <CashierDashboardView
-            onNewTransaction={() =>
-              handleNavigate(SALES_ROUTES.NEW_TRANSACTION)
-            }
-          />
-        </DashboardLayout>
+        <CashierDashboardView
+          onNewTransaction={() => handleNavigate(SALES_ROUTES.NEW_TRANSACTION)}
+        />
       );
 
     default:

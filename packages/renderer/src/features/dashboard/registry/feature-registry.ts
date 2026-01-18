@@ -23,6 +23,7 @@ import {
   Calendar,
   Brain,
   Coffee,
+  Clock,
 } from "lucide-react";
 import { PERMISSIONS } from "@app/shared/constants/permissions";
 import type { FeatureConfig } from "../types/feature-config";
@@ -79,13 +80,6 @@ export const FEATURE_REGISTRY: FeatureConfig[] = [
         onClick: () => {},
         permissions: [PERMISSIONS.SCHEDULES_MANAGE_CASHIERS], // Managers can access
       },
-      {
-        id: "break-policies",
-        label: "Break Policies",
-        icon: Coffee,
-        onClick: () => {},
-        permissions: [PERMISSIONS.USERS_MANAGE], // Admins can configure break policies
-      },
     ],
   },
 
@@ -134,6 +128,43 @@ export const FEATURE_REGISTRY: FeatureConfig[] = [
         icon: BarChart3,
         onClick: () => {},
         permissions: [PERMISSIONS.REPORTS_READ],
+      },
+    ],
+  },
+
+  // ============================================================================
+  // Time Tracking & Break Reporting
+  // ============================================================================
+  {
+    id: "time-breaks",
+    title: "Time & Breaks",
+    description: "Shift and break reporting & compliance",
+    icon: Clock,
+    permissions: [
+      PERMISSIONS.SCHEDULES_MANAGE_ALL,
+      PERMISSIONS.SCHEDULES_MANAGE_CASHIERS,
+      PERMISSIONS.REPORTS_READ,
+    ],
+    category: "reports",
+    order: 2,
+    actions: [
+      {
+        id: "break-policies",
+        label: "Break Policies",
+        icon: Coffee,
+        onClick: () => {},
+        permissions: [PERMISSIONS.USERS_MANAGE], // Admin-only configuration
+      },
+      {
+        id: "time-break-reports",
+        label: "Time & Break Reports",
+        icon: Clock,
+        onClick: () => {},
+        permissions: [
+          PERMISSIONS.SCHEDULES_MANAGE_ALL,
+          PERMISSIONS.SCHEDULES_MANAGE_CASHIERS,
+          PERMISSIONS.REPORTS_READ,
+        ],
       },
     ],
   },

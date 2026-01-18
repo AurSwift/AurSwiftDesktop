@@ -54,9 +54,9 @@ export const salesViews: Record<string, ViewConfig> = {
       title: "New Transaction",
       description: "Create a new sale",
     },
+    chrome: { showDashboardHeader: false },
     permissions: [SALES_PERMISSIONS.WRITE],
     requiresAuth: true,
-    defaultParams: { embeddedInDashboard: true },
   },
   [SALES_ROUTES.CASHIER_DASHBOARD]: {
     id: SALES_ROUTES.CASHIER_DASHBOARD,

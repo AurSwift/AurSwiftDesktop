@@ -11,6 +11,13 @@ import { SALES_ROUTES } from "@/features/sales/config/navigation";
 import { STAFF_ROUTES } from "@/features/staff/config/navigation";
 import { SETTINGS_ROUTES } from "@/features/settings/config/navigation";
 
+export type MappedViewTarget =
+  | string
+  | {
+      viewId: string;
+      params?: Record<string, unknown>;
+    };
+
 /**
  * Map feature ID and action ID to view ID
  *
@@ -24,8 +31,8 @@ import { SETTINGS_ROUTES } from "@/features/settings/config/navigation";
 export function mapActionToView(
   featureId: string,
   actionId: string
-): string | undefined {
-  const mapping: Record<string, Record<string, string>> = {
+): MappedViewTarget | undefined {
+  const mapping: Record<string, Record<string, MappedViewTarget>> = {
     "user-management": {
       "manage-users": USERS_ROUTES.MANAGEMENT,
       "role-permissions": RBAC_ROUTES.ROLE_MANAGEMENT,
@@ -52,6 +59,10 @@ export function mapActionToView(
     "system-settings": {
       "general-settings": SETTINGS_ROUTES.GENERAL,
       "store-configuration": SETTINGS_ROUTES.STORE_CONFIGURATION,
+      "break-policies": STAFF_ROUTES.BREAK_POLICIES,
+    },
+    "time-breaks": {
+      "time-break-reports": STAFF_ROUTES.TIME_REPORTS,
       "break-policies": STAFF_ROUTES.BREAK_POLICIES,
     },
   };

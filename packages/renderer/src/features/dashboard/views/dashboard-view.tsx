@@ -5,7 +5,8 @@
  * Wraps the application with NavigationProvider and renders NavigationContainer.
  */
 
-import { NavigationProvider, NavigationContainer } from "@/navigation";
+import { NavigationProvider } from "@/navigation";
+import { AuthenticatedAppShell } from "@/navigation/components/authenticated-app-shell";
 import { useAuth } from "@/shared/hooks";
 import { LoadingScreen } from "@/components/loading-screen";
 
@@ -18,7 +19,7 @@ export default function DashboardView() {
 
   return (
     <NavigationProvider initialView="dashboard">
-      <NavigationContainer />
+      <AuthenticatedAppShell />
     </NavigationProvider>
   );
 }

@@ -1083,14 +1083,6 @@ export function NewTransactionView({
         </>
       )}
 
-      {/* Admin Mode Indicator - hidden when embedded in dashboard layout */}
-      {!embeddedInDashboard && !salesMode.requiresShift && (
-        <div className="bg-blue-50 border-b border-blue-200 px-4 py-2 text-sm text-blue-800">
-          <div className="flex items-center justify-between">
-            <span>Admin Mode: Direct sales access (no shift required)</span>
-          </div>
-        </div>
-      )}
 
       {/* Main Layout */}
       <div className="flex p-2 sm:p-3 lg:p-4 flex-col lg:flex-row gap-2 sm:gap-3 h-screen overflow-hidden">

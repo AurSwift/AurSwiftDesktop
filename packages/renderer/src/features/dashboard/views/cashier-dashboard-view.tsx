@@ -302,7 +302,7 @@ const CashierDashboardView = ({
   }
 
   return (
-    <div className="flex flex-1 min-h-0 flex-col gap-4 sm:gap-6">
+    <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 flex flex-1 min-h-0 flex-col gap-4 sm:gap-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {/* Transaction Count */}
         <Card className="bg-white border-slate-200 shadow-sm h-full">
