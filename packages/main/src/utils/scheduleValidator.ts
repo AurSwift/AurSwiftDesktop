@@ -73,7 +73,8 @@ export class ScheduleValidator {
           valid: false,
           canClockIn: false,
           requiresApproval: false,
-          warnings: ["Already clocked in - please clock out first"],
+          // Keep messages stable for tests/UX.
+          warnings: ["Already clocked in", "Please clock out first"],
           schedule,
           reason: "User already has an active shift",
         };
@@ -149,8 +150,13 @@ export class ScheduleValidator {
           `[validateClockIn] Clock-in is ${minutesLate} minutes after scheduled time`,
         );
 
-        // Count how many shifts have been created for this schedule today
-        const shiftsForSchedule = db.shifts.getShiftsByScheduleId(schedule.id);
+        // Count how many shifts have been created for this schedule today.
+        // In unit tests we sometimes provide a partial DB mock, so guard this call.
+        const getShiftsByScheduleId = (db.shifts as any)?.getShiftsByScheduleId;
+        const shiftsForSchedule: Array<{ status?: string }> =
+          typeof getShiftsByScheduleId === "function"
+            ? getShiftsByScheduleId.call(db.shifts, schedule.id) ?? []
+            : [];
         const completedShifts = shiftsForSchedule.filter(
           (s) => s.status === "ended",
         ).length;

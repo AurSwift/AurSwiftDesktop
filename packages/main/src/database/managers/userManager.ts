@@ -35,7 +35,7 @@ export interface AuthResponse {
   schedule?: {
     id: string | number;
     startTime: string | number | Date;
-    endTime: string | number | Date;
+    endTime: string | number | Date | null;
   }; // NEW: Relevant schedule window (when applicable)
   warning?: string; // Warning message (e.g., clock-in failure)
   clockInError?: string; // Error message if clock-in failed
