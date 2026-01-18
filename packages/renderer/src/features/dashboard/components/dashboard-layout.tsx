@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 import { LogOut, Clock, Power } from "lucide-react";
@@ -7,6 +7,11 @@ import { useAuth } from "@/shared/hooks/use-auth";
 import { userHasAnyRole } from "@/shared/utils/rbac-helpers";
 import { LicenseHeaderBadge } from "./license-header-badge";
 import { WiFiStatusIcon } from "@/features/license";
+import { BreakControls } from "./break-controls";
+import { BreakStatusIndicator } from "./break-status-indicator";
+import { LogoutConfirmationDialog } from "./logout-confirmation-dialog";
+import { BreakReminder } from "./break-reminder";
+import { useActiveShift } from "../hooks/use-active-shift";
 
 import { getLogger } from "@/shared/utils/logger";
 const logger = getLogger("dashboard-layout");
@@ -19,39 +24,46 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children, subtitle }: DashboardLayoutProps) {
   const { user, logout, isLoading } = useAuth();
-  const [activeShift, setActiveShift] = useState<{
-    id: string;
-    clockInEvent?: { timestamp: string };
-    createdAt?: string;
-  } | null>(null);
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
 
-  // Check for active shift on mount and periodically (for "Clocked In" badge display)
-  useEffect(() => {
-    if (!user) return;
+  // Use the active shift hook for real-time updates
+  const {
+    shift: activeShift,
+    activeBreak,
+    refresh: refreshShift,
+    workDuration,
+    breakDuration,
+  } = useActiveShift(user?.id);
 
-    const checkActiveShift = async () => {
-      try {
-        const response = await window.timeTrackingAPI.getActiveShift(user.id);
-        if (response.success && response.shift) {
-          setActiveShift(response.shift);
-        } else {
-          setActiveShift(null);
-        }
-      } catch (error) {
-        logger.error("Failed to check active shift:", error);
-      }
-    };
+  // Check if user has had a meal break today
+  const hasMealBreakToday = false; // TODO: Implement check for meal breaks in shift history
 
-    checkActiveShift();
-    const interval = setInterval(checkActiveShift, 30000); // Check every 30 seconds
+  const handleLogoutClick = () => {
+    if (activeShift) {
+      // Show confirmation dialog if user has active shift
+      setIsLogoutDialogOpen(true);
+    } else {
+      // No active shift, logout immediately
+      handleConfirmLogout();
+    }
+  };
 
-    return () => clearInterval(interval);
-  }, [user]);
-
-  const handleLogout = async () => {
+  const handleConfirmLogout = async () => {
     if (!user) return;
     // Backend automatically handles clock-out during logout
     await logout();
+  };
+
+  const handleTakeBreak = () => {
+    // No need for separate state, break controls manages its own dialog
+  };
+
+  const handleBreakStarted = async () => {
+    await refreshShift();
+  };
+
+  const handleBreakEnded = async () => {
+    await refreshShift();
   };
 
   const handleCloseApp = async () => {
@@ -65,9 +77,9 @@ export function DashboardLayout({ children, subtitle }: DashboardLayoutProps) {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="border-b bg-gradient-to-r from-background via-primary/5 to-background backdrop-blur-sm sticky top-0 z-50 shadow-sm">
+      <header className="border-b bg-linear-to-r from-background via-primary/5 to-background backdrop-blur-sm sticky top-0 z-50 shadow-sm">
         <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
@@ -86,7 +98,7 @@ export function DashboardLayout({ children, subtitle }: DashboardLayoutProps) {
                 />
               </div>
               <div>
-                <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                <h1 className="text-lg font-bold bg-linear-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                   AurSwift
                 </h1>
                 <p className="text-[10px] text-muted-foreground/60 -mt-1">
@@ -107,18 +119,38 @@ export function DashboardLayout({ children, subtitle }: DashboardLayoutProps) {
             <LicenseHeaderBadge />
             <div className="flex items-center gap-3 pl-3 border-l">
               <div className="flex items-center gap-2">
-                {activeShift &&
+                {/* Show break status if on break */}
+                {activeBreak &&
+                  activeShift &&
                   userHasAnyRole(user, ["cashier", "manager"]) && (
-                    <div className="flex items-center gap-1 px-2 py-1 bg-green-100 rounded-full">
-                      <Clock className="w-3 h-3 text-green-700" />
-                      <span className="text-xs font-medium text-green-700">
-                        Clocked In
-                      </span>
-                    </div>
+                    <BreakStatusIndicator
+                      activeBreak={activeBreak}
+                      breakDuration={breakDuration}
+                      onBreakEnded={handleBreakEnded}
+                    />
+                  )}
+
+                {/* Show clocked in status and break button if shift active but not on break */}
+                {activeShift &&
+                  !activeBreak &&
+                  userHasAnyRole(user, ["cashier", "manager"]) && (
+                    <>
+                      <div className="flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/30 rounded-full">
+                        <Clock className="w-3 h-3 text-green-700 dark:text-green-400" />
+                        <span className="text-xs font-medium text-green-700 dark:text-green-400">
+                          Clocked In
+                        </span>
+                      </div>
+                      <BreakControls
+                        shiftId={activeShift.id}
+                        userId={user!.id}
+                        onBreakStarted={handleBreakStarted}
+                      />
+                    </>
                   )}
               </div>
               <Button
-                onClick={handleLogout}
+                onClick={handleLogoutClick}
                 variant="ghost"
                 size="sm"
                 disabled={isLoading}
@@ -143,7 +175,34 @@ export function DashboardLayout({ children, subtitle }: DashboardLayoutProps) {
       </header>
 
       {/* Main Content */}
-      <main className="p-3">{children}</main>
+      <main className="p-3 flex-1 min-h-0 overflow-hidden flex flex-col">
+        {children}
+      </main>
+
+      {/* Logout Confirmation Dialog */}
+      {activeShift && (
+        <LogoutConfirmationDialog
+          isOpen={isLogoutDialogOpen}
+          onClose={() => setIsLogoutDialogOpen(false)}
+          onConfirmLogout={handleConfirmLogout}
+          hasActiveShift={!!activeShift}
+          workDuration={workDuration}
+          shiftId={activeShift.id}
+          userId={user?.id}
+          onBreakStarted={handleBreakStarted}
+        />
+      )}
+
+      {/* Break Reminder (shows after 6 hours without meal break) */}
+      {activeShift &&
+        !activeBreak &&
+        userHasAnyRole(user, ["cashier", "manager"]) && (
+          <BreakReminder
+            workDuration={workDuration}
+            hasMealBreakToday={hasMealBreakToday}
+            onTakeBreak={handleTakeBreak}
+          />
+        )}
     </div>
   );
 }

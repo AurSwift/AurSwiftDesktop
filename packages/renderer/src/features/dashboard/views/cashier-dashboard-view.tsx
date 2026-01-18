@@ -302,8 +302,8 @@ const CashierDashboardView = ({
   }
 
   return (
-    <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-4 sm:mb-6">
+    <div className="flex flex-1 min-h-0 flex-col gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {/* Transaction Count */}
         <Card className="bg-white border-slate-200 shadow-sm h-full">
           <CardHeader className="pb-2 sm:pb-3">
@@ -405,7 +405,7 @@ const CashierDashboardView = ({
         </Card>
 
         {/* Quick Actions */}
-        <Card className="bg-white border-slate-200 shadow-sm h-full flex flex-col shadow-sm hover:shadow-md transition-shadow">
+        <Card className="bg-white border-slate-200 shadow-sm h-full flex flex-col hover:shadow-md transition-shadow">
           <CardHeader>
             <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
               <ShoppingCart className="w-5 h-5 shrink-0" />
@@ -436,32 +436,33 @@ const CashierDashboardView = ({
         </Card>
       </div>
 
-      <div className="space-y-4 sm:space-y-6">
-        {/* Recent Transactions */}
-        <Card className="bg-white border-slate-200 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-base sm:text-lg font-semibold text-slate-700">
-              Recent Transactions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {transactions.length === 0 ? (
-                <div className="text-center py-6 sm:py-8 text-slate-500">
-                  <div className="mb-2">
-                    <ShoppingCart className="h-6 w-6 sm:h-8 sm:w-8 mx-auto opacity-50" />
-                  </div>
-                  <p className="text-xs sm:text-sm">No recent transactions</p>
-                  <p className="text-[10px] sm:text-xs mt-1">
-                    Transactions will appear here once processed
-                  </p>
+      {/* Recent Transactions */}
+      <Card className="bg-white border-slate-200 shadow-sm flex min-h-0 flex-1 flex-col">
+        <CardHeader className="shrink-0">
+          <CardTitle className="text-base sm:text-lg font-semibold text-slate-700">
+            Recent Transactions
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex min-h-0 flex-1 flex-col">
+          {transactions.length === 0 ? (
+            <div className="flex flex-1 items-center justify-center text-center text-slate-500">
+              <div className="py-6 sm:py-8">
+                <div className="mb-2">
+                  <ShoppingCart className="h-6 w-6 sm:h-8 sm:w-8 mx-auto opacity-50" />
                 </div>
-              ) : (
-                transactions.map((transaction: Transaction) => (
-                  <div key={transaction.id}>
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`
+                <p className="text-xs sm:text-sm">No recent transactions</p>
+                <p className="text-[10px] sm:text-xs mt-1">
+                  Transactions will appear here once processed
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="min-h-0 flex-1 space-y-3 overflow-auto pr-1">
+              {transactions.map((transaction: Transaction) => (
+                <div key={transaction.id}>
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`
                       p-2 rounded-full
                       ${
                         transaction.type === "sale"
@@ -479,36 +480,36 @@ const CashierDashboardView = ({
                           : ""
                       }
                     `}
-                      >
-                        {transaction.type === "sale" && (
-                          <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
-                        )}
-                        {transaction.type === "refund" && (
-                          <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4" />
-                        )}
-                        {transaction.type === "void" && (
-                          <XCircle className="h-3 w-3 sm:h-4 sm:w-4" />
-                        )}
+                    >
+                      {transaction.type === "sale" && (
+                        <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                      )}
+                      {transaction.type === "refund" && (
+                        <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4" />
+                      )}
+                      {transaction.type === "void" && (
+                        <XCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-xs sm:text-sm truncate">
+                        #{transaction.receiptNumber}
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium text-xs sm:text-sm truncate">
-                          #{transaction.receiptNumber}
-                        </div>
-                        <div className="text-[10px] sm:text-xs text-slate-500 truncate">
-                          {new Date(transaction.timestamp).toLocaleString()} •{" "}
-                          {transaction.items.length} items
-                        </div>
+                      <div className="text-[10px] sm:text-xs text-slate-500 truncate">
+                        {new Date(transaction.timestamp).toLocaleString()} •{" "}
+                        {transaction.items.length} items
                       </div>
                     </div>
-                    <div className="text-right shrink-0">
-                      <div className="font-semibold text-xs sm:text-sm text-black">
-                        {transaction.type === "sale"
-                          ? `+£${Math.abs(transaction.total).toFixed(2)}`
-                          : `-£${Math.abs(transaction.total).toFixed(2)}`}
-                      </div>
-                      <Badge
-                        variant="outline"
-                        className={`
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="font-semibold text-xs sm:text-sm text-black">
+                      {transaction.type === "sale"
+                        ? `+£${Math.abs(transaction.total).toFixed(2)}`
+                        : `-£${Math.abs(transaction.total).toFixed(2)}`}
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className={`
                       text-[10px] sm:text-xs mt-1
                       ${
                         transaction.paymentMethod === "cash"
@@ -526,18 +527,17 @@ const CashierDashboardView = ({
                           : ""
                       }
                     `}
-                      >
-                        {transaction.paymentMethod}
-                      </Badge>
-                    </div>
+                    >
+                      {transaction.paymentMethod}
+                    </Badge>
                   </div>
-                ))
-              )}
+                </div>
+              ))}
             </div>
-          </CardContent>
-        </Card>
-      </div>
-    </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
