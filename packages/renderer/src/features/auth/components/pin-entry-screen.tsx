@@ -5,10 +5,10 @@ import {
   User,
   ArrowLeft,
   Delete,
-  Calendar,
+
   Clock,
   CheckCircle,
-  AlertCircle,
+
 } from "lucide-react";
 import type { UserForLogin } from "@/types/domain";
 import type { Schedule, Shift } from "@/types/domain/shift";
@@ -128,104 +128,7 @@ export function PinEntryScreen({
           </h2>
         </div>
 
-        {/* Shift/Schedule Information (for cashiers/managers) */}
-        {isCashierOrManager && (
-          <div
-            className={`border rounded-lg p-3 mb-3 ${
-              scheduleEnded || !schedule
-                ? "bg-amber-50 border-amber-200"
-                : scheduleNotStarted
-                  ? "bg-yellow-50 border-yellow-200"
-                  : "bg-blue-50 border-blue-200"
-            }`}
-          >
-            {isLoadingShiftInfo ? (
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-blue-600 animate-spin" />
-                <span className="text-xs sm:text-sm text-blue-800">
-                  Loading schedule...
-                </span>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {/* Schedule Information */}
-                {schedule ? (
-                  scheduleEnded ? (
-                    // Schedule has ended
-                    <div className="flex items-start gap-2">
-                      <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs sm:text-sm font-semibold text-amber-900">
-                          Schedule Ended
-                        </div>
-                        <div className="text-xs text-amber-700">
-                          Your shift was {formatTime(schedule.startTime)} -{" "}
-                          {formatTime(schedule.endTime)}
-                        </div>
-                        <div className="text-xs text-amber-600 mt-1">
-                          Contact your manager to work additional hours
-                        </div>
-                      </div>
-                    </div>
-                  ) : scheduleNotStarted ? (
-                    // Schedule hasn't started yet
-                    <div className="flex items-start gap-2">
-                      <Clock className="w-4 h-4 text-yellow-600 mt-0.5 shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs sm:text-sm font-semibold text-yellow-900">
-                          Upcoming Schedule
-                        </div>
-                        <div className="text-xs text-yellow-700">
-                          {formatTime(schedule.startTime)} -{" "}
-                          {formatTime(schedule.endTime)}
-                        </div>
-                        <div className="text-xs text-yellow-600 mt-1">
-                          You can clock in 15 min before start time
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    // Schedule is active
-                    <div className="flex items-start gap-2">
-                      <Calendar className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs sm:text-sm font-semibold text-blue-900">
-                          Today's Schedule
-                        </div>
-                        <div className="text-xs text-blue-700">
-                          {formatTime(schedule.startTime)} -{" "}
-                          {formatTime(schedule.endTime)}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 text-amber-600" />
-                    <span className="text-xs sm:text-sm text-amber-800">
-                      No schedule for today
-                    </span>
-                  </div>
-                )}
-
-                {/* Active Shift Information */}
-                {activeShift && (
-                  <div className="flex items-start gap-2 pt-2 border-t border-blue-200">
-                    <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs sm:text-sm font-semibold text-green-900">
-                        Active Shift
-                      </div>
-                      <div className="text-xs text-green-700">
-                        Started at {formatTime(activeShift.startTime)}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+        
 
         {/* PIN Input Display */}
         <div className="bg-gray-100 rounded-xl p-3 sm:p-4 mb-3 sm:mb-4">
