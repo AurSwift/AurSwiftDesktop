@@ -478,10 +478,21 @@ export class TimeTrackingManager {
 
     // Validate against break policy - check if allowed count exceeded
     const db = await getDatabase();
+    const clockInEvent = shift.clock_in_id
+      ? this.getClockEventById(shift.clock_in_id)
+      : undefined;
+    const shiftStartDate =
+      clockInEvent?.timestamp instanceof Date
+        ? clockInEvent.timestamp
+        : typeof clockInEvent?.timestamp === "number"
+          ? new Date(clockInEvent.timestamp)
+          : clockInEvent?.timestamp
+            ? new Date(clockInEvent.timestamp as any)
+            : new Date();
     const availableBreaks = await db.breakPolicy.getAvailableBreaksForShift(
       data.businessId,
       data.shiftId,
-      new Date(shift.start_time)
+      shiftStartDate
     );
 
     const breakType = data.type || "rest";
@@ -720,6 +731,183 @@ export class TimeTrackingManager {
     }
 
     return finalBreak;
+  }
+
+  /**
+   * Update an existing break (manager override).
+   *
+   * This is intended for manager/admin corrections and should always be paired
+   * with an audit log entry at the IPC layer (include reason + managerId).
+   */
+  async updateBreakByManager(data: {
+    breakId: string;
+    startTime?: string; // ISO
+    endTime?: string | null; // ISO or null (null not allowed for completed breaks)
+    type?: "meal" | "rest" | "other";
+    isPaid?: boolean;
+    notes?: string | null;
+  }): Promise<Break> {
+    const breakRecord = this.getBreakById(data.breakId);
+    if (!breakRecord) {
+      throw new Error("Break not found");
+    }
+
+    const shift = this.getShiftById(breakRecord.shift_id);
+    if (!shift) {
+      throw new Error("Shift not found for break");
+    }
+
+    // Normalize inputs (accept only ISO strings)
+    const nextStart =
+      typeof data.startTime === "string"
+        ? new Date(data.startTime)
+        : typeof breakRecord.start_time === "number"
+        ? new Date(breakRecord.start_time)
+        : breakRecord.start_time instanceof Date
+        ? breakRecord.start_time
+        : new Date(breakRecord.start_time as string);
+
+    const nextEnd =
+      data.endTime === null
+        ? null
+        : typeof data.endTime === "string"
+        ? new Date(data.endTime)
+        : breakRecord.end_time
+        ? breakRecord.end_time instanceof Date
+          ? breakRecord.end_time
+          : new Date(breakRecord.end_time as string)
+        : null;
+
+    if (isNaN(nextStart.getTime())) {
+      throw new Error("Invalid break start time");
+    }
+    if (nextEnd && isNaN(nextEnd.getTime())) {
+      throw new Error("Invalid break end time");
+    }
+    if (nextEnd && nextEnd.getTime() < nextStart.getTime()) {
+      throw new Error("Break end time cannot be before start time");
+    }
+
+    // If break is completed, don't allow reopening via manager edit (safety).
+    if (breakRecord.status === "completed" && data.endTime === null) {
+      throw new Error("Cannot reopen a completed break");
+    }
+
+    const durationSeconds =
+      nextEnd && nextStart
+        ? Math.floor((nextEnd.getTime() - nextStart.getTime()) / 1000)
+        : null;
+
+    const isShort =
+      breakRecord.is_required &&
+      breakRecord.minimum_duration_seconds &&
+      typeof durationSeconds === "number" &&
+      durationSeconds < breakRecord.minimum_duration_seconds;
+
+    const nextStatus: Break["status"] =
+      nextEnd || breakRecord.status === "completed" ? "completed" : "active";
+
+    const updatedBreakRecord = {
+      ...breakRecord,
+      start_time: nextStart,
+      end_time: nextEnd,
+      duration_seconds: durationSeconds,
+      status: nextStatus,
+      type: (data.type ?? breakRecord.type) as Break["type"],
+      is_paid:
+        typeof data.isPaid === "boolean" ? data.isPaid : breakRecord.is_paid,
+      notes:
+        typeof data.notes === "string" || data.notes === null
+          ? data.notes
+          : (breakRecord as any).notes ?? null,
+      is_short: isShort ? true : isShort === false ? false : null,
+      updatedAt: new Date(),
+    } as Break;
+
+    const validation = shiftDataValidator.validateBreak(updatedBreakRecord);
+    if (!validation.valid) {
+      throw new Error(
+        `Break validation failed: ${validation.errors.join(", ")}`
+      );
+    }
+    if (validation.warnings.length > 0) {
+      logger.warn(
+        `[updateBreakByManager] Break validation warnings: ${validation.warnings.join(
+          ", "
+        )}`
+      );
+    }
+
+    // Re-run compliance validation when break becomes completed (best-effort; log-only)
+    if (updatedBreakRecord.end_time) {
+      try {
+        const dbManagers = await getDatabase();
+        const compliance = await breakComplianceValidator.validateBreakEnd(
+          updatedBreakRecord,
+          shift as any,
+          dbManagers
+        );
+        if (compliance.violations.length > 0) {
+          logger.warn(
+            `[updateBreakByManager] Compliance violations: ${compliance.violations.join(
+              ", "
+            )}`
+          );
+        }
+        if (compliance.warnings.length > 0) {
+          logger.info(
+            `[updateBreakByManager] Compliance warnings: ${compliance.warnings.join(
+              ", "
+            )}`
+          );
+        }
+      } catch (error) {
+        logger.warn(
+          "[updateBreakByManager] Failed compliance validation (non-blocking):",
+          error
+        );
+      }
+    }
+
+    // Persist break update
+    this.db
+      .update(schema.breaks)
+      .set({
+        start_time: nextStart,
+        end_time: nextEnd,
+        duration_seconds: durationSeconds,
+        status: nextStatus,
+        type: updatedBreakRecord.type,
+        is_paid: updatedBreakRecord.is_paid,
+        notes: (updatedBreakRecord as any).notes ?? null,
+        is_short: (updatedBreakRecord as any).is_short ?? null,
+        updatedAt: new Date(),
+      } as any)
+      .where(eq(schema.breaks.id, data.breakId))
+      .run();
+
+    // If shift is ended, keep cached break_duration_seconds in sync (best-effort)
+    try {
+      const breaks = this.getBreaksByShift(shift.id);
+      const totalBreakSeconds = breaks
+        .filter((b) => b.status === "completed" && b.duration_seconds)
+        .reduce((sum, b) => sum + (b.duration_seconds || 0), 0);
+
+      this.db
+        .update(schema.shifts)
+        .set({
+          break_duration_seconds: totalBreakSeconds,
+        } as any)
+        .where(eq(schema.shifts.id, shift.id))
+        .run();
+    } catch (error) {
+      logger.warn(
+        `[updateBreakByManager] Failed to update shift break_duration_seconds:`,
+        error
+      );
+    }
+
+    return this.getBreakById(data.breakId)!;
   }
 
   /**
@@ -1047,6 +1235,12 @@ export class TimeTrackingManager {
     const activeShift = this.getActiveShift(userId);
     if (!activeShift) {
       throw new Error("No active shift found for user");
+    }
+
+    // End any active break before clocking out (match regular clock-out behavior)
+    const activeBreak = this.getActiveBreak(activeShift.id);
+    if (activeBreak) {
+      await this.endBreak(activeBreak.id);
     }
 
     // Create clock-out event with manager method

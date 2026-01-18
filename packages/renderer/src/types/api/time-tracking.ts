@@ -37,5 +37,72 @@ export interface TimeTrackingAPI {
   endBreak: (breakId: string) => Promise<
     APIResponse & { break?: any }
   >;
+
+  // ============================================================================
+  // Reporting (Admin/Manager)
+  // ============================================================================
+
+  getRealTimeDashboard: (businessId: string) => Promise<
+    APIResponse & { data?: any }
+  >;
+
+  getShiftsReport: (args: {
+    businessId: string;
+    startDate: string;
+    endDate: string;
+    filters?: {
+      userIds?: string[];
+      status?: "active" | "ended";
+      complianceOnly?: boolean;
+    };
+  }) => Promise<APIResponse & { data?: any[] }>;
+
+  getShiftDetails: (shiftId: string) => Promise<APIResponse & { data?: any }>;
+
+  getBreakComplianceReport: (args: {
+    businessId: string;
+    startDate: string;
+    endDate: string;
+  }) => Promise<APIResponse & { data?: any[] }>;
+
+  getPayrollSummary: (args: {
+    businessId: string;
+    startDate: string;
+    endDate: string;
+    hourlyRate?: number;
+  }) => Promise<APIResponse & { data?: any[] }>;
+
+  getPendingTimeCorrections: (businessId: string) => Promise<
+    APIResponse & { data?: any[] }
+  >;
+
+  // ============================================================================
+  // Manager overrides (reason required)
+  // ============================================================================
+
+  forceClockOut: (args: {
+    userId: string;
+    managerId: string;
+    reason: string;
+  }) => Promise<APIResponse & { data?: any }>;
+
+  updateBreak: (args: {
+    breakId: string;
+    managerId: string;
+    reason: string;
+    patch: {
+      startTime?: string;
+      endTime?: string | null;
+      type?: "meal" | "rest" | "other";
+      isPaid?: boolean;
+      notes?: string | null;
+    };
+  }) => Promise<APIResponse & { data?: any }>;
+
+  processTimeCorrection: (args: {
+    correctionId: string;
+    managerId: string;
+    approved: boolean;
+  }) => Promise<APIResponse & { data?: any }>;
 }
 

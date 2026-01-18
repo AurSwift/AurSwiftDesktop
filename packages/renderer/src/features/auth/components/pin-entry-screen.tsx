@@ -50,7 +50,7 @@ export function PinEntryScreen({
       try {
         // Fetch today's schedule
         const scheduleResponse = await window.shiftAPI.getTodaySchedule(
-          user.id
+          user.id,
         );
         if (scheduleResponse.success && scheduleResponse.data) {
           setSchedule(scheduleResponse.data);
@@ -71,7 +71,7 @@ export function PinEntryScreen({
     fetchShiftInfo();
   }, [user.id, isCashierOrManager]);
 
-  const formatTime = (timeString: string) => {
+  const formatTime = (timeString: string | number | Date) => {
     try {
       const date = new Date(timeString);
       return date.toLocaleTimeString([], {
@@ -80,9 +80,37 @@ export function PinEntryScreen({
         hour12: true,
       });
     } catch {
-      return timeString;
+      return String(timeString);
     }
   };
+
+  // Check if schedule has ended
+  const isScheduleEnded = (schedule: Schedule | null): boolean => {
+    if (!schedule?.endTime) return false;
+    const endTimeMs =
+      typeof schedule.endTime === "number"
+        ? schedule.endTime
+        : schedule.endTime instanceof Date
+          ? schedule.endTime.getTime()
+          : new Date(schedule.endTime as string).getTime();
+    return Date.now() > endTimeMs;
+  };
+
+  // Check if schedule hasn't started yet
+  const isScheduleNotStarted = (schedule: Schedule | null): boolean => {
+    if (!schedule?.startTime) return false;
+    const startTimeMs =
+      typeof schedule.startTime === "number"
+        ? schedule.startTime
+        : schedule.startTime instanceof Date
+          ? schedule.startTime.getTime()
+          : new Date(schedule.startTime as string).getTime();
+    // Allow 15 min grace period before start
+    return Date.now() < startTimeMs - 15 * 60 * 1000;
+  };
+
+  const scheduleEnded = isScheduleEnded(schedule);
+  const scheduleNotStarted = isScheduleNotStarted(schedule);
 
   return (
     <Card className="border-0 shadow-none bg-transparent rounded-3xl overflow-hidden">
@@ -100,7 +128,15 @@ export function PinEntryScreen({
 
         {/* Shift/Schedule Information (for cashiers/managers) */}
         {isCashierOrManager && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+          <div
+            className={`border rounded-lg p-3 mb-3 ${
+              scheduleEnded || !schedule
+                ? "bg-amber-50 border-amber-200"
+                : scheduleNotStarted
+                  ? "bg-yellow-50 border-yellow-200"
+                  : "bg-blue-50 border-blue-200"
+            }`}
+          >
             {isLoadingShiftInfo ? (
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-blue-600 animate-spin" />
@@ -112,22 +148,59 @@ export function PinEntryScreen({
               <div className="space-y-2">
                 {/* Schedule Information */}
                 {schedule ? (
-                  <div className="flex items-start gap-2">
-                    <Calendar className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs sm:text-sm font-semibold text-blue-900">
-                        Today's Schedule
-                      </div>
-                      <div className="text-xs text-blue-700">
-                        {formatTime(schedule.startTime)} -{" "}
-                        {formatTime(schedule.endTime)}
+                  scheduleEnded ? (
+                    // Schedule has ended
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs sm:text-sm font-semibold text-amber-900">
+                          Schedule Ended
+                        </div>
+                        <div className="text-xs text-amber-700">
+                          Your shift was {formatTime(schedule.startTime)} -{" "}
+                          {formatTime(schedule.endTime)}
+                        </div>
+                        <div className="text-xs text-amber-600 mt-1">
+                          Contact your manager to work additional hours
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  ) : scheduleNotStarted ? (
+                    // Schedule hasn't started yet
+                    <div className="flex items-start gap-2">
+                      <Clock className="w-4 h-4 text-yellow-600 mt-0.5 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs sm:text-sm font-semibold text-yellow-900">
+                          Upcoming Schedule
+                        </div>
+                        <div className="text-xs text-yellow-700">
+                          {formatTime(schedule.startTime)} -{" "}
+                          {formatTime(schedule.endTime)}
+                        </div>
+                        <div className="text-xs text-yellow-600 mt-1">
+                          You can clock in 15 min before start time
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    // Schedule is active
+                    <div className="flex items-start gap-2">
+                      <Calendar className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs sm:text-sm font-semibold text-blue-900">
+                          Today's Schedule
+                        </div>
+                        <div className="text-xs text-blue-700">
+                          {formatTime(schedule.startTime)} -{" "}
+                          {formatTime(schedule.endTime)}
+                        </div>
+                      </div>
+                    </div>
+                  )
                 ) : (
                   <div className="flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 text-yellow-600" />
-                    <span className="text-xs sm:text-sm text-yellow-800">
+                    <AlertCircle className="w-4 h-4 text-amber-600" />
+                    <span className="text-xs sm:text-sm text-amber-800">
                       No schedule for today
                     </span>
                   </div>

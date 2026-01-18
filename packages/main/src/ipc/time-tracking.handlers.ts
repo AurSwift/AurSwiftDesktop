@@ -55,7 +55,7 @@ export function registerTimeTrackingHandlers() {
       if (user && data.businessId) {
         const shiftRequirement = await shiftRequirementResolver.resolve(
           user,
-          db
+          db,
         );
 
         if (shiftRequirement.requiresShift) {
@@ -63,7 +63,7 @@ export function registerTimeTrackingHandlers() {
           const scheduleValidation = await scheduleValidator.validateClockIn(
             data.userId,
             data.businessId,
-            db
+            db,
           );
 
           // Audit log schedule validation
@@ -87,7 +87,7 @@ export function registerTimeTrackingHandlers() {
           } catch (error) {
             logger.error(
               "[timeTracking:clockIn] Failed to audit log schedule validation:",
-              error
+              error,
             );
           }
 
@@ -109,8 +109,8 @@ export function registerTimeTrackingHandlers() {
               // Schedule validation failed but can proceed with approval
               logger.warn(
                 `Schedule validation warnings for clock-in: ${scheduleValidation.warnings.join(
-                  ", "
-                )}`
+                  ", ",
+                )}`,
               );
               // Continue but return warnings
             }
@@ -133,7 +133,7 @@ export function registerTimeTrackingHandlers() {
           const scheduleValidation = await scheduleValidator.validateClockIn(
             data.userId,
             data.businessId,
-            db
+            db,
           );
           scheduleId = scheduleValidation.schedule?.id;
         }
@@ -212,7 +212,7 @@ export function registerTimeTrackingHandlers() {
       // 3. Validate user owns the shift
       if (activeShift.user_id !== userId) {
         logger.warn(
-          `[ClockOut] User ${userId} attempted to clock out shift ${activeShift.id} owned by ${activeShift.user_id}`
+          `[ClockOut] User ${userId} attempted to clock out shift ${activeShift.id} owned by ${activeShift.user_id}`,
         );
         return {
           success: false,
@@ -234,13 +234,13 @@ export function registerTimeTrackingHandlers() {
       // Get the clock-in event for this shift
       if (activeShift.clock_in_id) {
         const clockInEvent = db.timeTracking.getClockEventById(
-          activeShift.clock_in_id
+          activeShift.clock_in_id,
         );
         if (clockInEvent) {
           // Check if shift already has a clock-out event (via clock_out_id)
           if (activeShift.clock_out_id) {
             const existingClockOut = db.timeTracking.getClockEventById(
-              activeShift.clock_out_id
+              activeShift.clock_out_id,
             );
             if (existingClockOut && existingClockOut.type === "out") {
               return {
@@ -256,7 +256,7 @@ export function registerTimeTrackingHandlers() {
       // 6. Validate minimum shift duration
       if (activeShift.clock_in_id) {
         const clockInEvent = db.timeTracking.getClockEventById(
-          activeShift.clock_in_id
+          activeShift.clock_in_id,
         );
         if (clockInEvent) {
           const shiftDuration =
@@ -266,7 +266,7 @@ export function registerTimeTrackingHandlers() {
           if (shiftDuration < minDuration) {
             const durationMinutes = Math.floor(shiftDuration / (1000 * 60));
             logger.warn(
-              `[ClockOut] Shift duration too short: ${durationMinutes} minutes for user ${userId}`
+              `[ClockOut] Shift duration too short: ${durationMinutes} minutes for user ${userId}`,
             );
 
             // If force flag is not set, block the clock-out and suggest taking a break instead
@@ -302,8 +302,8 @@ export function registerTimeTrackingHandlers() {
       if (!validation.valid && validation.violations.length > 0) {
         logger.warn(
           `[ClockOut] Clock-out validation violations: ${validation.violations.join(
-            ", "
-          )}`
+            ", ",
+          )}`,
         );
         // Log but don't block - violations are warnings, not blockers
       }
@@ -311,7 +311,7 @@ export function registerTimeTrackingHandlers() {
       // Complete shift
       const completedShift = await db.timeTracking.completeShift(
         activeShift.id,
-        clockEvent.id
+        clockEvent.id,
       );
 
       return {

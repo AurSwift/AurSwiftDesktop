@@ -18,6 +18,7 @@ interface AnimatePresenceProps {
     | "modal-exit-95";
   exitDuration?: number;
   as?: "div" | "fragment";
+  className?: string;
 }
 
 /**
@@ -30,6 +31,7 @@ export function AnimatePresence({
   exitAnimation = "fade",
   exitDuration = 300,
   as = "div",
+  className,
 }: AnimatePresenceProps) {
   const [displayChildren, setDisplayChildren] = useState<ReactNode>(children);
   const [exiting, setExiting] = useState(false);
@@ -86,5 +88,9 @@ export function AnimatePresence({
     return <>{displayChildren || pendingChildren}</>;
   }
 
-  return <div className={cn(exitClass)}>{displayChildren || pendingChildren}</div>;
+  return (
+    <div className={cn(exitClass, className)}>
+      {displayChildren || pendingChildren}
+    </div>
+  );
 }

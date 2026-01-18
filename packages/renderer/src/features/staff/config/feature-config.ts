@@ -15,6 +15,8 @@ import type { ViewConfig } from "@/navigation/types";
 import ManageCashierView from "../views/manage-cashier-view";
 import StaffSchedulesView from "../views/staff-schedules-view";
 import BreakPolicySettingsView from "../views/break-policy-settings-view";
+import StaffTimeReportsView from "../views/staff-time-reports-view";
+import StaffTimeCorrectionsView from "../views/staff-time-corrections-view";
 
 /**
  * Staff Feature Configuration for Dashboard
@@ -93,6 +95,38 @@ export const staffViews: Record<string, ViewConfig> = {
       description: "Configure break types and rules for staff",
     },
     permissions: [STAFF_PERMISSIONS.MANAGE_BREAK_POLICIES],
+    requiresAuth: true,
+  },
+
+  [STAFF_ROUTES.TIME_REPORTS]: {
+    id: STAFF_ROUTES.TIME_REPORTS,
+    level: "root",
+    component: StaffTimeReportsView,
+    metadata: {
+      title: "Time & Break Reports",
+      description: "Review staff shifts, breaks, and compliance",
+    },
+    // Allow both admins and managers (any-of)
+    permissions: [
+      STAFF_PERMISSIONS.MANAGE_SCHEDULES,
+      STAFF_PERMISSIONS.MANAGE_CASHIER_SCHEDULES,
+    ],
+    requiresAuth: true,
+  },
+
+  [STAFF_ROUTES.TIME_CORRECTIONS]: {
+    id: STAFF_ROUTES.TIME_CORRECTIONS,
+    level: "root",
+    component: StaffTimeCorrectionsView,
+    metadata: {
+      title: "Time Corrections",
+      description: "Audit and review time overrides and corrections",
+    },
+    // Allow both admins and managers (any-of)
+    permissions: [
+      STAFF_PERMISSIONS.MANAGE_SCHEDULES,
+      STAFF_PERMISSIONS.MANAGE_CASHIER_SCHEDULES,
+    ],
     requiresAuth: true,
   },
 };

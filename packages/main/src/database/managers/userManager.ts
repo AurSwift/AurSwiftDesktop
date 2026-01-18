@@ -48,7 +48,7 @@ export class UserManager {
     uuid: any,
     sessionManager?: any,
     timeTrackingManager?: any,
-    scheduleManager?: any
+    scheduleManager?: any,
   ) {
     this.db = drizzle;
     this.bcrypt = bcrypt;
@@ -95,7 +95,7 @@ export class UserManager {
       .from(schema.users)
       .leftJoin(schema.roles, eq(schema.users.primaryRoleId, schema.roles.id))
       .where(
-        and(eq(schema.users.email, email), eq(schema.users.isActive, true))
+        and(eq(schema.users.email, email), eq(schema.users.isActive, true)),
       )
       .limit(1)
       .all();
@@ -154,8 +154,8 @@ export class UserManager {
           .where(
             and(
               eq(schema.userRoles.userId, user.id),
-              eq(schema.userRoles.isActive, true)
-            )
+              eq(schema.userRoles.isActive, true),
+            ),
           )
           .limit(1)
           .all();
@@ -170,20 +170,20 @@ export class UserManager {
               primaryRoleId: userRoleRecords[0].roleId,
             });
             logger.info(
-              `[getUserById] Fixed missing primaryRoleId for user ${user.id}`
+              `[getUserById] Fixed missing primaryRoleId for user ${user.id}`,
             );
           } else if (user.primaryRoleId !== userRoleRecords[0].roleId) {
             // primaryRoleId exists but doesn't match the active role
             // Log a warning but don't change it automatically
             logger.warn(
-              `[getUserById] User ${user.id} has primaryRoleId ${user.primaryRoleId} but active role is ${userRoleRecords[0].roleId}`
+              `[getUserById] User ${user.id} has primaryRoleId ${user.primaryRoleId} but active role is ${userRoleRecords[0].roleId}`,
             );
           }
         }
       } catch (error) {
         logger.warn(
           `[getUserById] Failed to lookup role for user ${user.id}:`,
-          error
+          error,
         );
       }
     }
@@ -203,7 +203,7 @@ export class UserManager {
       .from(schema.users)
       .innerJoin(
         schema.businesses,
-        eq(schema.users.businessId, schema.businesses.id)
+        eq(schema.users.businessId, schema.businesses.id),
       )
       .where(and(eq(schema.users.id, userId), eq(schema.users.isActive, true)))
       .limit(1)
@@ -219,7 +219,7 @@ export class UserManager {
 
   getUserByUsername(username: string): User | null {
     logger.info(
-      `[getUserByUsername] Looking up user with username: "${username}"`
+      `[getUserByUsername] Looking up user with username: "${username}"`,
     );
 
     const [user] = this.db
@@ -248,15 +248,15 @@ export class UserManager {
       .where(
         and(
           eq(schema.users.username, username),
-          eq(schema.users.isActive, true)
-        )
+          eq(schema.users.isActive, true),
+        ),
       )
       .limit(1)
       .all();
 
     if (!user) {
       logger.warn(
-        `[getUserByUsername] No active user found with username: "${username}"`
+        `[getUserByUsername] No active user found with username: "${username}"`,
       );
       // Try case-insensitive lookup for debugging
       const allUsers = this.db
@@ -269,7 +269,7 @@ export class UserManager {
       logger.info(
         `[getUserByUsername] Available usernames: ${allUsers
           .map((u) => `${u.username} (active: ${u.isActive})`)
-          .join(", ")}`
+          .join(", ")}`,
       );
       return null;
     }
@@ -290,8 +290,8 @@ export class UserManager {
           .where(
             and(
               eq(schema.userRoles.userId, user.id),
-              eq(schema.userRoles.isActive, true)
-            )
+              eq(schema.userRoles.isActive, true),
+            ),
           )
           .limit(1)
           .all();
@@ -306,20 +306,20 @@ export class UserManager {
               primaryRoleId: userRoleRecords[0].roleId,
             });
             logger.info(
-              `[getUserByUsername] Fixed missing primaryRoleId for user ${user.id}`
+              `[getUserByUsername] Fixed missing primaryRoleId for user ${user.id}`,
             );
           } else if (user.primaryRoleId !== userRoleRecords[0].roleId) {
             // primaryRoleId exists but doesn't match the active role
             // Log a warning but don't change it automatically
             logger.warn(
-              `[getUserByUsername] User ${user.id} has primaryRoleId ${user.primaryRoleId} but active role is ${userRoleRecords[0].roleId}`
+              `[getUserByUsername] User ${user.id} has primaryRoleId ${user.primaryRoleId} but active role is ${userRoleRecords[0].roleId}`,
             );
           }
         }
       } catch (error) {
         logger.warn(
           `[getUserByUsername] Failed to lookup role for user ${user.id}:`,
-          error
+          error,
         );
       }
     }
@@ -329,7 +329,7 @@ export class UserManager {
         user.lastName
       }), primaryRoleId: ${user.primaryRoleId || "null"}, role: ${
         user.roleName || "none"
-      }`
+      }`,
     );
     return {
       ...user,
@@ -339,16 +339,16 @@ export class UserManager {
 
   async authenticateUserByUsernamePin(
     username: string,
-    pin: string
+    pin: string,
   ): Promise<User | null> {
     logger.info(
-      `[authenticateUserByUsernamePin] Attempting login for username: ${username}`
+      `[authenticateUserByUsernamePin] Attempting login for username: ${username}`,
     );
 
     const user = this.getUserByUsername(username);
     if (!user) {
       logger.warn(
-        `[authenticateUserByUsernamePin] User not found for username: ${username}`
+        `[authenticateUserByUsernamePin] User not found for username: ${username}`,
       );
       return null;
     }
@@ -358,12 +358,12 @@ export class UserManager {
         user.firstName
       } ${user.lastName}), isActive: ${
         user.isActive
-      }, hasPinHash: ${!!user.pinHash}`
+      }, hasPinHash: ${!!user.pinHash}`,
     );
 
     if (!user.pinHash) {
       logger.error(
-        `[authenticateUserByUsernamePin] User ${user.id} has no PIN hash`
+        `[authenticateUserByUsernamePin] User ${user.id} has no PIN hash`,
       );
       return null;
     }
@@ -372,7 +372,7 @@ export class UserManager {
     const cleanPin = String(pin).trim();
 
     logger.info(
-      `[authenticateUserByUsernamePin] Comparing PIN (length: ${cleanPin.length}, value: "${cleanPin}") for user ${user.id}`
+      `[authenticateUserByUsernamePin] Comparing PIN (length: ${cleanPin.length}, value: "${cleanPin}") for user ${user.id}`,
     );
 
     // Validate PIN hash format
@@ -380,8 +380,8 @@ export class UserManager {
       logger.error(
         `[authenticateUserByUsernamePin] PIN hash format appears invalid (should start with $2): ${user.pinHash.substring(
           0,
-          20
-        )}...`
+          20,
+        )}...`,
       );
       return null;
     }
@@ -389,19 +389,19 @@ export class UserManager {
     const isValidPin = await this.bcrypt.compare(cleanPin, user.pinHash);
     if (!isValidPin) {
       logger.warn(
-        `[authenticateUserByUsernamePin] Invalid PIN for user ${user.id} (username: ${username}, PIN length: ${cleanPin.length})`
+        `[authenticateUserByUsernamePin] Invalid PIN for user ${user.id} (username: ${username}, PIN length: ${cleanPin.length})`,
       );
       // Try to provide helpful debugging info
       logger.info(
         `[authenticateUserByUsernamePin] PIN hash exists: ${!!user.pinHash}, hash length: ${
           user.pinHash?.length || 0
-        }, hash prefix: ${user.pinHash?.substring(0, 10) || "none"}`
+        }, hash prefix: ${user.pinHash?.substring(0, 10) || "none"}`,
       );
       return null;
     }
 
     logger.info(
-      `[authenticateUserByUsernamePin] ✅ Authentication successful for user ${user.id}`
+      `[authenticateUserByUsernamePin] ✅ Authentication successful for user ${user.id}`,
     );
 
     // Return user without passwordHash, pinHash, and salt
@@ -433,7 +433,9 @@ export class UserManager {
     }
 
     if (!user.pinHash.startsWith("$2")) {
-      logger.warn(`[verifyPinForUser] Invalid PIN hash format for user ${userId}`);
+      logger.warn(
+        `[verifyPinForUser] Invalid PIN hash format for user ${userId}`,
+      );
       return false;
     }
 
@@ -469,8 +471,8 @@ export class UserManager {
       .where(
         and(
           eq(schema.users.businessId, businessId),
-          eq(schema.users.isActive, true)
-        )
+          eq(schema.users.isActive, true),
+        ),
       )
       .orderBy(desc(schema.users.createdAt))
       .all();
@@ -526,7 +528,7 @@ export class UserManager {
       if (!userData.businessId) {
         // Split businessName into firstName and lastName for the business
         const businessNameParts = (userData.businessName || "Business").split(
-          " "
+          " ",
         );
         const businessFirstName = businessNameParts[0] || "Business";
         const businessLastName = businessNameParts.slice(1).join(" ") || "Name";
@@ -561,15 +563,15 @@ export class UserManager {
         .where(
           and(
             eq(schema.roles.name, userData.role),
-            eq(schema.roles.businessId, businessId)
-          )
+            eq(schema.roles.businessId, businessId),
+          ),
         )
         .limit(1)
         .all();
 
       if (!roleRecord) {
         throw new Error(
-          `Role '${userData.role}' not found for business ${businessId}`
+          `Role '${userData.role}' not found for business ${businessId}`,
         );
       }
 
@@ -623,7 +625,7 @@ export class UserManager {
       address: string;
       pinHash?: string;
       salt?: string;
-    }>
+    }>,
   ): { changes: number } {
     const result = this.db
       .update(schema.users)
@@ -639,7 +641,7 @@ export class UserManager {
    */
   async updateUserPin(
     userId: string,
-    newPin: string
+    newPin: string,
   ): Promise<{ success: boolean; message: string }> {
     try {
       const user = this.getUserById(userId);
@@ -659,7 +661,7 @@ export class UserManager {
     } catch (error) {
       logger.error(
         `[updateUserPin] Error updating PIN for user ${userId}:`,
-        error
+        error,
       );
       return { success: false, message: "Failed to update PIN" };
     }
@@ -726,13 +728,13 @@ export class UserManager {
             .from(schema.userRoles)
             .innerJoin(
               schema.roles,
-              eq(schema.userRoles.roleId, schema.roles.id)
+              eq(schema.userRoles.roleId, schema.roles.id),
             )
             .where(
               and(
                 eq(schema.userRoles.userId, user.id),
-                eq(schema.userRoles.isActive, true)
-              )
+                eq(schema.userRoles.isActive, true),
+              ),
             )
             .limit(1)
             .all();
@@ -747,14 +749,14 @@ export class UserManager {
                 primaryRoleId: userRoleRecords[0].roleId,
               });
               logger.info(
-                `[getAllActiveUsers] Fixed missing primaryRoleId for user ${user.id}`
+                `[getAllActiveUsers] Fixed missing primaryRoleId for user ${user.id}`,
               );
             }
           }
         } catch (error) {
           logger.warn(
             `[getAllActiveUsers] Failed to lookup role for user ${user.id}:`,
-            error
+            error,
           );
         }
       }
@@ -780,8 +782,8 @@ export class UserManager {
             ${schema.users.email} LIKE ${searchPattern} OR 
             ${schema.users.firstName} LIKE ${searchPattern} OR 
             ${schema.users.lastName} LIKE ${searchPattern}
-          )`
-        )
+          )`,
+        ),
       )
       .orderBy(desc(schema.users.createdAt))
       .all();
@@ -910,7 +912,7 @@ export class UserManager {
         // Authenticate with username and PIN
         user = await this.authenticateUserByUsernamePin(
           data.username,
-          data.pin
+          data.pin,
         );
 
         if (!user) {
@@ -942,12 +944,12 @@ export class UserManager {
         const db = await getDatabase();
         const shiftRequirement = await shiftRequirementResolver.resolve(
           user,
-          db
+          db,
         );
         mode = shiftRequirement.mode;
 
         logger.info(
-          `[login] Shift requirement resolved: requiresShift=${shiftRequirement.requiresShift}, mode=${mode}`
+          `[login] Shift requirement resolved: requiresShift=${shiftRequirement.requiresShift}, mode=${mode}`,
         );
 
         // Auto clock-in if shift is required (cashier/manager mode)
@@ -968,7 +970,7 @@ export class UserManager {
           const scheduleValidation = await scheduleValidator.validateClockIn(
             user.id,
             userWithBusiness.businessId,
-            db
+            db,
           );
 
           // Audit log schedule validation
@@ -993,23 +995,40 @@ export class UserManager {
           } catch (error) {
             logger.error(
               "[login] Failed to audit log schedule validation:",
-              error
+              error,
             );
           }
 
           if (!scheduleValidation.canClockIn) {
-            // If requires approval, we can still proceed but log warning
+            // Block login - requires manager approval which is not currently provided
             if (scheduleValidation.requiresApproval) {
               logger.warn(
-                `[login] Schedule validation warnings for user ${
+                `[login] Schedule validation requires approval for user ${
                   user.id
-                }: ${scheduleValidation.warnings.join(", ")}`
+                }: ${scheduleValidation.warnings.join(", ")}`,
               );
-              // Continue but user should be aware of the warnings
+              // BLOCK: User cannot clock in outside schedule without manager approval
+              return {
+                success: false,
+                message:
+                  scheduleValidation.warnings.join(" ") ||
+                  "You are outside your scheduled shift time. Please contact your manager for approval.",
+                code: "SCHEDULE_REQUIRES_APPROVAL",
+                requiresShift: true,
+                requiresApproval: true,
+                warnings: scheduleValidation.warnings,
+                schedule: scheduleValidation.schedule
+                  ? {
+                      id: scheduleValidation.schedule.id,
+                      startTime: scheduleValidation.schedule.startTime,
+                      endTime: scheduleValidation.schedule.endTime,
+                    }
+                  : undefined,
+              };
             } else {
               // Critical issue - block login
               logger.warn(
-                `[login] Schedule validation failed for user ${user.id}: ${scheduleValidation.reason}`
+                `[login] Schedule validation failed for user ${user.id}: ${scheduleValidation.reason}`,
               );
               return {
                 success: false,
@@ -1067,12 +1086,12 @@ export class UserManager {
               this.scheduleManager.updateScheduleStatus(schedule.id, "active");
 
               logger.info(
-                `[login] Auto clock-in successful for scheduled shift ${schedule.id}`
+                `[login] Auto clock-in successful for scheduled shift ${schedule.id}`,
               );
             } catch (error) {
               logger.error(
                 `[login] Auto clock-in failed for user ${user.id}:`,
-                error
+                error,
               );
               // CRITICAL: Fail login if clock-in fails (user cannot work without shift)
               return {
@@ -1091,7 +1110,7 @@ export class UserManager {
             // User already has active shift
             timeShift = activeShift;
             logger.info(
-              `[login] User ${user.id} already has active shift ${activeShift.id}`
+              `[login] User ${user.id} already has active shift ${activeShift.id}`,
             );
           }
         }
@@ -1109,7 +1128,7 @@ export class UserManager {
       // Create session (Desktop EPOS: single long-lived token with secure storage)
       const session = this.sessionManager.createSession(
         user.id,
-        sessionExpiryHours / 24 // Convert hours to days
+        sessionExpiryHours / 24, // Convert hours to days
       );
 
       // Return user without sensitive fields
@@ -1188,7 +1207,7 @@ export class UserManager {
     options?: {
       terminalId?: string;
       ipAddress?: string;
-    }
+    },
   ): Promise<AuthResponse> {
     try {
       if (!this.sessionManager) {
@@ -1214,12 +1233,12 @@ export class UserManager {
           try {
             // End any active breaks
             const activeBreak = this.timeTrackingManager.getActiveBreak(
-              activeShift.id
+              activeShift.id,
             );
             if (activeBreak) {
               await this.timeTrackingManager.endBreak(activeBreak.id);
               logger.info(
-                `[logout] Ended active break ${activeBreak.id} for user ${user.id}`
+                `[logout] Ended active break ${activeBreak.id} for user ${user.id}`,
               );
             }
 
@@ -1246,16 +1265,16 @@ export class UserManager {
             // Complete shift
             await this.timeTrackingManager.completeShift(
               activeShift.id,
-              clockOutEvent.id
+              clockOutEvent.id,
             );
 
             // Don't mark schedule as completed - allow multiple shifts per schedule
             // Schedule will be auto-completed after its endTime expires
             logger.info(
-              `[logout] Auto clock-out successful for user ${user.id}: Shift ${activeShift.id} completed`
+              `[logout] Auto clock-out successful for user ${user.id}: Shift ${activeShift.id} completed`,
             );
             logger.debug(
-              `[logout] Schedule ${activeShift.scheduleId} remains active for potential re-login`
+              `[logout] Schedule ${activeShift.scheduleId} remains active for potential re-login`,
             );
           } catch (error) {
             logger.error("Auto clock-out failed:", error);
@@ -1321,7 +1340,7 @@ export class UserManager {
       role: "cashier" | "manager" | "admin";
       isActive: boolean;
       address: string;
-    }>
+    }>,
   ): AuthResponse {
     try {
       const result = this.updateUser(userId, updates);
@@ -1477,8 +1496,8 @@ export class UserManager {
       .where(
         and(
           eq(schema.userRoles.userId, user.id),
-          eq(schema.userRoles.isActive, true)
-        )
+          eq(schema.userRoles.isActive, true),
+        ),
       )
       .all();
 

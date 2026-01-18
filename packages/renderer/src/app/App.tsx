@@ -14,6 +14,7 @@ import {
   LicenseInfoPage,
   useLicenseContext,
 } from "@/features/license";
+import { ProtectedAppShell } from "@/navigation/components/protected-app-shell";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -58,7 +59,7 @@ function useSystemNotifications() {
  */
 function LoadingScreen() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
       <div className="text-center space-y-4">
         <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
         <p className="text-muted-foreground">Loading aurswift...</p>
@@ -96,7 +97,9 @@ function AppContent() {
           path="/license"
           element={
             <ProtectedRoute>
-              <LicenseInfoPage />
+              <ProtectedAppShell subtitle="License">
+                <LicenseInfoPage />
+              </ProtectedAppShell>
             </ProtectedRoute>
           }
         />
