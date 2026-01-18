@@ -528,8 +528,8 @@ async function seedDefaultBreakPolicies(
     .values({
       publicId: uuidv4(),
       business_id: businessId,
-      name: "Default UK Policy",
-      description: "UK Working Time Directive compliant break policy",
+      name: "Default Policy",
+      description: "Working Time Directive compliant break policy",
       max_consecutive_hours: 6,
       warn_before_required_minutes: 30,
       auto_enforce_breaks: false,

@@ -460,7 +460,7 @@ export default function BreakPolicySettingsView({
             <CardTitle className="text-xl">Set Up Break Policies</CardTitle>
             <CardDescription className="max-w-md mx-auto">
               Configure break rules for your staff. We'll create sensible
-              defaults for a small grocery shop, compliant with UK Working Time
+              defaults for a small grocery shop, compliant with xWorking Time
               Directive.
             </CardDescription>
           </CardHeader>
@@ -793,7 +793,7 @@ export default function BreakPolicySettingsView({
                       }
                     />
                     <p className="text-xs text-muted-foreground">
-                      UK Working Time Directive requires a break after 6 hours
+                      Working Time Directive requires a break after 6 hours
                     </p>
                   </div>
 
@@ -872,7 +872,7 @@ export default function BreakPolicySettingsView({
                   <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div className="text-sm">
                     <p className="font-medium text-blue-900 dark:text-blue-100">
-                      UK Working Time Directive
+                      Working Time Directive
                     </p>
                     <p className="text-blue-700 dark:text-blue-300">
                       Workers are entitled to a 20-minute rest break if they

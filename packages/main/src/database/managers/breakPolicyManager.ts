@@ -162,7 +162,7 @@ export const DEFAULT_POLICY_RULES: DefaultPolicyRuleTemplate[] = [
     min_shift_hours: 6,
     max_shift_hours: null,
     allowed_count: 1,
-    is_mandatory: true, // UK Working Time Directive
+    is_mandatory: true, //  Working Time Directive
     earliest_after_hours: 3,
     latest_before_end_hours: 1,
     priority: 4,
@@ -922,9 +922,9 @@ export class BreakPolicyManager {
     // Create default policy
     const policy = await this.createPolicy({
       business_id: businessId,
-      name: "Standard UK Policy",
+      name: "Standard Policy",
       description:
-        "Default break policy for small grocery shops, compliant with UK Working Time Directive",
+        "Default break policy for small grocery shops, compliant with Working Time Directive",
       max_consecutive_hours: 6,
       warn_before_required_minutes: 30,
       auto_enforce_breaks: true,
