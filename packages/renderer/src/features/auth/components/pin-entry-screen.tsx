@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -6,15 +6,9 @@ import {
   ArrowLeft,
   Delete,
 
-  Clock,
-  CheckCircle,
 
 } from "lucide-react";
 import type { UserForLogin } from "@/types/domain";
-import type { Schedule, Shift } from "@/types/domain/shift";
-import { getLogger } from "@/shared/utils/logger";
-
-const logger = getLogger("pin-entry-screen");
 
 interface PinEntryScreenProps {
   user: UserForLogin;
@@ -35,84 +29,8 @@ export function PinEntryScreen({
   onDeletePin,
   onBack,
 }: PinEntryScreenProps) {
-  const [schedule, setSchedule] = useState<Schedule | null>(null);
-  const [activeShift, setActiveShift] = useState<Shift | null>(null);
-  const [isLoadingShiftInfo, setIsLoadingShiftInfo] = useState(false);
-  const isCashierOrManager =
-    user.roleName === "cashier" || user.roleName === "manager";
 
-  // Fetch schedule and shift info for cashiers/managers
-  useEffect(() => {
-    if (!isCashierOrManager) return;
 
-    const fetchShiftInfo = async () => {
-      setIsLoadingShiftInfo(true);
-      try {
-        // Fetch today's schedule
-        const scheduleResponse = await window.shiftAPI.getTodaySchedule(
-          user.id,
-        );
-        if (scheduleResponse.success && scheduleResponse.data) {
-          setSchedule(scheduleResponse.data);
-        }
-
-        // Fetch active shift
-        const shiftResponse = await window.shiftAPI.getActive(user.id);
-        if (shiftResponse.success && shiftResponse.data) {
-          setActiveShift(shiftResponse.data);
-        }
-      } catch (error) {
-        logger.error("Failed to fetch shift info:", error);
-      } finally {
-        setIsLoadingShiftInfo(false);
-      }
-    };
-
-    fetchShiftInfo();
-  }, [user.id, isCashierOrManager]);
-
-  const formatTime = (timeString: string | number | Date) => {
-    try {
-      const date = new Date(timeString);
-      return date.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      });
-    } catch {
-      return String(timeString);
-    }
-  };
-
-  const isDate = (value: unknown): value is Date => value instanceof Date;
-
-  // Check if schedule has ended
-  const isScheduleEnded = (schedule: Schedule | null): boolean => {
-    if (!schedule?.endTime) return false;
-    const endTimeMs =
-      typeof schedule.endTime === "number"
-        ? schedule.endTime
-        : isDate(schedule.endTime)
-          ? schedule.endTime.getTime()
-          : new Date(schedule.endTime as string).getTime();
-    return Date.now() > endTimeMs;
-  };
-
-  // Check if schedule hasn't started yet
-  const isScheduleNotStarted = (schedule: Schedule | null): boolean => {
-    if (!schedule?.startTime) return false;
-    const startTimeMs =
-      typeof schedule.startTime === "number"
-        ? schedule.startTime
-        : isDate(schedule.startTime)
-          ? schedule.startTime.getTime()
-          : new Date(schedule.startTime as string).getTime();
-    // Allow 15 min grace period before start
-    return Date.now() < startTimeMs - 15 * 60 * 1000;
-  };
-
-  const scheduleEnded = isScheduleEnded(schedule);
-  const scheduleNotStarted = isScheduleNotStarted(schedule);
 
   return (
     <Card className="border-0 shadow-none bg-transparent rounded-3xl overflow-hidden">
