@@ -30,6 +30,13 @@ export interface AuthResponse {
   activeShift?: any; // Active shift (on logout)
   mode?: "admin" | "cashier"; // NEW: Sales mode (admin or cashier)
   requiresShift?: boolean; // NEW: Whether shift is required for this user
+  requiresApproval?: boolean; // NEW: Manager approval needed to clock in
+  warnings?: string[]; // NEW: Warnings shown to user (e.g. outside schedule)
+  schedule?: {
+    id: string | number;
+    startTime: string | number | Date;
+    endTime: string | number | Date;
+  }; // NEW: Relevant schedule window (when applicable)
   warning?: string; // Warning message (e.g., clock-in failure)
   clockInError?: string; // Error message if clock-in failed
 }

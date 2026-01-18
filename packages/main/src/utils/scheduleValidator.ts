@@ -152,7 +152,7 @@ export class ScheduleValidator {
         // Count how many shifts have been created for this schedule today
         const shiftsForSchedule = db.shifts.getShiftsByScheduleId(schedule.id);
         const completedShifts = shiftsForSchedule.filter(
-          (s) => s.status === "completed",
+          (s) => s.status === "ended",
         ).length;
 
         return {

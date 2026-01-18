@@ -189,6 +189,12 @@ export function LockScreen({
           <h1 className="text-xl sm:text-2xl lg:text-2xl font-bold text-white mb-1">
             Till Locked
           </h1>
+          {userName && (
+            <div className="flex items-center justify-center gap-1.5 text-xs sm:text-sm text-slate-300 mb-1">
+              <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400" />
+              <span className="truncate max-w-[85%]">Locked by {userName}</span>
+            </div>
+          )}
           <p className="text-xs sm:text-sm text-slate-400">
             Enter your PIN to unlock
           </p>

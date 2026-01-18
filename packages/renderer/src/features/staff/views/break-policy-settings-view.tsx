@@ -52,7 +52,6 @@ import {
   UtensilsCrossed,
   Pause,
   Clock,
-  AlertCircle,
   CheckCircle2,
   Info,
   Loader2,
@@ -142,7 +141,6 @@ export default function BreakPolicySettingsView({
 
   // Data state
   const [breakTypes, setBreakTypes] = useState<BreakTypeDefinition[]>([]);
-  const [policies, setPolicies] = useState<BreakPolicy[]>([]);
   const [activePolicy, setActivePolicy] = useState<BreakPolicyWithRules | null>(
     null
   );
@@ -184,8 +182,6 @@ export default function BreakPolicySettingsView({
         user.businessId
       );
       if (policiesRes.success && policiesRes.data) {
-        setPolicies(policiesRes.data);
-
         // Load active policy with rules
         const activePolicyRes = await window.breakPolicyAPI.getActivePolicy(
           user.businessId
@@ -307,10 +303,10 @@ export default function BreakPolicySettingsView({
           editingRule.id,
           {
             ...ruleForm,
-            max_shift_hours: ruleForm.max_shift_hours || undefined,
-            earliest_after_hours: ruleForm.earliest_after_hours || undefined,
+            max_shift_hours: ruleForm.max_shift_hours ?? undefined,
+            earliest_after_hours: ruleForm.earliest_after_hours ?? undefined,
             latest_before_end_hours:
-              ruleForm.latest_before_end_hours || undefined,
+              ruleForm.latest_before_end_hours ?? undefined,
           }
         );
         if (res.success) {
@@ -323,10 +319,10 @@ export default function BreakPolicySettingsView({
         const res = await window.breakPolicyAPI.createPolicyRule({
           ...ruleForm,
           policy_id: activePolicy.id,
-          max_shift_hours: ruleForm.max_shift_hours || undefined,
-          earliest_after_hours: ruleForm.earliest_after_hours || undefined,
+          max_shift_hours: ruleForm.max_shift_hours ?? undefined,
+          earliest_after_hours: ruleForm.earliest_after_hours ?? undefined,
           latest_before_end_hours:
-            ruleForm.latest_before_end_hours || undefined,
+            ruleForm.latest_before_end_hours ?? undefined,
         });
         if (res.success) {
           toast.success("Rule created");
@@ -369,9 +365,17 @@ export default function BreakPolicySettingsView({
     if (!activePolicy) return;
 
     try {
+      const updatesForApi: Record<string, unknown> = { ...updates };
+      if (
+        "description" in updatesForApi &&
+        updatesForApi.description === null
+      ) {
+        delete (updatesForApi as { description?: unknown }).description;
+      }
+
       const res = await window.breakPolicyAPI.updatePolicy(
         activePolicy.id,
-        updates
+        updatesForApi as any
       );
       if (res.success) {
         toast.success("Policy updated");
@@ -411,11 +415,11 @@ export default function BreakPolicySettingsView({
     setRuleForm({
       break_type_id: rule.break_type_id,
       min_shift_hours: rule.min_shift_hours,
-      max_shift_hours: rule.max_shift_hours,
+      max_shift_hours: rule.max_shift_hours ?? null,
       allowed_count: rule.allowed_count,
       is_mandatory: rule.is_mandatory,
-      earliest_after_hours: rule.earliest_after_hours,
-      latest_before_end_hours: rule.latest_before_end_hours,
+      earliest_after_hours: rule.earliest_after_hours ?? null,
+      latest_before_end_hours: rule.latest_before_end_hours ?? null,
     });
     setShowRuleDialog(true);
   };

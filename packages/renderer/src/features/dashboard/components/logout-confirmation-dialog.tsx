@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { LogOut, Coffee, Clock, AlertCircle } from "lucide-react";
+import { LogOut, Clock, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 
@@ -35,7 +35,6 @@ export function LogoutConfirmationDialog({
   onConfirmLogout,
   hasActiveShift,
   workDuration,
-
 }: LogoutConfirmationDialogProps) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 

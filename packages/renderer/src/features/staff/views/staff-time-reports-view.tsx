@@ -5,7 +5,6 @@ import type { DateRange } from "react-day-picker";
 import {
   ArrowLeft,
   Calendar as CalendarIcon,
-  Clock,
   Loader2,
   ShieldAlert,
   Pencil,

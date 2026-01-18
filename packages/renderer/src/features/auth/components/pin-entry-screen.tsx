@@ -84,13 +84,15 @@ export function PinEntryScreen({
     }
   };
 
+  const isDate = (value: unknown): value is Date => value instanceof Date;
+
   // Check if schedule has ended
   const isScheduleEnded = (schedule: Schedule | null): boolean => {
     if (!schedule?.endTime) return false;
     const endTimeMs =
       typeof schedule.endTime === "number"
         ? schedule.endTime
-        : schedule.endTime instanceof Date
+        : isDate(schedule.endTime)
           ? schedule.endTime.getTime()
           : new Date(schedule.endTime as string).getTime();
     return Date.now() > endTimeMs;
@@ -102,7 +104,7 @@ export function PinEntryScreen({
     const startTimeMs =
       typeof schedule.startTime === "number"
         ? schedule.startTime
-        : schedule.startTime instanceof Date
+        : isDate(schedule.startTime)
           ? schedule.startTime.getTime()
           : new Date(schedule.startTime as string).getTime();
     // Allow 15 min grace period before start

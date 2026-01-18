@@ -107,6 +107,7 @@ export function NewTransactionView({
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const salesUnitSettings = useSalesUnitSettings(user?.businessId);
+  void embeddedInDashboard;
 
   // Active shift hook for break integration
   const {
