@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Plus, Shield } from "lucide-react";
 import { useAuth } from "@/shared/hooks/use-auth";
@@ -26,6 +27,7 @@ import {
 import type { UserCreateFormData, UserUpdateFormData } from "../schemas";
 
 export default function UserManagementView({ onBack }: { onBack: () => void }) {
+  const safeFocusRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const { hasPermission, isLoading: isLoadingPermissions } =
     useUserPermissions();
@@ -97,8 +99,11 @@ export default function UserManagementView({ onBack }: { onBack: () => void }) {
       const result = await createStaffUser(data);
       logger.info("Create result:", result);
       if (result.success) {
-        await refetch();
+        // Close immediately for better UX; refresh list in background
         closeAddDialog();
+        // Prevent any "Enter" key repeat from activating the Back button after the drawer closes
+        requestAnimationFrame(() => safeFocusRef.current?.focus());
+        void refetch();
       } else {
         logger.error("Create failed:", result.errors);
         // Error is already shown by the hook via toast
@@ -141,6 +146,8 @@ export default function UserManagementView({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-[1600px] space-y-6 sm:space-y-8">
+      {/* Focus target to avoid accidental navigation on drawer close */}
+      <div ref={safeFocusRef} tabIndex={-1} className="sr-only" aria-hidden="true" />
       {/* Back button */}
       <div className="flex items-center space-x-2 sm:space-x-4">
         <Button

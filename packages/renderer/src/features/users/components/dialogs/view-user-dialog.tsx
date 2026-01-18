@@ -122,15 +122,6 @@ export function ViewUserDialog({
                 {new Date(user.createdAt).toLocaleDateString()}
               </p>
             </div>
-
-            <div>
-              <Label className="text-xs sm:text-sm md:text-base lg:text-base font-medium text-gray-500">
-                Business ID
-              </Label>
-              <p className="text-xs sm:text-sm md:text-base lg:text-base text-gray-600">
-                {user.businessId}
-              </p>
-            </div>
           </div>
 
           {/* Actions */}

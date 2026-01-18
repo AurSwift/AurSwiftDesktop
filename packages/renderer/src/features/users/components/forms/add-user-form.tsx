@@ -375,7 +375,9 @@ export function AddUserForm({
                     })()}
 
                     {/* Keep Radix value for a11y/typeahead; hide visually */}
-                    <SelectValue className="sr-only" />
+                    <span className="sr-only">
+                      <SelectValue />
+                    </span>
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
