@@ -119,4 +119,13 @@ export interface AuthAPI {
 
   /** Verify PIN for a user by ID (e.g. till unlock). Does not create a session. */
   verifyPin: (userId: string, pin: string) => Promise<{ success: boolean; message?: string }>;
+
+  /** Change PIN (self-service) */
+  changePin: (sessionToken: string, currentPin: string, newPin: string) => Promise<{ success: boolean; message: string }>;
+
+  /** Reset PIN (admin action) */
+  resetPin: (sessionToken: string, userId: string) => Promise<{ success: boolean; message: string; temporaryPin?: string }>;
+
+  /** Set new PIN (forced change) */
+  setNewPin: (sessionToken: string, newPin: string) => Promise<{ success: boolean; message: string }>;
 }

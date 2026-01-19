@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -44,6 +44,9 @@ interface EditUserFormProps {
   showButtons?: boolean; // Whether to show buttons (for drawer mode)
 }
 
+import { ResetPinDialog } from "@/features/users/components/dialogs/reset-pin-dialog";
+import { RotateCcw } from "lucide-react";
+
 export function EditUserForm({
   user,
   onSubmit,
@@ -54,6 +57,7 @@ export function EditUserForm({
 }: EditUserFormProps) {
   // Fetch roles dynamically
   const { data: roles, isLoading: isLoadingRoles } = useRoles();
+  const [showResetPinDialog, setShowResetPinDialog] = useState(false);
 
   // Filter roles to only show active staff roles (cashier, manager)
   // Exclude admin roles from staff assignment
@@ -455,7 +459,34 @@ export function EditUserForm({
             </FormItem>
           )}
         />
+
+        
+        {/* Reset PIN Button */}
+        <div className="pt-2">
+            <Label className="text-xs sm:text-sm md:text-base lg:text-base block mb-2">
+                Security
+            </Label>
+            <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-start text-xs sm:text-sm md:text-base lg:text-base h-8 sm:h-9 md:h-10"
+                onClick={() => setShowResetPinDialog(true)}
+            >
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Reset PIN
+            </Button>
+            <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1">
+                Generates a temporary PIN for the user.
+            </p>
         </div>
+        </div>
+
+        <ResetPinDialog 
+            open={showResetPinDialog}
+            onOpenChange={setShowResetPinDialog}
+            userId={user.id}
+            userName={`${user.firstName} ${user.lastName}`}
+        />
 
         {/* Actions - Only show if showButtons is true */}
         {showButtons && (

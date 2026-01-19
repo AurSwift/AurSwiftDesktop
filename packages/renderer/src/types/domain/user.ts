@@ -37,6 +37,7 @@ export interface User {
 
   // Account status
   isActive: boolean;
+  requiresPinChange?: boolean;
   lastLoginAt?: string;
   loginAttempts?: number;
   lockedUntil?: string;
@@ -81,6 +82,10 @@ export function getUserDisplayName(user: User): string {
  */
 export interface AuthContextType {
   user: User | null;
+  sessionToken: string | null;
+  requiresPinChange: boolean;
+  completeForceChangePIN: (newPin: string) => Promise<{ success: boolean; message: string }>;
+  
   login: (
     username: string,
     pin: string,

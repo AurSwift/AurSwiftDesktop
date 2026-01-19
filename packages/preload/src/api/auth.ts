@@ -75,6 +75,16 @@ export const authAPI = {
 
   verifyPin: (userId: string, pin: string) =>
     ipcRenderer.invoke("auth:verifyPin", userId, pin),
+
+  // PIN Management
+  changePin: (sessionToken: string, currentPin: string, newPin: string) =>
+    ipcRenderer.invoke("auth:change-pin", sessionToken, currentPin, newPin),
+
+  resetPin: (sessionToken: string, userId: string) =>
+    ipcRenderer.invoke("auth:reset-pin", sessionToken, userId),
+
+  setNewPin: (sessionToken: string, newPin: string) =>
+    ipcRenderer.invoke("auth:set-new-pin", sessionToken, newPin),
 };
 
 export const authStore = {

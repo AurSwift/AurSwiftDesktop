@@ -86,6 +86,7 @@ export class UserManager {
         passwordHash: schema.users.passwordHash,
         pinHash: schema.users.pinHash,
         salt: schema.users.salt,
+        requiresPinChange: schema.users.requiresPinChange,
         firstName: schema.users.firstName,
         lastName: schema.users.lastName,
         businessId: schema.users.businessId,
@@ -124,6 +125,7 @@ export class UserManager {
         passwordHash: schema.users.passwordHash,
         pinHash: schema.users.pinHash,
         salt: schema.users.salt,
+        requiresPinChange: schema.users.requiresPinChange,
         firstName: schema.users.firstName,
         lastName: schema.users.lastName,
         businessId: schema.users.businessId,
@@ -237,6 +239,7 @@ export class UserManager {
         passwordHash: schema.users.passwordHash,
         pinHash: schema.users.pinHash,
         salt: schema.users.salt,
+        requiresPinChange: schema.users.requiresPinChange,
         firstName: schema.users.firstName,
         lastName: schema.users.lastName,
         businessId: schema.users.businessId,
@@ -591,6 +594,7 @@ export class UserManager {
           passwordHash: null,
           pinHash: hashedPin,
           salt: salt,
+          requiresPinChange: true, // Force PIN change on first login
           firstName: userData.firstName,
           lastName: userData.lastName,
           businessName: userData.businessName,
@@ -673,6 +677,155 @@ export class UserManager {
       return { success: false, message: "Failed to update PIN" };
     }
   }
+
+  /**
+   * Change user PIN (self-service) - requires current PIN verification
+   */
+  async changeUserPin(
+    userId: string,
+    currentPin: string,
+    newPin: string,
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      // Verify current PIN first
+      const isValidCurrentPin = await this.verifyPinForUser(userId, currentPin);
+      if (!isValidCurrentPin) {
+        logger.warn(`[changeUserPin] Invalid current PIN for user ${userId}`);
+        return { success: false, message: "Current PIN is incorrect" };
+      }
+
+      // Validate new PIN format (4 digits)
+      if (!/^\d{4}$/.test(newPin)) {
+        return {
+          success: false,
+          message: "New PIN must be exactly 4 digits",
+        };
+      }
+
+      // Don't allow same PIN
+      if (currentPin === newPin) {
+        return {
+          success: false,
+          message: "New PIN must be different from current PIN",
+        };
+      }
+
+      // Update to new PIN
+      const result = await this.updateUserPin(userId, newPin);
+      if (result.success) {
+        // Clear requiresPinChange flag if it was set
+        this.setRequiresPinChange(userId, false);
+        logger.info(`[changeUserPin] PIN changed successfully for user ${userId}`);
+      }
+      return result;
+    } catch (error) {
+      logger.error(
+        `[changeUserPin] Error changing PIN for user ${userId}:`,
+        error,
+      );
+      return { success: false, message: "Failed to change PIN" };
+    }
+  }
+
+  /**
+   * Reset user PIN (admin action) - generates temporary PIN
+   */
+  async resetUserPin(
+    userId: string,
+    requestedByUserId: string,
+  ): Promise<{
+    success: boolean;
+    temporaryPin?: string;
+    message: string;
+  }> {
+    try {
+      // Verify the user exists
+      const user = this.getUserById(userId);
+      if (!user) {
+        return { success: false, message: "User not found" };
+      }
+
+      // Verify requester has permission (admin or manager)
+      const requester = this.getUserById(requestedByUserId);
+      if (!requester) {
+        return { success: false, message: "Requester not found" };
+      }
+
+      // Get requester's role from database
+      let requesterRole: string | null = null;
+      if (requester.primaryRoleId) {
+        const [roleRecord] = this.db
+          .select({ name: schema.roles.name })
+          .from(schema.roles)
+          .where(eq(schema.roles.id, requester.primaryRoleId))
+          .limit(1)
+          .all();
+        requesterRole = roleRecord?.name?.toLowerCase() || null;
+      }
+
+      // Check if requester is admin or manager
+      if (requesterRole !== "admin" && requesterRole !== "manager") {
+        logger.warn(
+          `[resetUserPin] Unauthorized reset attempt by user ${requestedByUserId} (role: ${requesterRole})`,
+        );
+        return {
+          success: false,
+          message: "Only admins and managers can reset PINs",
+        };
+      }
+
+      // Generate temporary 4-digit PIN
+      const temporaryPin = Math.floor(1000 + Math.random() * 9000).toString();
+
+      // Update user's PIN
+      const result = await this.updateUserPin(userId, temporaryPin);
+      if (!result.success) {
+        return result;
+      }
+
+      // Set requiresPinChange flag
+      this.setRequiresPinChange(userId, true);
+
+      logger.info(
+        `[resetUserPin] PIN reset for user ${userId} by ${requestedByUserId}`,
+      );
+
+      return {
+        success: true,
+        temporaryPin,
+        message: "PIN reset successfully. User must change PIN on next login.",
+      };
+    } catch (error) {
+      logger.error(
+        `[resetUserPin] Error resetting PIN for user ${userId}:`,
+        error,
+      );
+      return { success: false, message: "Failed to reset PIN" };
+    }
+  }
+
+  /**
+   * Set or clear the requiresPinChange flag for a user
+   */
+  setRequiresPinChange(userId: string, required: boolean): void {
+    try {
+      this.db
+        .update(schema.users)
+        .set({ requiresPinChange: required })
+        .where(eq(schema.users.id, userId))
+        .run();
+
+      logger.info(
+        `[setRequiresPinChange] Set requiresPinChange=${required} for user ${userId}`,
+      );
+    } catch (error) {
+      logger.error(
+        `[setRequiresPinChange] Error setting requiresPinChange for user ${userId}:`,
+        error,
+      );
+    }
+  }
+
 
   deleteUser(id: string): { changes: number } {
     const result = this.db

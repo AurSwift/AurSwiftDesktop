@@ -299,6 +299,9 @@ export const users = createTable("users", {
   passwordHash: text("password_hash"),
   pinHash: text("pin_hash").notNull(),
   salt: text("salt").notNull(),
+  requiresPinChange: integer("requires_pin_change", { mode: "boolean" })
+    .notNull()
+    .default(false),
   firstName: text("firstName").notNull(),
   lastName: text("lastName").notNull(),
   businessName: text("businessName").notNull(),

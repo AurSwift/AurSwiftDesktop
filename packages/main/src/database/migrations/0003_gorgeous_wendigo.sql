@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `requires_pin_change` integer DEFAULT false NOT NULL;

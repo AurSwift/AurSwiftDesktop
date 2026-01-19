@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { LogOut, Clock, Power } from "lucide-react";
+import { LogOut, Clock, Power, User, Lock } from "lucide-react";
 import { useAuth } from "@/shared/hooks/use-auth";
 import { LicenseHeaderBadge } from "./license-header-badge";
 import { WiFiStatusIcon } from "@/features/license";
@@ -8,6 +8,15 @@ import { LogoutConfirmationDialog } from "./logout-confirmation-dialog";
 import { BreakReminder } from "./break-reminder";
 import { useActiveShift } from "../hooks/use-active-shift";
 import { getLogger } from "@/shared/utils/logger";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChangePinDialog } from "@/features/auth/components/change-pin-dialog";
 
 const logger = getLogger("dashboard-header");
 
@@ -16,8 +25,9 @@ export interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({ subtitle }: DashboardHeaderProps) {
-  const { user, logout, isLoading } = useAuth();
+  const { user, logout } = useAuth();
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
+  const [showChangePinDialog, setShowChangePinDialog] = useState(false);
 
   // Use the active shift hook for real-time updates
   const {
@@ -116,18 +126,31 @@ export function DashboardHeader({ subtitle }: DashboardHeaderProps) {
                   </div>
                 )}
               </div>
-              <Button
-                onClick={handleLogoutClick}
-                variant="ghost"
-                size="sm"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <LogOut className="w-4 h-4" />
-                )}
-              </Button>
+
+              {/* User Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <User className="w-4 h-4" />
+                    <span className="hidden md:inline-block">
+                      {user.firstName}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setShowChangePinDialog(true)}>
+                    <Lock className="mr-2 h-4 w-4" />
+                    Change PIN
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogoutClick}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             <Button
               onClick={handleCloseApp}
@@ -140,6 +163,12 @@ export function DashboardHeader({ subtitle }: DashboardHeaderProps) {
           </div>
         </div>
       </header>
+
+      <ChangePinDialog
+        open={showChangePinDialog}
+        onOpenChange={setShowChangePinDialog}
+        userId={user.id}
+      />
 
       {/* Logout Confirmation Dialog */}
       {activeShift && (

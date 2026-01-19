@@ -885,4 +885,173 @@ export function registerAuthHandlers() {
       }
     }
   );
+
+  // ============================================================================
+  // PIN MANAGEMENT HANDLERS
+  // ============================================================================
+
+  /**
+   * Change PIN (self-service) - requires current PIN verification
+   */
+  ipcMain.handle(
+    "auth:change-pin",
+    async (event, sessionToken: string, currentPin: string, newPin: string) => {
+      try {
+        const db = await getDatabase();
+
+        // Validate session (user must be logged in)
+        const auth = await validateSession(db, sessionToken);
+        if (!auth.success || !auth.user) {
+          return { success: false, message: auth.message, code: auth.code };
+        }
+
+        // Change PIN using userManager
+        const result = await db.users.changeUserPin(
+          auth.user.id,
+          currentPin,
+          newPin
+        );
+
+        // Audit log
+        if (result.success) {
+          await logAction(db, auth.user, "change_pin", "users", auth.user.id, {
+            method: "self_service",
+          });
+        }
+
+        return result;
+      } catch (error) {
+        logger.error("Change PIN IPC error:", error);
+        return {
+          success: false,
+          message: "Failed to change PIN",
+        };
+      }
+    }
+  );
+
+  /**
+   * Reset PIN (admin/manager action) - generates temporary PIN
+   */
+  ipcMain.handle(
+    "auth:reset-pin",
+    async (event, sessionToken: string, userId: string) => {
+      try {
+        const db = await getDatabase();
+
+        // Validate session and permission
+        const auth = await validateSessionAndPermission(
+          db,
+          sessionToken,
+          PERMISSIONS.USERS_MANAGE
+        );
+
+        if (!auth.success || !auth.user) {
+          return { success: false, message: auth.message, code: auth.code };
+        }
+
+        // Get target user
+        const targetUser = db.users.getUserById(userId);
+        if (!targetUser) {
+          return { success: false, message: "User not found" };
+        }
+
+        // Validate business access
+        const businessCheck = validateBusinessAccess(
+          auth.user,
+          targetUser.businessId
+        );
+        if (!businessCheck.success) {
+          return {
+            success: false,
+            message: businessCheck.message,
+            code: businessCheck.code,
+          };
+        }
+
+        // Reset PIN using userManager
+        const result = await db.users.resetUserPin(userId, auth.user.id);
+
+        // Audit log
+        if (result.success) {
+          await logAction(db, auth.user, "reset_pin", "users", userId, {
+            method: "admin_reset",
+            resetBy: auth.user.id,
+          });
+        }
+
+        return result;
+      } catch (error) {
+        logger.error("Reset PIN IPC error:", error);
+        return {
+          success: false,
+          message: "Failed to reset PIN",
+        };
+      }
+    }
+  );
+
+  /**
+   * Set new PIN (for forced PIN change on first login)
+   */
+  ipcMain.handle(
+    "auth:set-new-pin",
+    async (event, sessionToken: string, newPin: string) => {
+      try {
+        const db = await getDatabase();
+
+        // Validate session (user must be logged in)
+        const auth = await validateSession(db, sessionToken);
+        if (!auth.success || !auth.user) {
+          return { success: false, message: auth.message, code: auth.code };
+        }
+
+        // Verify user is in requiresPinChange state
+        if (!auth.user.requiresPinChange) {
+          return {
+            success: false,
+            message: "PIN change not required for this user",
+          };
+        }
+
+        // Validate new PIN format (4 digits)
+        if (!/^\d{4}$/.test(newPin)) {
+          return {
+            success: false,
+            message: "New PIN must be exactly 4 digits",
+          };
+        }
+
+        // Update PIN
+        const result = await db.users.updateUserPin(auth.user.id, newPin);
+        if (!result.success) {
+          return result;
+        }
+
+        // Clear requiresPinChange flag
+        db.users.setRequiresPinChange(auth.user.id, false);
+
+        // Audit log
+        await logAction(db, auth.user, "set_new_pin", "users", auth.user.id, {
+          method: "forced_change",
+        });
+
+        logger.info(
+          `[setNewPin] User ${auth.user.id} completed forced PIN change`
+        );
+
+        return {
+          success: true,
+          message: "PIN set successfully",
+        };
+      } catch (error) {
+        logger.error("Set new PIN IPC error:", error);
+        return {
+          success: false,
+          message: "Failed to set new PIN",
+        };
+      }
+    }
+  );
 }
+
