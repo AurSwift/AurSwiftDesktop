@@ -91,7 +91,7 @@ class WindowManager implements AppModule {
                   type: "info",
                   title: "About aurswift",
                   message: `aurswift POS System`,
-                  detail: `Version: ${electronApp.getVersion()}\n\nA modern point-of-sale system for retail businesses.\n\n© 2025 Sameer Shahi\n\nGitHub: github.com/Sam231221/aurswift`,
+                  detail: `Version: ${electronApp.getVersion()}\n\nA modern point-of-sale system for retail businesses.\n\n© 2025 Sameer Shahi\n\nGitHub: github.com/AurSwift/AurSwift`,
                   buttons: ["OK", "Visit GitHub"],
                 })
                 .then((result: { response: number }) => {

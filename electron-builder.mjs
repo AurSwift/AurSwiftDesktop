@@ -14,8 +14,8 @@ export default /** @type import('electron-builder').Configuration */
   // in electron-builder 26.x. No explicit configuration needed.
   publish: {
     provider: 'github',
-    owner: 'Sam231221',
-    repo: 'aurswift',
+    owner: 'AurSwift',
+    repo: 'AurSwift',
     releaseType: 'release',
     channel: 'latest'  // Explicitly set channel to 'latest' to generate latest.yml
   },
@@ -53,7 +53,7 @@ export default /** @type import('electron-builder').Configuration */
   },
   squirrelWindows: {
     // iconUrl is required for Squirrel - must be a public URL
-    iconUrl: 'https://raw.githubusercontent.com/Sam231221/aurswift/main/buildResources/icon.ico',
+    iconUrl: 'https://raw.githubusercontent.com/AurSwift/AurSwift/main/buildResources/icon.ico',
     // Optional: Add a loading GIF during installation
     // loadingGif: 'buildResources/install-spinner.gif'
   },
