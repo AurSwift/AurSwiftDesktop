@@ -41,6 +41,7 @@ export function LicenseActivationScreen({
   onActivationSuccess,
   onTestMode,
 }: LicenseActivationScreenProps) {
+  const logoSrc = `${import.meta.env.BASE_URL}logo.png`;
   const { activate, getMachineInfo, isLoading, error, clearError } =
     useLicense();
 
@@ -223,7 +224,7 @@ export function LicenseActivationScreen({
                   <div className="flex justify-center mb-[clamp(0.5rem,1.6vw,1.25rem)] [@media(max-height:560px)]:mb-2">
                     <div className="relative w-[clamp(2.75rem,5vw,6rem)] h-[clamp(2.75rem,5vw,6rem)] rounded-2xl bg-black flex items-center justify-center shadow-2xl ring-4 ring-primary/20 overflow-hidden [@media(max-height:560px)]:w-12 [@media(max-height:560px)]:h-12 [@media(max-height:560px)]:ring-2">
                       <img
-                        src="/logo.png"
+                        src={logoSrc}
                         alt="Aurswift Logo"
                         className="w-full h-full object-contain p-[clamp(0.45rem,0.9vw,1.1rem)] [@media(max-height:560px)]:p-1.5"
                         onError={(e) => {

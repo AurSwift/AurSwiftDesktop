@@ -9,6 +9,7 @@ const logger = getLogger("auth-header");
 
 // Header component for banner and time
 export function AuthHeader() {
+  const logoSrc = `${import.meta.env.BASE_URL}logo.png`;
   const [time, setTime] = useState(() => new Date());
 
   useEffect(() => {
@@ -37,7 +38,7 @@ export function AuthHeader() {
         <div className="w-7 h-7 sm:w-8 sm:h-8 bg-primary rounded-sm flex items-center justify-center shrink-0">
           <div className="relative w-8 h-8 rounded-sm overflow-hidden ring-2 ring-primary/20 shadow-md bg-black flex items-center justify-center">
             <img
-              src="/logo.png"
+              src={logoSrc}
               alt="AurSwift Logo"
               className="w-full h-full object-contain p-1"
               onError={(e) => {

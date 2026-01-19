@@ -25,6 +25,7 @@ export interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({ subtitle }: DashboardHeaderProps) {
+  const logoSrc = `${import.meta.env.BASE_URL}logo.png`;
   const { user, logout } = useAuth();
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
   const [showChangePinDialog, setShowChangePinDialog] = useState(false);
@@ -82,7 +83,7 @@ export function DashboardHeader({ subtitle }: DashboardHeaderProps) {
             <div className="flex items-center gap-3">
               <div className="relative w-10 h-10 rounded-xl overflow-hidden ring-2 ring-primary/20 shadow-md bg-black flex items-center justify-center">
                 <img
-                  src="/logo.png"
+                  src={logoSrc}
                   alt="AurSwift Logo"
                   className="w-full h-full object-contain p-1"
                   onError={(e) => {
