@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.34.0](https://github.com/AurSwift/AurSwift/compare/v1.33.0...v1.34.0) (2026-01-20)
+
+
+### feat
+
+* enhance database import process with progress tracking and UI updates ([](https://github.com/AurSwift/AurSwift/commit/a0d0a34d3b51129391afc6f1fe80f4e2699f94d0))
+* enhance time tracking IPC handlers with reporting and manager overrides ([](https://github.com/AurSwift/AurSwift/commit/37369946726994065d877f063eca019ee596d466))
+* implement receipt email settings and enhance email service integration ([](https://github.com/AurSwift/AurSwift/commit/d019b228ed6bf1ddb49520f60ec73912004e76ed))
+* update logo source handling in AuthHeader, DashboardHeader, and LicenseActivationScreen ([](https://github.com/AurSwift/AurSwift/commit/4b27d53fcf2a574f549f725e9520829bb83c1459))
+
 # [1.33.0](https://github.com/AurSwift/AurSwift/compare/v1.32.0...v1.33.0) (2026-01-19)
 
 
