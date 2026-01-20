@@ -6,12 +6,7 @@
  */
 
 import { useState, useEffect, useRef } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -222,11 +217,11 @@ export function LicenseActivationScreen({
                 <div className="text-center space-y-[clamp(0.5rem,1.4vw,0.9rem)] [@media(max-height:560px)]:space-y-1.5">
                   {/* Logo Container with Black Background */}
                   <div className="flex justify-center mb-[clamp(0.5rem,1.6vw,1.25rem)] [@media(max-height:560px)]:mb-2">
-                    <div className="relative w-[clamp(2.75rem,5vw,6rem)] h-[clamp(2.75rem,5vw,6rem)] rounded-2xl bg-black flex items-center justify-center shadow-2xl ring-4 ring-primary/20 overflow-hidden [@media(max-height:560px)]:w-12 [@media(max-height:560px)]:h-12 [@media(max-height:560px)]:ring-2">
+                    <div className="relative w-[clamp(3rem,6vw,6rem)] h-[clamp(3rem,6vw,6rem)] rounded-2xl bg-black flex items-center justify-center shadow-2xl ring-4 ring-primary/20 [@media(max-height:560px)]:w-12 [@media(max-height:560px)]:h-12 [@media(max-height:560px)]:ring-2">
                       <img
                         src={logoSrc}
                         alt="Aurswift Logo"
-                        className="w-full h-full object-contain p-[clamp(0.45rem,0.9vw,1.1rem)] [@media(max-height:560px)]:p-1.5"
+                        className="w-[80%] h-[80%] object-contain [@media(max-height:560px)]:w-[75%] [@media(max-height:560px)]:h-[75%]"
                         onError={(e) => {
                           // Fallback to key icon if logo fails to load
                           const target = e.target as HTMLImageElement;
