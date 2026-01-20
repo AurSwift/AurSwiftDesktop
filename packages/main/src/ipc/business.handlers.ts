@@ -6,8 +6,10 @@ import { getDatabase } from "../database/index.js";
 import { getLogger } from "../utils/logger.js";
 import {
   validateSession,
+  validateSessionAndPermission,
   validateBusinessAccess,
 } from "../utils/authHelpers.js";
+import { PERMISSIONS } from "@app/shared/constants/permissions";
 
 const logger = getLogger("businessHandlers");
 // let db: any = null; // Removed: Always get fresh DB reference
@@ -23,7 +25,7 @@ export function registerBusinessHandlers() {
       try {
         const db = await getDatabase();
 
-        // Validate session
+        // Validate session (basic)
         const sessionValidation = await validateSession(db, sessionToken);
         if (!sessionValidation.success) {
           return {
@@ -44,6 +46,33 @@ export function registerBusinessHandlers() {
             message: businessCheck.message,
             code: businessCheck.code,
           };
+        }
+
+        // If attempting to update receipt email sender credentials, require SETTINGS_MANAGE.
+        const receiptEmailFields = [
+          "receiptEmailGmailUser",
+          "receiptEmailGmailAppPassword",
+          "receiptEmailGmailAppPasswordEncrypted",
+          "receiptEmailUpdatedAt",
+        ];
+        const isReceiptEmailUpdate =
+          updates &&
+          typeof updates === "object" &&
+          receiptEmailFields.some((k) => Object.prototype.hasOwnProperty.call(updates, k));
+
+        if (isReceiptEmailUpdate) {
+          const authz = await validateSessionAndPermission(
+            db,
+            sessionToken,
+            PERMISSIONS.SETTINGS_MANAGE
+          );
+          if (!authz.success) {
+            return {
+              success: false,
+              message: authz.message,
+              code: authz.code,
+            };
+          }
         }
 
         // Log the updates being applied

@@ -3,7 +3,7 @@
  * Shown after successful transaction completion for all payment types
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   CheckCircle,
@@ -16,6 +16,8 @@ import {
 import { toast } from "sonner";
 import type { TransactionData } from "@/types/domain/transaction";
 import { EmailReceiptModal } from "../modals/email-receipt-modal";
+import { ReceiptPreviewModal } from "../modals/receipt-preview-modal";
+import { PrinterSetupDialog } from "@/services/hardware/printer";
 
 interface ReceiptOptionsModalProps {
   isOpen: boolean;
@@ -42,6 +44,33 @@ export function ReceiptOptionsModal({
   printerStatus = { connected: true, error: null },
 }: ReceiptOptionsModalProps) {
   const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showPrinterSetup, setShowPrinterSetup] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [localPrinterConnected, setLocalPrinterConnected] = useState(
+    printerStatus.connected
+  );
+  const [localPrinterError, setLocalPrinterError] = useState<string | null>(
+    printerStatus.error
+  );
+
+  // Keep local status in sync with parent, but allow live refresh after setup.
+  // (Parent state is only captured at transaction completion today.)
+  useEffect(() => {
+    setLocalPrinterConnected(printerStatus.connected);
+    setLocalPrinterError(printerStatus.error);
+  }, [printerStatus.connected, printerStatus.error]);
+
+  const refreshPrinterStatus = async () => {
+    try {
+      if (!window.printerAPI) return;
+      const status = await window.printerAPI.getStatus();
+      setLocalPrinterConnected(status.connected);
+      setLocalPrinterError(status.error ?? null);
+    } catch (e) {
+      setLocalPrinterConnected(false);
+      setLocalPrinterError(e instanceof Error ? e.message : "Unknown error");
+    }
+  };
 
   if (!isOpen || !transactionData) return null;
 
@@ -155,7 +184,7 @@ export function ReceiptOptionsModal({
             <div className="space-y-2">
               <Button
                 onClick={onPrint}
-                disabled={!printerStatus.connected}
+                disabled={!localPrinterConnected}
                 className="w-full min-h-[44px] h-14 sm:h-16 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 disabled:from-slate-400 disabled:to-slate-500 disabled:cursor-not-allowed text-white flex items-center justify-between px-4 sm:px-6 text-sm sm:text-base font-semibold shadow-md hover:shadow-lg transition-all touch-manipulation"
               >
                 <div className="flex items-center gap-2 sm:gap-3">
@@ -166,11 +195,32 @@ export function ReceiptOptionsModal({
                 </div>
                 <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
               </Button>
-              {!printerStatus.connected && (
-                <p className="text-[10px] sm:text-xs text-amber-600 text-center px-2">
-                  ⚠️ Printer is not connected. You can download the receipt or
-                  print later from transaction history.
-                </p>
+
+              <Button
+                onClick={() => setShowPreviewModal(true)}
+                variant="outline"
+                className="w-full"
+              >
+                Preview Receipt
+              </Button>
+              {!localPrinterConnected && (
+                <div className="space-y-2">
+                  <p className="text-[10px] sm:text-xs text-amber-600 text-center px-2">
+                    ⚠️ Printer is not connected. You can download the receipt or
+                    print later from transaction history.
+                    {localPrinterError ? ` (${localPrinterError})` : ""}
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={async () => {
+                      await refreshPrinterStatus();
+                      setShowPrinterSetup(true);
+                    }}
+                    className="w-full"
+                  >
+                    Connect Printer
+                  </Button>
+                </div>
               )}
             </div>
 
@@ -242,6 +292,22 @@ export function ReceiptOptionsModal({
         onClose={() => setShowEmailModal(false)}
         transactionId={transactionData.id}
         receiptNumber={transactionData.receiptNumber}
+      />
+
+      <ReceiptPreviewModal
+        isOpen={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+        transactionData={transactionData}
+      />
+
+      {/* Printer Setup Dialog */}
+      <PrinterSetupDialog
+        open={showPrinterSetup}
+        onOpenChange={(open) => setShowPrinterSetup(open)}
+        defaultPaperWidthMm={80}
+        onConnected={async () => {
+          await refreshPrinterStatus();
+        }}
       />
     </div>
   );

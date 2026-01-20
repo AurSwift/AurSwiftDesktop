@@ -204,6 +204,17 @@ export const businesses = createTable("businesses", {
   city: text("city").notNull().default(""),
   postalCode: text("postalCode").default(""),
 
+  // Receipt Email (Gmail) - stored per business (encrypted when supported)
+  receiptEmailGmailUser: text("receipt_email_gmail_user").default(""),
+  receiptEmailGmailAppPassword: text("receipt_email_gmail_app_password").default(""),
+  receiptEmailGmailAppPasswordEncrypted: integer(
+    "receipt_email_gmail_app_password_encrypted",
+    { mode: "boolean" }
+  ).default(false),
+  receiptEmailUpdatedAt: integer("receipt_email_updated_at", {
+    mode: "timestamp_ms",
+  }),
+
   // Business Identity
   vatNumber: text("vatNumber").unique().default(""),
   businessType: text("businessType", {
@@ -1201,6 +1212,10 @@ export const transactions = createTable("transactions", {
   // Viva Wallet transaction tracking
   vivaWalletTransactionId: text("viva_wallet_transaction_id"),
   vivaWalletTerminalId: text("viva_wallet_terminal_id"),
+  vivaWalletAuthCode: text("viva_wallet_auth_code"),
+  vivaWalletCardBrand: text("viva_wallet_card_brand"),
+  vivaWalletCardLast4: text("viva_wallet_card_last4"),
+  vivaWalletCardType: text("viva_wallet_card_type"),
   // Currency for multi-currency support
   currency: text("currency").notNull().default("GBP"),
 });
@@ -1664,11 +1679,13 @@ export const shiftReports = sqliteTableCreator((name: string) => `pos_${name}`)(
     periodCovered: text("period_covered").notNull(), // e.g., '2024-01-day', '2024-01-week'
   },
   (table: any) => [
-    index("shift_report_view_shift_idx").on(table.shiftId),
-    index("shift_report_view_business_idx").on(table.businessId),
-    index("shift_report_view_user_idx").on(table.userId),
-    index("shift_report_view_period_idx").on(table.periodCovered),
-    index("shift_report_view_generated_at_idx").on(table.reportGeneratedAt),
+    // Index names must be globally unique in SQLite (not just per-table).
+    // Prefix with table name to avoid collisions with legacy schemas.
+    index("pos_shift_reports_shift_id_idx").on(table.shiftId),
+    index("pos_shift_reports_business_id_idx").on(table.businessId),
+    index("pos_shift_reports_user_id_idx").on(table.userId),
+    index("pos_shift_reports_period_covered_idx").on(table.periodCovered),
+    index("pos_shift_reports_report_generated_at_idx").on(table.reportGeneratedAt),
   ]
 );
 
@@ -1718,17 +1735,19 @@ export const attendanceReports = createTable(
     dataUpTo: text("data_up_to").notNull(), // Last data point included
   },
   (table) => [
-    index("attendance_report_user_period_idx").on(
+    // Index names must be globally unique in SQLite (not just per-table).
+    // Prefix with table name to avoid collisions with legacy schemas.
+    index("attendance_reports_user_period_idx").on(
       table.userId,
       table.periodStartDate
     ),
-    index("attendance_report_business_period_idx").on(
+    index("attendance_reports_business_period_idx").on(
       table.businessId,
       table.periodType
     ),
-    index("attendance_report_generated_at_idx").on(table.reportGeneratedAt),
+    index("attendance_reports_report_generated_at_idx").on(table.reportGeneratedAt),
 
-    unique("attendance_report_unique").on(
+    unique("attendance_reports_unique").on(
       table.userId,
       table.periodStartDate,
       table.periodEndDate,

@@ -81,7 +81,7 @@ const AdminDashboardView = ({
     if (!isImporting) return;
 
     const unsubscribeProgress = window.databaseAPI.onImportProgress(
-      (progress) => {
+      (progress: DatabaseImportProgress) => {
         logger.info(
           `Import progress: ${progress.stage} - ${progress.percent}%`,
         );

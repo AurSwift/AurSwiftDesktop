@@ -44,11 +44,22 @@ export const databaseAPI = {
 
 export const printerAPI = {
   getStatus: () => ipcRenderer.invoke("printer:getStatus"),
-  connect: (config: { type: string; interface: string }) =>
+  connect: (config: {
+    type: string;
+    interface: string;
+    width?: number;
+    options?: {
+      timeout?: number;
+      characterSet?: string;
+      removeSpecialCharacters?: boolean;
+    };
+  }) =>
     ipcRenderer.invoke("printer:connect", config),
   disconnect: () => ipcRenderer.invoke("printer:disconnect"),
   printReceipt: (transactionData: any) =>
     ipcRenderer.invoke("printer:printReceipt", transactionData),
+  previewReceipt: (transactionData: any) =>
+    ipcRenderer.invoke("printer:previewReceipt", transactionData),
   cancelPrint: () => ipcRenderer.invoke("printer:cancelPrint"),
   getAvailableInterfaces: () =>
     ipcRenderer.invoke("printer:getAvailableInterfaces"),

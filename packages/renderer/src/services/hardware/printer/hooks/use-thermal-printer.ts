@@ -59,6 +59,57 @@ export const useThermalPrinter = () => {
     }
   }, []);
 
+  /**
+   * Ensure printer is connected.
+   * - Always refreshes status from main process
+   * - If disconnected, attempts a best-effort auto-connect using saved config
+   */
+  const ensureConnected = useCallback(async (): Promise<boolean> => {
+    if (!window.printerAPI) return false;
+
+    try {
+      const status = await window.printerAPI.getStatus();
+      setPrinterInfo(status);
+      setIsConnected(status.connected);
+      if (status.connected) return true;
+
+      // Best-effort auto-connect using saved config
+      const savedConfigRaw = localStorage.getItem("printer_config");
+      if (!savedConfigRaw) return false;
+
+      let savedConfig: unknown;
+      try {
+        savedConfig = JSON.parse(savedConfigRaw);
+      } catch {
+        return false;
+      }
+
+      const config = savedConfig as Partial<PrinterConfig>;
+      if (!config.interface || !config.type) return false;
+
+      const connectResult = await window.printerAPI.connect({
+        type: config.type,
+        interface: config.interface,
+        width: config.width,
+        characterSet: config.characterSet,
+        baudRate: config.baudRate,
+        timeout: config.timeout,
+      });
+      if (!connectResult?.success) {
+        return false;
+      }
+
+      const statusAfter = await window.printerAPI.getStatus();
+      setPrinterInfo(statusAfter);
+      setIsConnected(statusAfter.connected);
+      return statusAfter.connected;
+    } catch (error) {
+      logger.error("Failed to ensure printer connection:", error);
+      setIsConnected(false);
+      return false;
+    }
+  }, []);
+
   // Initialize printer connection status
   useEffect(() => {
     checkPrinterStatus();
@@ -118,15 +169,18 @@ export const useThermalPrinter = () => {
    */
   const printReceipt = useCallback(
     async (transactionData: TransactionData): Promise<boolean> => {
-      if (!isConnected || !window.printerAPI) {
-        toast.error("Printer not connected");
-        return false;
-      }
+      if (!window.printerAPI) return false;
 
       // Validate transaction ID is present
       if (!transactionData.id) {
         logger.error("Transaction ID is required for receipt printing");
         toast.error("Cannot print receipt: Transaction ID is missing");
+        return false;
+      }
+
+      const connected = await ensureConnected();
+      if (!connected) {
+        toast.error("Printer not connected");
         return false;
       }
 
@@ -196,7 +250,7 @@ export const useThermalPrinter = () => {
         return false;
       }
     },
-    [isConnected]
+    [ensureConnected]
   );
 
   /**
@@ -278,6 +332,7 @@ export const useThermalPrinter = () => {
     clearQueue,
     checkPrinterStatus,
     getAvailableInterfaces,
+    ensureConnected,
 
     // Utilities
     setPrintStatus,
@@ -368,6 +423,7 @@ export const useReceiptPrintingFlow = () => {
     isConnected,
     printReceipt,
     setPrintStatus,
+    ensureConnected,
   } = useThermalPrinter();
 
   /**
@@ -378,14 +434,16 @@ export const useReceiptPrintingFlow = () => {
       setCurrentTransaction(transactionData);
       setIsShowingStatus(true);
 
-      if (!isConnected) {
+      // Always re-check status (connection may have changed since mount)
+      const connected = await ensureConnected();
+      if (!connected) {
         setPrintStatus("error");
         return false;
       }
 
       return await printReceipt(transactionData);
     },
-    [isConnected, printReceipt, setPrintStatus]
+    [ensureConnected, printReceipt, setPrintStatus]
   );
 
   /**

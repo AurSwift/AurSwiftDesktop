@@ -41,6 +41,7 @@ import { terminalsAPI } from "./api/terminals.js";
 import { licenseAPI } from "./api/license.js";
 import { reportsExportAPI } from "./api/reportsExport.js";
 import { breakPolicyAPI } from "./api/breakPolicy.js";
+import { emailSettingsAPI } from "./api/emailSettings.js";
 import "./api/updates.js";
 
 // Expose APIs to renderer process
@@ -84,6 +85,7 @@ contextBridge.exposeInMainWorld("terminalsAPI", terminalsAPI);
 contextBridge.exposeInMainWorld("licenseAPI", licenseAPI);
 contextBridge.exposeInMainWorld("reportsExportAPI", reportsExportAPI);
 contextBridge.exposeInMainWorld("breakPolicyAPI", breakPolicyAPI);
+contextBridge.exposeInMainWorld("emailSettingsAPI", emailSettingsAPI);
 contextBridge.exposeInMainWorld(
   "systemNotificationsAPI",
   systemNotificationsAPI

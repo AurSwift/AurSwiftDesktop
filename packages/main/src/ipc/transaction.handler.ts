@@ -1,4 +1,4 @@
-import { ipcMain } from "electron";
+import { ipcMain, safeStorage } from "electron";
 import { getDatabase } from "../database/index.js";
 import { getLogger } from "../utils/logger.js";
 import {
@@ -10,6 +10,65 @@ import { transactionValidator } from "../utils/transactionValidator.js";
 import { vivaWalletService } from "../services/vivaWallet/index.js";
 import { emailService } from "../services/email-service.js";
 const logger = getLogger("transactionHandlers");
+
+function decryptBusinessAppPassword(
+  stored: string,
+  encryptedFlag: boolean
+): string | null {
+  if (!stored) return null;
+  if (encryptedFlag && safeStorage.isEncryptionAvailable()) {
+    try {
+      const buffer = Buffer.from(stored, "base64");
+      return safeStorage.decryptString(buffer);
+    } catch (error) {
+      logger.error("Failed to decrypt business Gmail app password:", error);
+      return null;
+    }
+  }
+  return stored;
+}
+
+async function configureEmailServiceForBusiness(business: any | null) {
+  try {
+    const gmailUser = (business?.receiptEmailGmailUser || "").trim();
+    const storedPass = business?.receiptEmailGmailAppPassword || "";
+    const encryptedFlag = business?.receiptEmailGmailAppPasswordEncrypted === true;
+
+    const appPassword = decryptBusinessAppPassword(storedPass, encryptedFlag);
+
+    if (!gmailUser || !appPassword) {
+      await emailService.initialize({
+        provider: "console",
+        fromEmail: "no-reply@aurswift.local",
+        fromName: "AurSwift POS",
+      });
+      return;
+    }
+
+    await emailService.initialize({
+      provider: "smtp",
+      smtp: {
+        host: "smtp.gmail.com",
+        port: 587,
+        secure: false,
+        auth: {
+          user: gmailUser,
+          pass: appPassword.replace(/\s+/g, "").trim(),
+        },
+      },
+      fromEmail: gmailUser,
+      fromName: "AurSwift POS",
+    });
+  } catch (error) {
+    logger.error("Failed to configure email service for business:", error);
+    // Fall back to console mode so the app remains usable
+    await emailService.initialize({
+      provider: "console",
+      fromEmail: "no-reply@aurswift.local",
+      fromName: "AurSwift POS",
+    });
+  }
+}
 
 export function registerTransactionHandlers() {
   // Transaction API endpoints
@@ -377,6 +436,10 @@ export function registerTransactionHandlers() {
         // Extract Viva Wallet transaction IDs if payment method is viva_wallet
         let vivaWalletTransactionId: string | undefined;
         let vivaWalletTerminalId: string | undefined;
+        let vivaWalletAuthCode: string | undefined;
+        let vivaWalletCardBrand: string | undefined;
+        let vivaWalletCardLast4: string | undefined;
+        let vivaWalletCardType: string | undefined;
 
         if (data.paymentMethod === "viva_wallet") {
           // Get Viva Wallet transaction ID from data if provided
@@ -399,6 +462,31 @@ export function registerTransactionHandlers() {
             transactionId: vivaWalletTransactionId,
             terminalId: vivaWalletTerminalId,
           });
+
+          // Best-effort: fetch final terminal status payload to persist card-slip metadata.
+          // This enables "Lidl-style" receipts with auth code + masked PAN details.
+          if (vivaWalletTransactionId) {
+            try {
+              const terminalResponse =
+                await vivaWalletService.fetchTerminalTransactionResponse(
+                  vivaWalletTransactionId
+                );
+
+              if (terminalResponse?.authCode) {
+                vivaWalletAuthCode = terminalResponse.authCode;
+              }
+              if (terminalResponse?.cardDetails) {
+                vivaWalletCardBrand = terminalResponse.cardDetails.brand;
+                vivaWalletCardLast4 = terminalResponse.cardDetails.last4;
+                vivaWalletCardType = terminalResponse.cardDetails.type;
+              }
+            } catch (error) {
+              logger.warn(
+                "Failed to fetch Viva Wallet card-slip metadata, continuing without it:",
+                error
+              );
+            }
+          }
         }
 
         // Create transaction using createTransactionWithItems
@@ -428,6 +516,10 @@ export function registerTransactionHandlers() {
           // Viva Wallet transaction tracking
           vivaWalletTransactionId: vivaWalletTransactionId || null,
           vivaWalletTerminalId: vivaWalletTerminalId || null,
+          vivaWalletAuthCode: vivaWalletAuthCode || null,
+          vivaWalletCardBrand: vivaWalletCardBrand || null,
+          vivaWalletCardLast4: vivaWalletCardLast4 || null,
+          vivaWalletCardType: vivaWalletCardType || null,
           // Currency for multi-currency support
           currency: currency,
         } as any);
@@ -1141,6 +1233,9 @@ export function registerTransactionHandlers() {
         // Get business info
         const business = db.businesses.getBusinessById(transaction.businessId);
 
+        // Configure email service for THIS business (per-business Gmail credentials)
+        await configureEmailServiceForBusiness(business);
+
         // Get cashier info
         const cashier = db.users.getUserById(transaction.cashierId);
 
@@ -1186,10 +1281,13 @@ export function registerTransactionHandlers() {
         const emailSent = await emailService.sendTransactionReceipt(emailData);
 
         if (!emailSent) {
+          const isConsoleMode = !emailService.isConfiguredForSending();
           return {
             success: false,
             message:
-              "Failed to send email. Please check email service configuration.",
+              isConsoleMode
+                ? "Email is not configured. Go to Settings → Receipt Email (Gmail) to enable receipt emailing."
+                : "Failed to send email. Please check your Gmail settings and internet connection.",
           };
         }
 

@@ -29,6 +29,27 @@
       "when": 1768776520510,
       "tag": "0003_gorgeous_wendigo",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1768842366175,
+      "tag": "0004_steep_rage",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1768847000000,
+      "tag": "0005_patient_harpoon",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1768903062759,
+      "tag": "0006_good_mister_sinister",
+      "breakpoints": true
     }
   ]
 }

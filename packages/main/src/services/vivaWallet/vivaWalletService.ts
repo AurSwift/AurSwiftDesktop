@@ -8,6 +8,7 @@ import { getLogger } from "../../utils/logger.js";
 import { VivaWalletConfigManager } from "./config.js";
 import { TerminalDiscovery } from "./terminal-discovery.js";
 import { TransactionManager } from "./transaction-manager.js";
+import { VivaWalletHTTPClient } from "./http-client.js";
 import type {
   Terminal,
   VivaWalletConfig,
@@ -16,6 +17,7 @@ import type {
   DiscoverTerminalsResponse,
   ConnectTerminalResponse,
   TransactionResponse,
+  VivaWalletTransactionResponse,
 } from "./types.js";
 
 const logger = getLogger("VivaWalletService");
@@ -37,6 +39,31 @@ export class VivaWalletService {
     this.transactionManager = new TransactionManager();
     this.setupIpcHandlers();
     logger.info("VivaWalletService initialized");
+  }
+
+  /**
+   * Fetch the raw terminal transaction status payload.
+   *
+   * Used by the POS to persist card-slip metadata (authCode/card brand/last4/type)
+   * for later receipt printing/reprints.
+   */
+  async fetchTerminalTransactionResponse(
+    terminalTransactionId: string
+  ): Promise<VivaWalletTransactionResponse | null> {
+    try {
+      if (!this.connectedTerminal) return null;
+      const httpClient = new VivaWalletHTTPClient(this.connectedTerminal);
+      const response = await httpClient.get<VivaWalletTransactionResponse>(
+        `/api/transactions/${terminalTransactionId}/status`
+      );
+      return response;
+    } catch (error) {
+      logger.warn(
+        `Failed to fetch terminal transaction status for ${terminalTransactionId}:`,
+        error
+      );
+      return null;
+    }
   }
 
   /**

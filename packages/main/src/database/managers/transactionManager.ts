@@ -91,6 +91,10 @@ export class TransactionManager {
         (transactionData as any).vivaWalletTransactionId ?? null,
       vivaWalletTerminalId:
         (transactionData as any).vivaWalletTerminalId ?? null,
+      vivaWalletAuthCode: (transactionData as any).vivaWalletAuthCode ?? null,
+      vivaWalletCardBrand: (transactionData as any).vivaWalletCardBrand ?? null,
+      vivaWalletCardLast4: (transactionData as any).vivaWalletCardLast4 ?? null,
+      vivaWalletCardType: (transactionData as any).vivaWalletCardType ?? null,
       // Currency for multi-currency support
       currency: (transactionData as any).currency ?? "GBP",
     });

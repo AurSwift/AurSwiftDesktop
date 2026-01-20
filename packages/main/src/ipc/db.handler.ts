@@ -15,6 +15,7 @@ const logger = getLogger("dbHandlers");
 interface LicenseBackupData {
   licenseActivation: any | null;
   licenseValidationLogs: any[];
+  receiptEmailSettings: Array<{ key: string; value: string }> | null;
 }
 
 /**
@@ -35,6 +36,7 @@ function extractLicenseData(dbPath: string): LicenseBackupData | null {
     const tableNames = tables.map((t) => t.name);
     let licenseActivation = null;
     let licenseValidationLogs: any[] = [];
+    let receiptEmailSettings: Array<{ key: string; value: string }> | null = null;
 
     // Extract license activation (only active one)
     if (tableNames.includes("license_activation")) {
@@ -74,13 +76,36 @@ function extractLicenseData(dbPath: string): LicenseBackupData | null {
       }
     }
 
+    // Extract receipt email settings (if present) so they survive imports.
+    if (tableNames.includes("app_settings")) {
+      try {
+        const rows = db
+          .prepare(
+            "SELECT key, value FROM app_settings WHERE key LIKE 'receipt_email:%' ORDER BY key ASC"
+          )
+          .all() as Array<{ key: string; value: string }>;
+        receiptEmailSettings = rows.length > 0 ? rows : null;
+        if (receiptEmailSettings) {
+          logger.info(
+            `Extracted ${receiptEmailSettings.length} receipt email setting(s) from app_settings`
+          );
+        }
+      } catch (err) {
+        logger.warn("Could not extract receipt email settings:", err);
+      }
+    }
+
     db.close();
 
-    if (!licenseActivation && licenseValidationLogs.length === 0) {
+    if (
+      !licenseActivation &&
+      licenseValidationLogs.length === 0 &&
+      !receiptEmailSettings
+    ) {
       return null;
     }
 
-    return { licenseActivation, licenseValidationLogs };
+    return { licenseActivation, licenseValidationLogs, receiptEmailSettings };
   } catch (error) {
     logger.error("Failed to extract license data:", error);
     return null;
@@ -248,6 +273,34 @@ function restoreLicenseData(
           );
         }
       }
+
+      // Restore receipt email settings (if available)
+      if (backupData.receiptEmailSettings && backupData.receiptEmailSettings.length > 0) {
+        const appSettingsExists = db
+          .prepare(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='app_settings'"
+          )
+          .get();
+
+        if (appSettingsExists) {
+          const now = Date.now();
+          const upsert = db.prepare(
+            "INSERT OR REPLACE INTO app_settings (key, value, created_at, updated_at) VALUES (?, ?, ?, ?)"
+          );
+
+          for (const row of backupData.receiptEmailSettings) {
+            try {
+              upsert.run(row.key, row.value, now, now);
+            } catch (err) {
+              logger.warn(`Failed to restore app_settings key ${row.key}:`, err);
+            }
+          }
+
+          logger.info(
+            `Restored ${backupData.receiptEmailSettings.length} receipt email setting(s) to app_settings`
+          );
+        }
+      }
     });
 
     transaction();
@@ -351,6 +404,11 @@ export function registerDbHandlers() {
       const db = await getDatabase();
       const info = db.getDatabaseInfo();
 
+      // Preserve receipt email settings across empty operations
+      const preservedReceiptEmailSettings = db.settings.getSettingsByPrefix(
+        "receipt_email:"
+      );
+
       // Create automatic backup before emptying
       const timestamp = new Date()
         .toISOString()
@@ -387,6 +445,23 @@ export function registerDbHandlers() {
       try {
         await db.reseedDatabase();
         logger.info("✅ Database reseeded after emptying");
+
+        // Restore preserved receipt email settings after reseed
+        if (preservedReceiptEmailSettings.length > 0) {
+          for (const s of preservedReceiptEmailSettings) {
+            try {
+              db.settings.setSetting(s.key, s.value);
+            } catch (err) {
+              logger.warn(
+                `Failed to restore preserved email setting ${s.key}:`,
+                err
+              );
+            }
+          }
+          logger.info(
+            `✅ Restored ${preservedReceiptEmailSettings.length} receipt email setting(s) after empty`
+          );
+        }
       } catch (seedError) {
         logger.error(
           "⚠️  Failed to reseed database after emptying:",
@@ -628,6 +703,9 @@ export function registerDbHandlers() {
           } else {
             logger.info("No active license found in current database");
           }
+          if (licenseBackup?.receiptEmailSettings?.length) {
+            logger.info("✅ Receipt email settings extracted - will be restored after import");
+          }
         } catch (backupError) {
           logger.error("Failed to create backup:", backupError);
           return {
@@ -768,6 +846,15 @@ export function registerDbHandlers() {
             logger.warn(
               "⚠️ License restoration failed - user may need to re-activate",
             );
+          }
+        } else if (licenseBackup?.receiptEmailSettings?.length) {
+          // Even if there is no license, we may still want to restore receipt email settings.
+          logger.info("Restoring receipt email settings to imported database...");
+          const restored = restoreLicenseData(info.path, licenseBackup);
+          if (restored) {
+            logger.info("✅ Receipt email settings restored successfully");
+          } else {
+            logger.warn("⚠️ Receipt email settings restoration failed");
           }
         }
       } catch (reinitError) {

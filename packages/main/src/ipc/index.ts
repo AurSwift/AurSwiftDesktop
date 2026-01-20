@@ -10,6 +10,7 @@ import { registerCategoryHandlers } from "./category.handlers.js";
 import { registerDashboardHandlers } from "./dashboard.handlers.js";
 import { registerDbHandlers } from "./db.handler.js";
 import { registerExpiryProductHandlers } from "./expiryProduct.handlers.js";
+import { registerEmailSettingsHandlers } from "./email-settings.handlers.js";
 import { registerLicenseHandlers } from "./license.handlers.js";
 import { registerSalesUnitSettingsHandlers } from "./sales-unit-settings.handlers.js";
 import { registerProductHandlers } from "./product.handlers.js";
@@ -35,6 +36,7 @@ export function registerAllIpcHandlers() {
   registerCategoryHandlers();
   registerDashboardHandlers();
   registerDbHandlers();
+  registerEmailSettingsHandlers();
   registerExpiryProductHandlers();
   registerLicenseHandlers();
   registerSalesUnitSettingsHandlers();

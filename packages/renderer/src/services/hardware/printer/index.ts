@@ -16,3 +16,5 @@ export type {
   PrintJob,
 } from "./types/printer.types";
 
+export { PrinterSetupDialog } from "./components/printer-setup-dialog";
+

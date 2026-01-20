@@ -43,6 +43,7 @@ import type { LicenseAPI } from "../types/api/license";
 import type { BasketAPI } from "../types/api/basket";
 import type { ReportsExportAPI } from "../types/api/reports-export";
 import type { BreakPolicyAPI } from "../types/api/break-policy";
+import type { EmailSettingsAPI } from "../types/api/email-settings";
 import type { APIResponse } from "../types/api/common";
 
 declare global {
@@ -131,6 +132,9 @@ declare global {
 
     // Break Policy Management
     breakPolicyAPI: BreakPolicyAPI;
+
+    // Receipt Email (Gmail) Settings
+    emailSettingsAPI: EmailSettingsAPI;
 
     // System Notifications
     systemNotificationsAPI?: {
