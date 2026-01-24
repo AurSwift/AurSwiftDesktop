@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.36.1](https://github.com/AurSwift/AurSwift/compare/v1.36.0...v1.36.1) (2026-01-24)
+
+
+### docs
+
+* enhance database migration documentation with additional safety features and user experience details ([](https://github.com/AurSwift/AurSwift/commit/f2b13964e9b277d0b9b8a1c7623ee5831c92ae02))
+
+
+### refactor
+
+* standardize code formatting and improve update handling ([](https://github.com/AurSwift/AurSwift/commit/9bae5055700f0f231783eb7320855e607a78ec82))
+
 # [1.36.0](https://github.com/AurSwift/AurSwift/compare/v1.35.1...v1.36.0) (2026-01-24)
 
 
