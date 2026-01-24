@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.36.0](https://github.com/AurSwift/AurSwift/compare/v1.35.1...v1.36.0) (2026-01-24)
+
+
+### chore
+
+* remove obsolete database bridge migration script from package.json ([](https://github.com/AurSwift/AurSwift/commit/95c812338bc3e25641523ba06ef6c2656fff01f1))
+
+
+### docs
+
+* Add comprehensive backup cleanup system documentation and retention policy analysis ([](https://github.com/AurSwift/AurSwift/commit/3b1b39b560f2c38f3bfa016c0f6cc9db673e0059))
+* add comprehensive documentation for database migration and auto-update system ([](https://github.com/AurSwift/AurSwift/commit/cf89d0b33a420d4eb3e5e3eaa60474207da0328a))
+* Add unified system documentation and refactor old system references ([](https://github.com/AurSwift/AurSwift/commit/1927d27469ed9c9eca474b0afaf2ab532dbda510))
+
+
+### feat
+
+* add new database management scripts to package.json ([](https://github.com/AurSwift/AurSwift/commit/f579f75917308ba6d1d1ab403b715d8771c38d04))
+* implement disk space check for database migrations ([](https://github.com/AurSwift/AurSwift/commit/63c18c036b8d0831640dbed14ace53031218e81a))
+* introduce comprehensive backup cleanup system ([](https://github.com/AurSwift/AurSwift/commit/c2257c3d6740fab34783b90eafdd71c01dc33277))
+
+
+### fix
+
+* enhance import database error handling and improve user feedback ([](https://github.com/AurSwift/AurSwift/commit/2a2d11bfaa70fb7dcc301378f6329ffb4210d6bf))
+
 ## [1.35.1](https://github.com/AurSwift/AurSwift/compare/v1.35.0...v1.35.1) (2026-01-21)
 
 
