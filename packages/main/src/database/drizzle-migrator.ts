@@ -32,6 +32,7 @@ import {
   mkdirSync,
   readdirSync,
   statSync,
+  statfsSync,
 } from "node:fs";
 import { app } from "electron";
 import Database from "better-sqlite3";
@@ -147,6 +148,63 @@ function getMigrationsFolder(): string {
     `- Check that migrations are included in the build output`;
 
   throw new Error(errorMessage);
+}
+
+/**
+ * Check if there's enough disk space for migration
+ * Requires space for: backup (1x db size) + migration overhead (0.5x db size) + safety margin
+ *
+ * @param dbPath - Path to database file
+ * @returns Object with hasSpace, required bytes, and available bytes
+ */
+function checkDiskSpace(dbPath: string): {
+  hasSpace: boolean;
+  requiredBytes: number;
+  availableBytes: number;
+  dbSizeBytes: number;
+} {
+  try {
+    // Get database file size (or estimate for new databases)
+    let dbSizeBytes = 0;
+    if (existsSync(dbPath)) {
+      dbSizeBytes = statSync(dbPath).size;
+    }
+
+    // Minimum required: 50MB for new databases, or 2.5x database size
+    // This covers: backup (1x) + WAL overhead (0.5x) + migration space (0.5x) + safety (0.5x)
+    const minRequired = 50 * 1024 * 1024; // 50MB minimum
+    const requiredBytes = Math.max(minRequired, Math.ceil(dbSizeBytes * 2.5));
+
+    // Get available disk space using statfsSync
+    const dbDir = dirname(dbPath);
+    const stats = statfsSync(dbDir);
+    const availableBytes = stats.bfree * stats.bsize;
+
+    const hasSpace = availableBytes >= requiredBytes;
+
+    if (!hasSpace) {
+      logger.warn(
+        `   ⚠️  Low disk space: ${(availableBytes / 1024 / 1024).toFixed(1)}MB available, ` +
+          `${(requiredBytes / 1024 / 1024).toFixed(1)}MB required`,
+      );
+    }
+
+    return {
+      hasSpace,
+      requiredBytes,
+      availableBytes,
+      dbSizeBytes,
+    };
+  } catch (error) {
+    // If we can't check disk space, log warning but don't block migration
+    logger.warn(`   ⚠️  Could not check disk space: ${error}`);
+    return {
+      hasSpace: true, // Assume OK if we can't check
+      requiredBytes: 0,
+      availableBytes: 0,
+      dbSizeBytes: 0,
+    };
+  }
 }
 
 /**
@@ -458,6 +516,25 @@ export async function runDrizzleMigrations(
     if (!checkDatabaseIntegrity(rawDb, isProduction)) {
       throw new Error("Database integrity check failed - aborting migration");
     }
+
+    // Disk space check before migrations (critical in production)
+    logger.info("   💾 Checking available disk space...");
+    const diskSpace = checkDiskSpace(dbPath);
+    if (!diskSpace.hasSpace) {
+      const availableMB = (diskSpace.availableBytes / 1024 / 1024).toFixed(1);
+      const requiredMB = (diskSpace.requiredBytes / 1024 / 1024).toFixed(1);
+      const dbSizeMB = (diskSpace.dbSizeBytes / 1024 / 1024).toFixed(1);
+      throw new Error(
+        `Insufficient disk space for migration. ` +
+          `Database size: ${dbSizeMB}MB, ` +
+          `Required: ${requiredMB}MB, ` +
+          `Available: ${availableMB}MB. ` +
+          `Please free up disk space before proceeding.`,
+      );
+    }
+    logger.info(
+      `   ✅ Disk space OK: ${(diskSpace.availableBytes / 1024 / 1024).toFixed(1)}MB available`,
+    );
 
     // Setup backup directory
     const backupDir = join(dirname(dbPath), "backups");

@@ -210,7 +210,8 @@ export async function getDatabase(): Promise<DatabaseManagers> {
 
     // Cleanup old database backups on startup
     try {
-      const dbInfo = getDatabaseInfo();
+      const dbPath = dbManagerInstance.getDatabasePath();
+      const dbInfo = getDatabaseInfo(dbPath);
       const isProduction = !isDevelopmentMode();
 
       // Get storage info and check for warnings

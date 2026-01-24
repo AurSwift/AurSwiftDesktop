@@ -5,50 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1767793562154,
-      "tag": "0000_mighty_tiger_shark",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1767990959867,
-      "tag": "0001_happy_exodus",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1768697524449,
-      "tag": "0002_talented_gateway",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1768776520510,
-      "tag": "0003_gorgeous_wendigo",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1768842366175,
-      "tag": "0004_steep_rage",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "6",
-      "when": 1768847000000,
-      "tag": "0005_patient_harpoon",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "6",
-      "when": 1768903062759,
-      "tag": "0006_good_mister_sinister",
+      "when": 1769262701893,
+      "tag": "0000_cool_mysterio",
       "breakpoints": true
     }
   ]

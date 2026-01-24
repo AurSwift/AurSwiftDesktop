@@ -64,10 +64,10 @@ CREATE TABLE `attendance_reports` (
 	`data_up_to` text NOT NULL
 );
 --> statement-breakpoint
-CREATE INDEX `attendance_report_user_period_idx` ON `attendance_reports` (`user_id`,`period_start_date`);--> statement-breakpoint
-CREATE INDEX `attendance_report_business_period_idx` ON `attendance_reports` (`business_id`,`period_type`);--> statement-breakpoint
-CREATE INDEX `attendance_report_generated_at_idx` ON `attendance_reports` (`report_generated_at`);--> statement-breakpoint
-CREATE UNIQUE INDEX `attendance_report_unique` ON `attendance_reports` (`user_id`,`period_start_date`,`period_end_date`,`business_id`);--> statement-breakpoint
+CREATE INDEX `attendance_reports_user_period_idx` ON `attendance_reports` (`user_id`,`period_start_date`);--> statement-breakpoint
+CREATE INDEX `attendance_reports_business_period_idx` ON `attendance_reports` (`business_id`,`period_type`);--> statement-breakpoint
+CREATE INDEX `attendance_reports_report_generated_at_idx` ON `attendance_reports` (`report_generated_at`);--> statement-breakpoint
+CREATE UNIQUE INDEX `attendance_reports_unique` ON `attendance_reports` (`user_id`,`period_start_date`,`period_end_date`,`business_id`);--> statement-breakpoint
 CREATE TABLE `audit_logs` (
 	`id` text PRIMARY KEY NOT NULL,
 	`user_id` text NOT NULL,
@@ -86,6 +86,77 @@ CREATE TABLE `audit_logs` (
 	FOREIGN KEY (`terminal_id`) REFERENCES `terminals`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
+CREATE TABLE `break_policies` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`public_id` text NOT NULL,
+	`business_id` text NOT NULL,
+	`name` text NOT NULL,
+	`description` text,
+	`max_consecutive_hours` real DEFAULT 6 NOT NULL,
+	`warn_before_required_minutes` integer DEFAULT 30 NOT NULL,
+	`auto_enforce_breaks` integer DEFAULT true NOT NULL,
+	`allow_skip_break` integer DEFAULT false NOT NULL,
+	`require_manager_override` integer DEFAULT false NOT NULL,
+	`min_staff_for_break` integer DEFAULT 1,
+	`is_active` integer DEFAULT true NOT NULL,
+	`is_default` integer DEFAULT false NOT NULL,
+	`created_at` integer NOT NULL,
+	`updated_at` integer,
+	FOREIGN KEY (`business_id`) REFERENCES `businesses`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `break_policies_business_idx` ON `break_policies` (`business_id`);--> statement-breakpoint
+CREATE INDEX `break_policies_active_idx` ON `break_policies` (`is_active`);--> statement-breakpoint
+CREATE INDEX `break_policies_default_idx` ON `break_policies` (`is_default`);--> statement-breakpoint
+CREATE TABLE `break_policy_rules` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`public_id` text NOT NULL,
+	`policy_id` integer NOT NULL,
+	`break_type_id` integer NOT NULL,
+	`min_shift_hours` real NOT NULL,
+	`max_shift_hours` real,
+	`allowed_count` integer DEFAULT 1 NOT NULL,
+	`is_mandatory` integer DEFAULT false NOT NULL,
+	`earliest_after_hours` real,
+	`latest_before_end_hours` real,
+	`priority` integer DEFAULT 0,
+	`created_at` integer NOT NULL,
+	`updated_at` integer,
+	FOREIGN KEY (`policy_id`) REFERENCES `break_policies`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`break_type_id`) REFERENCES `break_type_definitions`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `break_policy_rules_policy_idx` ON `break_policy_rules` (`policy_id`);--> statement-breakpoint
+CREATE INDEX `break_policy_rules_type_idx` ON `break_policy_rules` (`break_type_id`);--> statement-breakpoint
+CREATE INDEX `break_policy_rules_shift_hours_idx` ON `break_policy_rules` (`min_shift_hours`);--> statement-breakpoint
+CREATE TABLE `break_type_definitions` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`public_id` text NOT NULL,
+	`business_id` text NOT NULL,
+	`name` text NOT NULL,
+	`code` text NOT NULL,
+	`description` text,
+	`default_duration_minutes` integer DEFAULT 15 NOT NULL,
+	`min_duration_minutes` integer DEFAULT 5 NOT NULL,
+	`max_duration_minutes` integer DEFAULT 60 NOT NULL,
+	`is_paid` integer DEFAULT false NOT NULL,
+	`is_required` integer DEFAULT false NOT NULL,
+	`counts_as_worked_time` integer DEFAULT false NOT NULL,
+	`allowed_window_start` text,
+	`allowed_window_end` text,
+	`icon` text DEFAULT 'coffee',
+	`color` text DEFAULT '#6B7280',
+	`sort_order` integer DEFAULT 0,
+	`is_active` integer DEFAULT true NOT NULL,
+	`created_at` integer NOT NULL,
+	`updated_at` integer,
+	FOREIGN KEY (`business_id`) REFERENCES `businesses`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `break_type_defs_business_idx` ON `break_type_definitions` (`business_id`);--> statement-breakpoint
+CREATE INDEX `break_type_defs_code_idx` ON `break_type_definitions` (`code`);--> statement-breakpoint
+CREATE INDEX `break_type_defs_active_idx` ON `break_type_definitions` (`is_active`);--> statement-breakpoint
+CREATE UNIQUE INDEX `break_type_defs_business_code_unique` ON `break_type_definitions` (`business_id`,`code`);--> statement-breakpoint
 CREATE TABLE `breaks` (
 	`id` text PRIMARY KEY NOT NULL,
 	`shift_id` text NOT NULL,
@@ -133,6 +204,10 @@ CREATE TABLE `businesses` (
 	`country` text DEFAULT '' NOT NULL,
 	`city` text DEFAULT '' NOT NULL,
 	`postalCode` text DEFAULT '',
+	`receipt_email_gmail_user` text DEFAULT '',
+	`receipt_email_gmail_app_password` text DEFAULT '',
+	`receipt_email_gmail_app_password_encrypted` integer DEFAULT false,
+	`receipt_email_updated_at` integer,
 	`vatNumber` text DEFAULT '',
 	`businessType` text DEFAULT 'retail' NOT NULL,
 	`currency` text DEFAULT 'USD' NOT NULL,
@@ -378,6 +453,7 @@ CREATE TABLE `license_activation` (
 	`is_active` integer DEFAULT true NOT NULL,
 	`subscription_status` text DEFAULT 'active' NOT NULL,
 	`expires_at` integer,
+	`trial_end` integer,
 	`activated_at` integer NOT NULL,
 	`last_heartbeat` integer NOT NULL,
 	`last_validated_at` integer NOT NULL,
@@ -624,11 +700,11 @@ CREATE TABLE `pos_shift_reports` (
 	`period_covered` text NOT NULL
 );
 --> statement-breakpoint
-CREATE INDEX `shift_report_view_shift_idx` ON `pos_shift_reports` (`shift_id`);--> statement-breakpoint
-CREATE INDEX `shift_report_view_business_idx` ON `pos_shift_reports` (`business_id`);--> statement-breakpoint
-CREATE INDEX `shift_report_view_user_idx` ON `pos_shift_reports` (`user_id`);--> statement-breakpoint
-CREATE INDEX `shift_report_view_period_idx` ON `pos_shift_reports` (`period_covered`);--> statement-breakpoint
-CREATE INDEX `shift_report_view_generated_at_idx` ON `pos_shift_reports` (`report_generated_at`);--> statement-breakpoint
+CREATE INDEX `pos_shift_reports_shift_id_idx` ON `pos_shift_reports` (`shift_id`);--> statement-breakpoint
+CREATE INDEX `pos_shift_reports_business_id_idx` ON `pos_shift_reports` (`business_id`);--> statement-breakpoint
+CREATE INDEX `pos_shift_reports_user_id_idx` ON `pos_shift_reports` (`user_id`);--> statement-breakpoint
+CREATE INDEX `pos_shift_reports_period_covered_idx` ON `pos_shift_reports` (`period_covered`);--> statement-breakpoint
+CREATE INDEX `pos_shift_reports_report_generated_at_idx` ON `pos_shift_reports` (`report_generated_at`);--> statement-breakpoint
 CREATE TABLE `shift_validation_issues` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`public_id` text NOT NULL,
@@ -788,6 +864,21 @@ CREATE TABLE `suppliers` (
 --> statement-breakpoint
 CREATE INDEX `suppliers_business_idx` ON `suppliers` (`business_id`);--> statement-breakpoint
 CREATE INDEX `suppliers_name_idx` ON `suppliers` (`name`);--> statement-breakpoint
+CREATE TABLE `table` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`public_id` text NOT NULL,
+	`business_id` text NOT NULL,
+	`name` text NOT NULL,
+	`description` text,
+	`status` text DEFAULT 'active',
+	`created_at` integer NOT NULL,
+	`updated_at` integer,
+	FOREIGN KEY (`business_id`) REFERENCES `businesses`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `table_business_idx` ON `table` (`business_id`);--> statement-breakpoint
+CREATE INDEX `table_name_idx` ON `table` (`name`);--> statement-breakpoint
+CREATE INDEX `table_status_idx` ON `table` (`status`);--> statement-breakpoint
 CREATE TABLE `terminals` (
 	`id` text PRIMARY KEY NOT NULL,
 	`business_id` text NOT NULL,
@@ -898,6 +989,10 @@ CREATE TABLE `transactions` (
 	`appliedDiscounts` text,
 	`viva_wallet_transaction_id` text,
 	`viva_wallet_terminal_id` text,
+	`viva_wallet_auth_code` text,
+	`viva_wallet_card_brand` text,
+	`viva_wallet_card_last4` text,
+	`viva_wallet_card_type` text,
 	`currency` text DEFAULT 'GBP' NOT NULL,
 	FOREIGN KEY (`shiftId`) REFERENCES `shifts`(`id`) ON UPDATE no action ON DELETE set null,
 	FOREIGN KEY (`businessId`) REFERENCES `businesses`(`id`) ON UPDATE no action ON DELETE no action,
@@ -944,6 +1039,7 @@ CREATE TABLE `users` (
 	`password_hash` text,
 	`pin_hash` text NOT NULL,
 	`salt` text NOT NULL,
+	`requires_pin_change` integer DEFAULT false NOT NULL,
 	`firstName` text NOT NULL,
 	`lastName` text NOT NULL,
 	`businessName` text NOT NULL,

@@ -143,7 +143,7 @@ export const licenseValidationLog = createTable(
   (table) => [
     index("idx_license_validation_log_action").on(table.action),
     index("idx_license_validation_log_timestamp").on(table.timestamp),
-  ]
+  ],
 );
 
 // Type exports for license tables
@@ -206,10 +206,12 @@ export const businesses = createTable("businesses", {
 
   // Receipt Email (Gmail) - stored per business (encrypted when supported)
   receiptEmailGmailUser: text("receipt_email_gmail_user").default(""),
-  receiptEmailGmailAppPassword: text("receipt_email_gmail_app_password").default(""),
+  receiptEmailGmailAppPassword: text(
+    "receipt_email_gmail_app_password",
+  ).default(""),
   receiptEmailGmailAppPasswordEncrypted: integer(
     "receipt_email_gmail_app_password_encrypted",
-    { mode: "boolean" }
+    { mode: "boolean" },
   ).default(false),
   receiptEmailUpdatedAt: integer("receipt_email_updated_at", {
     mode: "timestamp_ms",
@@ -268,7 +270,7 @@ export const terminals = createTable(
     index("terminals_business_idx").on(table.business_id),
     index("terminals_status_idx").on(table.status),
     index("terminals_token_idx").on(table.device_token),
-  ]
+  ],
 );
 
 /**
@@ -297,7 +299,7 @@ export const roles = createTable(
     index("idx_roles_business").on(table.businessId),
     index("idx_roles_name").on(table.name),
     unique("unique_role_name_per_business").on(table.businessId, table.name),
-  ]
+  ],
 );
 
 /**
@@ -357,7 +359,7 @@ export const userRoles = createTable(
     unique("idx_user_roles_unique").on(table.userId, table.roleId),
     index("idx_user_roles_user").on(table.userId),
     index("idx_user_roles_role").on(table.roleId),
-  ]
+  ],
 );
 
 /**
@@ -384,7 +386,7 @@ export const userPermissions = createTable(
   (table) => [
     unique("idx_user_permissions_unique").on(table.userId, table.permission),
     index("idx_user_permissions_user").on(table.userId),
-  ]
+  ],
 );
 
 /**
@@ -427,7 +429,7 @@ export const vatCategories = createTable(
   (table) => [
     index("vat_business_idx").on(table.businessId),
     index("vat_code_idx").on(table.code),
-  ]
+  ],
 );
 
 /**
@@ -463,7 +465,7 @@ export const categories = createTable(
       enum: ["NONE", "AGE_16", "AGE_18", "AGE_21"],
     }).default("NONE"), // Default age restriction for products in this category
     requireIdScan: integer("require_id_scan", { mode: "boolean" }).default(
-      false
+      false,
     ),
 
     ...timestampColumns,
@@ -474,7 +476,7 @@ export const categories = createTable(
     index("categories_vat_idx").on(table.vatCategoryId),
     // Ensure category names are unique within a business
     unique("category_name_business_unique").on(table.name, table.businessId),
-  ]
+  ],
 );
 
 /**
@@ -524,13 +526,13 @@ export const products = createTable(
 
     // Generic item behavior
     isGenericButton: integer("is_generic_button", { mode: "boolean" }).default(
-      false
+      false,
     ),
     genericDefaultPrice: real("generic_default_price"), // Suggested price for generic items
 
     // Inventory
     trackInventory: integer("track_inventory", { mode: "boolean" }).default(
-      true
+      true,
     ),
     // ⚠️ IMPORTANT: When requiresBatchTracking is true, stockLevel should be calculated
     // as SUM(currentQuantity) of all ACTIVE batches for this product.
@@ -575,7 +577,7 @@ export const products = createTable(
       .notNull()
       .default("NONE"),
     requireIdScan: integer("require_id_scan", { mode: "boolean" }).default(
-      false
+      false,
     ),
     restrictionReason: text("restriction_reason"), // e.g., "Alcoholic beverage", "Tobacco product"
 
@@ -592,7 +594,7 @@ export const products = createTable(
     index("products_age_restriction_idx").on(table.ageRestrictionLevel),
     // Ensure SKU is unique per business
     unique("product_sku_business_unique").on(table.sku, table.businessId),
-  ]
+  ],
 );
 
 /**
@@ -671,7 +673,7 @@ export const suppliers = createTable(
   (table) => [
     index("suppliers_business_idx").on(table.businessId),
     index("suppliers_name_idx").on(table.name),
-  ]
+  ],
 );
 
 /**
@@ -732,27 +734,27 @@ export const productBatches = createTable(
     index("batches_product_status_expiry_idx").on(
       table.productId,
       table.status,
-      table.expiryDate
+      table.expiryDate,
     ),
     // Composite index for finding batches expiring soon (for notifications)
     index("batches_business_status_expiry_idx").on(
       table.businessId,
       table.status,
-      table.expiryDate
+      table.expiryDate,
     ),
     // Composite index for stock calculation queries (SUM currentQuantity by product)
     index("batches_product_status_quantity_idx").on(
       table.productId,
       table.status,
-      table.currentQuantity
+      table.currentQuantity,
     ),
     // Ensure batch number is unique per product and business
     unique("batch_number_product_business_unique").on(
       table.batchNumber,
       table.productId,
-      table.businessId
+      table.businessId,
     ),
-  ]
+  ],
 );
 
 /**
@@ -773,10 +775,10 @@ export const expirySettings = createTable(
 
     // Notification channels
     notifyViaEmail: integer("notify_via_email", { mode: "boolean" }).default(
-      true
+      true,
     ),
     notifyViaPush: integer("notify_via_push", { mode: "boolean" }).default(
-      true
+      true,
     ),
     notifyViaDashboard: integer("notify_via_dashboard", {
       mode: "boolean",
@@ -803,7 +805,7 @@ export const expirySettings = createTable(
     index("expiry_settings_business_idx").on(table.businessId),
     // Ensure one settings record per business
     unique("expiry_settings_business_unique").on(table.businessId),
-  ]
+  ],
 );
 
 /**
@@ -837,7 +839,7 @@ export const salesUnitSettings = createTable(
     index("sales_unit_settings_business_idx").on(table.businessId),
     // Ensure one settings record per business
     unique("sales_unit_settings_business_unique").on(table.businessId),
-  ]
+  ],
 );
 
 /**
@@ -889,7 +891,7 @@ export const expiryNotifications = createTable(
     index("notifications_scheduled_idx").on(table.scheduledFor),
     index("notifications_business_idx").on(table.businessId),
     index("notifications_type_idx").on(table.notificationType),
-  ]
+  ],
 );
 
 /**
@@ -948,11 +950,11 @@ export const stockMovements = createTable(
     // Composite index for product movement history queries
     index("movements_product_timestamp_idx").on(
       table.productId,
-      table.timestamp
+      table.timestamp,
     ),
     // Index for reference lookups (e.g., find movements for a specific sale)
     index("movements_reference_idx").on(table.reference),
-  ]
+  ],
 );
 
 /**
@@ -1030,7 +1032,7 @@ export const cartSessions = createTable(
     index("cart_sessions_created_idx").on(table.createdAt),
     index("cart_sessions_shift_idx").on(table.shiftId),
     index("cart_sessions_business_idx").on(table.businessId),
-  ]
+  ],
 );
 
 /**
@@ -1103,7 +1105,7 @@ export const cartItems = createTable(
     index("cart_items_category_idx").on(table.categoryId),
     index("cart_items_batch_idx").on(table.batchId),
     index("cart_items_type_idx").on(table.itemType),
-  ]
+  ],
 );
 
 /**
@@ -1155,7 +1157,7 @@ export const savedBaskets = createTable(
     index("saved_baskets_saved_by_idx").on(table.savedBy),
     index("saved_baskets_status_idx").on(table.status),
     index("saved_baskets_saved_at_idx").on(table.savedAt),
-  ]
+  ],
 );
 
 // ============================================================================
@@ -1197,7 +1199,7 @@ export const transactions = createTable("transactions", {
   // @ts-ignore - Self-reference: transactions.originalTransactionId -> transactions.id
   originalTransactionId: text("originalTransactionId").references(
     // @ts-ignore - Circular reference type inference
-    () => transactions.id
+    () => transactions.id,
   ),
   refundReason: text("refundReason"),
   refundMethod: text("refundMethod", {
@@ -1205,7 +1207,7 @@ export const transactions = createTable("transactions", {
   }),
   managerApprovalId: text("managerApprovalId").references(() => users.id),
   isPartialRefund: integer("isPartialRefund", { mode: "boolean" }).default(
-    false
+    false,
   ),
   discountAmount: real("discountAmount").default(0),
   appliedDiscounts: text("appliedDiscounts"),
@@ -1293,7 +1295,7 @@ export const ageVerificationRecords = createTable(
     }),
     transactionItemId: text("transaction_item_id").references(
       () => transactionItems.id,
-      { onDelete: "set null" }
+      { onDelete: "set null" },
     ),
     productId: text("product_id")
       .notNull()
@@ -1340,9 +1342,9 @@ export const ageVerificationRecords = createTable(
     // Composite index for compliance reporting
     index("age_verification_business_date_idx").on(
       table.businessId,
-      table.verifiedAt
+      table.verifiedAt,
     ),
-  ]
+  ],
 );
 /**
  * Cash drawer counts (mid-shift and end-shift)
@@ -1384,9 +1386,9 @@ export const cashDrawerCounts = createTable(
     // Ensure only one end-shift count per shift
     unique("cash_drawer_counts_shift_type_unique").on(
       table.shift_id,
-      table.count_type
+      table.count_type,
     ),
-  ]
+  ],
 );
 
 // ============================================================================
@@ -1489,7 +1491,7 @@ export const shifts = createTable(
     // Unique constraints - each clock event can only be used once
     unique("shifts_clock_in_unique").on(table.clock_in_id),
     unique("shifts_clock_out_unique").on(table.clock_out_id),
-  ]
+  ],
 );
 
 // ============================================================================
@@ -1572,15 +1574,15 @@ export const shiftValidationIssues = createTable(
     index("validation_issues_business_idx").on(table.businessId),
     index("validation_issues_related_entity_idx").on(
       table.relatedEntityType,
-      table.relatedEntityId
+      table.relatedEntityId,
     ),
 
     // Composite index for common query patterns
     index("validation_issues_status_severity_idx").on(
       table.resolved,
-      table.severity
+      table.severity,
     ),
-  ]
+  ],
 );
 
 /**
@@ -1626,12 +1628,12 @@ export const shiftValidations = createTable(
     index("shift_validations_requires_review_idx").on(table.requiresReview),
     index("shift_validations_resolution_idx").on(table.resolution),
     index("shift_validations_unresolved_count_idx").on(
-      table.unresolvedIssueCount
+      table.unresolvedIssueCount,
     ),
 
     // One validation record per shift
     unique("shift_validations_shift_unique").on(table.shiftId),
-  ]
+  ],
 );
 
 /**
@@ -1685,8 +1687,10 @@ export const shiftReports = sqliteTableCreator((name: string) => `pos_${name}`)(
     index("pos_shift_reports_business_id_idx").on(table.businessId),
     index("pos_shift_reports_user_id_idx").on(table.userId),
     index("pos_shift_reports_period_covered_idx").on(table.periodCovered),
-    index("pos_shift_reports_report_generated_at_idx").on(table.reportGeneratedAt),
-  ]
+    index("pos_shift_reports_report_generated_at_idx").on(
+      table.reportGeneratedAt,
+    ),
+  ],
 );
 
 /**
@@ -1739,21 +1743,23 @@ export const attendanceReports = createTable(
     // Prefix with table name to avoid collisions with legacy schemas.
     index("attendance_reports_user_period_idx").on(
       table.userId,
-      table.periodStartDate
+      table.periodStartDate,
     ),
     index("attendance_reports_business_period_idx").on(
       table.businessId,
-      table.periodType
+      table.periodType,
     ),
-    index("attendance_reports_report_generated_at_idx").on(table.reportGeneratedAt),
+    index("attendance_reports_report_generated_at_idx").on(
+      table.reportGeneratedAt,
+    ),
 
     unique("attendance_reports_unique").on(
       table.userId,
       table.periodStartDate,
       table.periodEndDate,
-      table.businessId
+      table.businessId,
     ),
-  ]
+  ],
 );
 
 // ============================================================================
@@ -1810,9 +1816,9 @@ export const clockEvents = createTable(
     index("clock_events_user_timestamp_idx").on(table.user_id, table.timestamp),
     index("clock_events_business_timestamp_idx").on(
       table.business_id,
-      table.timestamp
+      table.timestamp,
     ),
-  ]
+  ],
 );
 
 /**
@@ -1876,7 +1882,7 @@ export const breaks = createTable(
     // Compound indexes
     index("breaks_shift_status_idx").on(table.shift_id, table.status),
     index("breaks_user_start_idx").on(table.user_id, table.start_time),
-  ]
+  ],
 );
 
 /**
@@ -1928,7 +1934,7 @@ export const timeCorrections = createTable(
     index("time_corrections_user_idx").on(table.user_id),
     index("time_corrections_business_idx").on(table.business_id),
     index("time_corrections_status_idx").on(table.status),
-  ]
+  ],
 );
 
 // ============================================================================
@@ -1995,9 +2001,9 @@ export const breakTypeDefinitions = createTable(
     index("break_type_defs_active_idx").on(table.is_active),
     unique("break_type_defs_business_code_unique").on(
       table.business_id,
-      table.code
+      table.code,
     ),
-  ]
+  ],
 );
 
 /**
@@ -2057,7 +2063,7 @@ export const breakPolicies = createTable(
     index("break_policies_business_idx").on(table.business_id),
     index("break_policies_active_idx").on(table.is_active),
     index("break_policies_default_idx").on(table.is_default),
-  ]
+  ],
 );
 
 /**
@@ -2103,7 +2109,7 @@ export const breakPolicyRules = createTable(
     index("break_policy_rules_policy_idx").on(table.policy_id),
     index("break_policy_rules_type_idx").on(table.break_type_id),
     index("break_policy_rules_shift_hours_idx").on(table.min_shift_hours),
-  ]
+  ],
 );
 
 // ============================================================================
@@ -2196,6 +2202,7 @@ export const businessesRelations = relations(businesses, ({ one, many }) => ({
   breaks: many(breaks),
   timeCorrections: many(timeCorrections),
   terminals: many(terminals),
+  // tables: many(table),
 }));
 
 export const terminalsRelations = relations(terminals, ({ one, many }) => ({
@@ -2310,7 +2317,7 @@ export const userPermissionsRelations = relations(
       references: [users.id],
       relationName: "grantedBy",
     }),
-  })
+  }),
 );
 
 // ----------------------------------------------------------------------------
@@ -2326,7 +2333,7 @@ export const vatCategoriesRelations = relations(
     }),
     categories: many(categories),
     products: many(products),
-  })
+  }),
 );
 
 export const categoriesRelations = relations(categories, ({ one, many }) => ({
@@ -2416,7 +2423,7 @@ export const productBatchesRelations = relations(
     toMovements: many(stockMovements, {
       relationName: "toBatch",
     }),
-  })
+  }),
 );
 
 export const expirySettingsRelations = relations(expirySettings, ({ one }) => ({
@@ -2433,7 +2440,7 @@ export const salesUnitSettingsRelations = relations(
       fields: [salesUnitSettings.businessId],
       references: [businesses.id],
     }),
-  })
+  }),
 );
 
 export const expiryNotificationsRelations = relations(
@@ -2451,7 +2458,7 @@ export const expiryNotificationsRelations = relations(
       fields: [expiryNotifications.businessId],
       references: [businesses.id],
     }),
-  })
+  }),
 );
 
 export const stockMovementsRelations = relations(stockMovements, ({ one }) => ({
@@ -2498,7 +2505,7 @@ export const stockAdjustmentsRelations = relations(
       fields: [stockAdjustments.businessId],
       references: [businesses.id],
     }),
-  })
+  }),
 );
 
 // ----------------------------------------------------------------------------
@@ -2530,7 +2537,7 @@ export const transactionsRelations = relations(
     }),
     items: many(transactionItems),
     ageVerifications: many(ageVerificationRecords),
-  })
+  }),
 );
 
 export const transactionItemsRelations = relations(
@@ -2553,7 +2560,7 @@ export const transactionItemsRelations = relations(
       references: [cartItems.id],
     }),
     ageVerifications: many(ageVerificationRecords),
-  })
+  }),
 );
 
 // ----------------------------------------------------------------------------
@@ -2581,7 +2588,7 @@ export const cartSessionsRelations = relations(
       relationName: "cartVerifiedBy",
     }),
     items: many(cartItems),
-  })
+  }),
 );
 
 export const cartItemsRelations = relations(cartItems, ({ one }) => ({
@@ -2628,7 +2635,7 @@ export const ageVerificationRecordsRelations = relations(
       fields: [ageVerificationRecords.businessId],
       references: [businesses.id],
     }),
-  })
+  }),
 );
 
 // ----------------------------------------------------------------------------
@@ -2704,7 +2711,7 @@ export const cashDrawerCountsRelations = relations(
       fields: [cashDrawerCounts.terminal_id],
       references: [terminals.id],
     }),
-  })
+  }),
 );
 
 // ----------------------------------------------------------------------------
@@ -2714,12 +2721,16 @@ export const cashDrawerCountsRelations = relations(
 export const shiftValidationsRelations = relations(
   shiftValidations,
   ({ one, many }) => ({
+    business: one(businesses, {
+      fields: [shiftValidations.businessId],
+      references: [businesses.id],
+    }),
     issues: many(shiftValidationIssues),
     shiftReport: one(shiftReports, {
       fields: [shiftValidations.shiftId],
       references: [shiftReports.shiftId],
     }),
-  })
+  }),
 );
 
 export const shiftValidationIssuesRelations = relations(
@@ -2729,7 +2740,7 @@ export const shiftValidationIssuesRelations = relations(
       fields: [shiftValidationIssues.validationId],
       references: [shiftValidations.id],
     }),
-  })
+  }),
 );
 
 export const shiftReportsRelations = relations(shiftReports, ({ one }) => ({
@@ -2750,7 +2761,7 @@ export const attendanceReportsRelations = relations(
       fields: [attendanceReports.businessId],
       references: [businesses.id],
     }),
-  })
+  }),
 );
 
 // ----------------------------------------------------------------------------
@@ -2826,7 +2837,7 @@ export const timeCorrectionsRelations = relations(
       references: [users.id],
       relationName: "approvedBy",
     }),
-  })
+  }),
 );
 
 // ----------------------------------------------------------------------------
@@ -2856,8 +2867,15 @@ export const printJobRetriesRelations = relations(
       fields: [printJobRetries.jobId],
       references: [printJobs.jobId],
     }),
-  })
+  }),
 );
+
+// export const tableRelations = relations(table, ({ one }) => ({
+//   business: one(businesses, {
+//     fields: [table.businessId],
+//     references: [businesses.id],
+//   }),
+// }));
 
 // ============================================================================
 // TYPE EXPORTS
@@ -2980,6 +2998,36 @@ export type NewExpiryNotification = InferInsertModel<
 >;
 export type StockMovement = InferSelectModel<typeof stockMovements>;
 export type NewStockMovement = InferInsertModel<typeof stockMovements>;
+
+// ============================================================================
+// TEST TABLE
+// ============================================================================
+
+/**
+ * Test table for development and testing purposes
+ */
+export const table1 = createTable(
+  "table",
+  {
+    ...commonColumns,
+    name: text("name").notNull(),
+    description: text("description"),
+    status: text("status").default("active"),
+    businessId: text("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    ...timestampColumns,
+  },
+  (table) => [
+    index("table_business_idx").on(table.businessId),
+    index("table_name_idx").on(table.name),
+    index("table_status_idx").on(table.status),
+  ],
+);
+
+// Type exports for test table
+export type Table = InferSelectModel<typeof table1>;
+export type NewTable = InferInsertModel<typeof table1>;
 
 // ============================================================================
 // APP VERSION TABLE (Preserve existing table)
