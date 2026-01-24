@@ -14,12 +14,13 @@ interface AppFlowContextValue {
 const AppFlowContext = createContext<AppFlowContextValue | null>(null);
 
 export function AppFlowProvider({ children }: { children: React.ReactNode }) {
-  // Default to suppress until App decides which screen is showing.
-  const [suppressUpdateToasts, setSuppressUpdateToasts] = useState(true);
+  // Default to false - allow toasts unless explicitly suppressed by activation screen.
+  // This fixes race condition where update events fire before App component mounts.
+  const [suppressUpdateToasts, setSuppressUpdateToasts] = useState(false);
 
   const value = useMemo<AppFlowContextValue>(
     () => ({ suppressUpdateToasts, setSuppressUpdateToasts }),
-    [suppressUpdateToasts]
+    [suppressUpdateToasts],
   );
 
   return (

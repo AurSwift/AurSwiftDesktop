@@ -167,7 +167,7 @@ export class AutoUpdater implements AppModule {
     const updater = this.getAutoUpdater();
     updater.logger = this.#logger || null;
     updater.fullChangelog = true;
-    updater.autoDownload = false;
+    updater.autoDownload = false; // User clicks "Download Now" to start download
     updater.autoInstallOnAppQuit = true;
     updater.allowDowngrade = false;
     updater.channel = "latest";
@@ -324,8 +324,8 @@ export class AutoUpdater implements AppModule {
         if (this.#logger) {
           this.#logger.info(
             `Skipping update check - user idle for ${Math.floor(
-              idleTime / 60000
-            )} minutes`
+              idleTime / 60000,
+            )} minutes`,
           );
         }
         return;
@@ -405,7 +405,7 @@ export class AutoUpdater implements AppModule {
    */
   private showUpdateAvailableDialog(
     info: UpdateInfo,
-    isReminder: boolean = false
+    isReminder: boolean = false,
   ): void {
     // Input validation
     if (!info || !info.version) {
@@ -449,7 +449,7 @@ export class AutoUpdater implements AppModule {
           if (this.#isDownloading) {
             if (this.#logger) {
               this.#logger.info(
-                "Download already in progress, skipping duplicate request"
+                "Download already in progress, skipping duplicate request",
               );
             }
             return;
@@ -511,7 +511,7 @@ export class AutoUpdater implements AppModule {
         const errorMessage = this.formatErrorMessage(error);
         if (this.#logger) {
           this.#logger.error(
-            `Error showing update available dialog: ${errorMessage}`
+            `Error showing update available dialog: ${errorMessage}`,
           );
         } else {
           logger.error("Error showing update available dialog:", error);
@@ -772,7 +772,7 @@ export class AutoUpdater implements AppModule {
       downloadedBytes: number;
       totalBytes: number;
       version: string;
-    } | null
+    } | null,
   ): void {
     try {
       if (state) {
@@ -817,7 +817,7 @@ export class AutoUpdater implements AppModule {
           };
           if (this.#logger) {
             this.#logger.info(
-              `Loaded persisted download state: ${saved.version} (${saved.downloadedBytes}/${saved.totalBytes} bytes)`
+              `Loaded persisted download state: ${saved.version} (${saved.downloadedBytes}/${saved.totalBytes} bytes)`,
             );
           }
         } else {
@@ -846,7 +846,7 @@ export class AutoUpdater implements AppModule {
     } catch (error) {
       if (this.#logger) {
         this.#logger.error(
-          `Failed to get update check error notification count: ${error}`
+          `Failed to get update check error notification count: ${error}`,
         );
       }
       return 0;
@@ -871,13 +871,13 @@ export class AutoUpdater implements AppModule {
         this.#logger.info(
           `Update check error notification count: ${newCount}/${
             this.#MAX_UPDATE_CHECK_ERROR_NOTIFICATIONS
-          }`
+          }`,
         );
       }
     } catch (error) {
       if (this.#logger) {
         this.#logger.error(
-          `Failed to increment update check error notification count: ${error}`
+          `Failed to increment update check error notification count: ${error}`,
         );
       }
     }
@@ -898,14 +898,14 @@ export class AutoUpdater implements AppModule {
 
         if (this.#logger) {
           this.#logger.info(
-            "Reset update check error notification count (successful check occurred)"
+            "Reset update check error notification count (successful check occurred)",
           );
         }
       }
     } catch (error) {
       if (this.#logger) {
         this.#logger.error(
-          `Failed to reset update check error notification count: ${error}`
+          `Failed to reset update check error notification count: ${error}`,
         );
       }
     }
@@ -928,8 +928,8 @@ export class AutoUpdater implements AppModule {
           if (this.#logger) {
             this.#logger.warn(
               `Failed to send ${channel} to window: ${this.formatErrorMessage(
-                error
-              )}`
+                error,
+              )}`,
             );
           }
         }
@@ -999,7 +999,7 @@ export class AutoUpdater implements AppModule {
               const errorMessage = this.formatErrorMessage(error);
               if (this.#logger) {
                 this.#logger.error(
-                  `Error checking for updates from error dialog: ${errorMessage}`
+                  `Error checking for updates from error dialog: ${errorMessage}`,
                 );
               } else {
                 logger.error("Error checking for updates:", error);
@@ -1050,7 +1050,7 @@ export class AutoUpdater implements AppModule {
             const errorMessage = this.formatErrorMessage(error);
             if (this.#logger) {
               this.#logger.error(
-                `Error retrying update check: ${errorMessage}`
+                `Error retrying update check: ${errorMessage}`,
               );
             } else {
               logger.error("Error retrying update check:", error);
@@ -1062,7 +1062,7 @@ export class AutoUpdater implements AppModule {
         const errorMessage = this.formatErrorMessage(error);
         if (this.#logger) {
           this.#logger.error(
-            `Error showing last error dialog: ${errorMessage}`
+            `Error showing last error dialog: ${errorMessage}`,
           );
         } else {
           logger.error("Error showing last error dialog:", error);
@@ -1147,8 +1147,8 @@ export class AutoUpdater implements AppModule {
         if (this.#logger) {
           this.#logger.info(
             `Using cached update check (${Math.floor(
-              cacheAge / 1000
-            )}s old, version: ${this.#lastCheckResult.version})`
+              cacheAge / 1000,
+            )}s old, version: ${this.#lastCheckResult.version})`,
           );
         }
         // Track cache hit
@@ -1206,7 +1206,7 @@ export class AutoUpdater implements AppModule {
                 this.#logger.info(
                   `Version changed from ${
                     this.#lastCheckResult.version
-                  } to ${newVersion}, invalidating cache`
+                  } to ${newVersion}, invalidating cache`,
                 );
               }
               this.#lastCheckTime = null;
@@ -1224,8 +1224,8 @@ export class AutoUpdater implements AppModule {
                 `Update check completed in ${checkDuration}ms (attempt ${attempt}/${
                   this.#MAX_RETRIES
                 }), cached for ${Math.floor(
-                  this.#CACHE_DURATION / 60000
-                )} minutes`
+                  this.#CACHE_DURATION / 60000,
+                )} minutes`,
               );
             }
           } else {
@@ -1282,7 +1282,7 @@ export class AutoUpdater implements AppModule {
                 this.#logger.warn(
                   `Update check failed (attempt ${attempt}/${
                     this.#MAX_RETRIES
-                  }): ${errorMessage}. Retrying in ${retryDelay}ms...`
+                  }): ${errorMessage}. Retrying in ${retryDelay}ms...`,
                 );
               }
               await new Promise((resolve) => setTimeout(resolve, retryDelay));
@@ -1297,7 +1297,7 @@ export class AutoUpdater implements AppModule {
               this.#logger.error(
                 `Update check failed after ${
                   this.#MAX_RETRIES
-                } attempts: ${errorMessage}`
+                } attempts: ${errorMessage}`,
               );
             }
             throw lastError || new Error("Update check failed after retries");
@@ -1333,7 +1333,7 @@ export class AutoUpdater implements AppModule {
     // Simple cache hit rate: (total checks - network requests) / total checks
     const totalChecks = Math.min(
       this.#metrics.checkCount,
-      this.#CACHE_HIT_RATE_WINDOW
+      this.#CACHE_HIT_RATE_WINDOW,
     );
     const networkRequests = this.#metrics.checkDuration.length;
     const cacheHits = totalChecks - networkRequests;
@@ -1463,7 +1463,7 @@ export class AutoUpdater implements AppModule {
             isLikelyFullDownload
               ? " (likely full installer - differential may not be available)"
               : " (differential update)"
-          }`
+          }`,
         );
       }
 
@@ -1513,7 +1513,7 @@ export class AutoUpdater implements AppModule {
         this.#logger.info(
           `Download progress: ${progressInfo.percent.toFixed(2)}% (${
             progressInfo.transferred
-          }/${progressInfo.total})`
+          }/${progressInfo.total})`,
         );
       }
 
@@ -1528,7 +1528,7 @@ export class AutoUpdater implements AppModule {
         const notification = new Notification({
           title: "Download In Progress",
           body: `Update download is ${progressInfo.percent.toFixed(
-            0
+            0,
           )}% complete...`,
           silent: true,
         });
@@ -1572,7 +1572,7 @@ export class AutoUpdater implements AppModule {
 
       if (this.#logger) {
         this.#logger.info(
-          `Update downloaded successfully in ${downloadDurationSeconds}s`
+          `Update downloaded successfully in ${downloadDurationSeconds}s`,
         );
       }
       if (this.#remindLaterTimeout) {
@@ -1682,7 +1682,7 @@ export class AutoUpdater implements AppModule {
 
       if (this.#logger) {
         this.#logger.error(
-          `Update error (${this.#lastError.type}): ${errorMessage}`
+          `Update error (${this.#lastError.type}): ${errorMessage}`,
         );
       }
 
@@ -1722,7 +1722,7 @@ export class AutoUpdater implements AppModule {
         this.resetUpdateCheckErrorNotificationCount();
         if (this.#logger) {
           this.#logger.info(
-            "No update available - this is a successful check, not an error"
+            "No update available - this is a successful check, not an error",
           );
         }
         return;
@@ -1735,7 +1735,7 @@ export class AutoUpdater implements AppModule {
         if (shouldSkipDueToLatestVersion) {
           if (this.#logger) {
             this.#logger.info(
-              "Skipping update check error notification (user is on latest version, network error not critical)"
+              "Skipping update check error notification (user is on latest version, network error not critical)",
             );
           }
           return;
@@ -1749,7 +1749,7 @@ export class AutoUpdater implements AppModule {
             this.#logger.info(
               `Skipping update check error notification (limit reached: ${currentCount}/${
                 this.#MAX_UPDATE_CHECK_ERROR_NOTIFICATIONS
-              })`
+              })`,
             );
           }
           // Don't broadcast to renderer, don't show UI - silently log the error
@@ -1774,8 +1774,8 @@ export class AutoUpdater implements AppModule {
           if (this.#logger) {
             this.#logger.info(
               `Skipping ${errorType} error UI (cooldown active: ${Math.floor(
-                timeSinceLastError / 1000
-              )}s)`
+                timeSinceLastError / 1000,
+              )}s)`,
             );
           }
           return;
@@ -1898,8 +1898,8 @@ export class AutoUpdater implements AppModule {
             } bytes (${Math.floor(
               (this.#downloadState.downloadedBytes /
                 this.#downloadState.totalBytes) *
-                100
-            )}%)`
+                100,
+            )}%)`,
           );
         }
         // Note: electron-updater handles resume automatically via Squirrel
@@ -1944,7 +1944,7 @@ export class AutoUpdater implements AppModule {
       if (info.version && this.#cachedReleaseNotes.has(info.version)) {
         if (this.#logger) {
           this.#logger.info(
-            `Using cached release notes for version ${info.version}`
+            `Using cached release notes for version ${info.version}`,
           );
         }
         return this.#cachedReleaseNotes.get(info.version)!;
@@ -2036,7 +2036,7 @@ export class AutoUpdater implements AppModule {
               this.#cachedReleaseNotes.delete(firstKey);
               if (this.#logger) {
                 this.#logger.info(
-                  `Release notes cache limit reached, removed version ${firstKey}`
+                  `Release notes cache limit reached, removed version ${firstKey}`,
                 );
               }
             }

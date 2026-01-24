@@ -1,51 +1,51 @@
-import pkg from './package.json' with {type: 'json'};
-import mapWorkspaces from '@npmcli/map-workspaces';
-import {join} from 'node:path';
-import {pathToFileURL} from 'node:url';
+import pkg from "./package.json" with { type: "json" };
+import mapWorkspaces from "@npmcli/map-workspaces";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 
 export default /** @type import('electron-builder').Configuration */
 ({
   directories: {
-    output: 'dist',
-    buildResources: 'buildResources',
+    output: "dist",
+    buildResources: "buildResources",
   },
   generateUpdatesFilesForAllChannels: true,
   // Note: Differential updates are automatically enabled for NSIS and Squirrel targets
   // in electron-builder 26.x. No explicit configuration needed.
   publish: {
-    provider: 'github',
-    owner: 'AurSwift',
-    repo: 'AurSwift',
-    releaseType: 'release',
-    channel: 'latest'  // Explicitly set channel to 'latest' to generate latest.yml
+    provider: "github",
+    owner: "AurSwift",
+    repo: "AurSwift",
+    releaseType: "release",
+    channel: "latest", // Explicitly set channel to 'latest' to generate latest.yml
   },
   mac: {
     target: [
       {
-        target: 'dmg',
-        arch: ['x64', 'arm64']
+        target: "dmg",
+        arch: ["x64", "arm64"],
       },
       {
-        target: 'zip',
-        arch: ['x64', 'arm64']
-      }
+        target: "zip",
+        arch: ["x64", "arm64"],
+      },
     ],
-    icon: 'buildResources/icon.icns'
+    icon: "buildResources/icon.icns",
   },
   win: {
     target: [
       {
-        target: 'nsis',
-        arch: ['x64']  // Focus on x64 only - Windows 10 Enterprise typically uses x64
+        target: "nsis",
+        arch: ["x64"], // Focus on x64 only - Windows 10 Enterprise typically uses x64
       },
       {
-        target: 'squirrel',
-        arch: ['x64']  // Focus on x64 only
-      }
+        target: "squirrel",
+        arch: ["x64"], // Focus on x64 only
+      },
     ],
-    icon: 'buildResources/icon.ico',
-    verifyUpdateCodeSignature: false,  // Set to true when you have code signing certificate
-    requestedExecutionLevel: 'asInvoker',  // Don't require admin by default - let NSIS handle elevation
+    icon: "buildResources/icon.ico",
+    verifyUpdateCodeSignature: false, // Set to true when you have code signing certificate
+    requestedExecutionLevel: "asInvoker", // Don't require admin by default - let NSIS handle elevation
     // Ensure compatibility with Windows 10 Enterprise
     // Note: electron-builder automatically includes Visual C++ Redistributables for native modules
     // (better-sqlite3, node-hid, serialport, usb) when needed
@@ -53,91 +53,92 @@ export default /** @type import('electron-builder').Configuration */
   },
   squirrelWindows: {
     // iconUrl is required for Squirrel - must be a public URL
-    iconUrl: 'https://raw.githubusercontent.com/AurSwift/AurSwift/main/buildResources/icon.ico',
+    iconUrl:
+      "https://raw.githubusercontent.com/AurSwift/AurSwift/main/buildResources/icon.ico",
     // Optional: Add a loading GIF during installation
     // loadingGif: 'buildResources/install-spinner.gif'
   },
   nsis: {
-    oneClick: false,                    // Show installation wizard (not one-click)
-    perMachine: true,                   // Install system-wide to C:\Program Files\ (requires admin)
-    allowElevation: true,               // Allow elevation if user wants to install for all users
-    allowToChangeInstallationDirectory: true,  // Let user choose install location
-    createDesktopShortcut: true,        // Create desktop shortcut
-    createStartMenuShortcut: true,      // Create Start Menu shortcut
-    shortcutName: 'aurswift',         // Shortcut name
-    deleteAppDataOnUninstall: true,    // Remove user data when uninstalling
-    menuCategory: true,                 // Create program group in Start Menu
-    runAfterFinish: true,              // Run app after installation completes
-    installerIcon: 'buildResources/icon.ico',
-    uninstallerIcon: 'buildResources/icon.ico',
+    oneClick: true, // Silent one-click install (no wizard dialog)
+    perMachine: false, // Install to user profile (no admin required)
+    allowElevation: false, // No elevation needed for user install
+    allowToChangeInstallationDirectory: false, // One-click doesn't show directory picker
+    createDesktopShortcut: true, // Create desktop shortcut
+    createStartMenuShortcut: true, // Create Start Menu shortcut
+    shortcutName: "aurswift", // Shortcut name
+    deleteAppDataOnUninstall: true, // Remove user data when uninstalling
+    menuCategory: true, // Create program group in Start Menu
+    runAfterFinish: true, // Run app after installation completes
+    installerIcon: "buildResources/icon.ico",
+    uninstallerIcon: "buildResources/icon.ico",
     // installerHeader requires .bmp format (150x57 pixels), not .ico
     // Removing it to use default NSIS header
-    license: undefined,                 // Path to license.txt (optional)
+    license: undefined, // Path to license.txt (optional)
     // Request execution level is set in win.requestedExecutionLevel (not in nsis config)
     // Include Visual C++ Redistributables check/install
     // Note: electron-builder will automatically include VC++ Redist if needed
     // but we ensure compatibility with Windows 10 Enterprise
-    include: undefined,                 // Use default includes
+    include: undefined, // Use default includes
   },
   linux: {
-    target: ['deb'],
+    target: ["deb"],
   },
   /**
    * It is recommended to avoid using non-standard characters such as spaces in artifact names,
    * as they can unpredictably change during deployment, making them impossible to locate and download for update.
    */
-  artifactName: '${productName}-${version}-${os}-${arch}.${ext}',
+  artifactName: "${productName}-${version}-${os}-${arch}.${ext}",
   files: [
-    'LICENSE*',
+    "LICENSE*",
     pkg.main,
-    '!node_modules/@app/**',
+    "!node_modules/@app/**",
     // Exclude development and unnecessary files
-    '!**/*.d.ts',  // Exclude TypeScript definitions
-    '!**/*.map',   // Exclude source maps
-    '!**/test/**',
-    '!**/tests/**',
-    '!**/__tests__/**',
-    '!**/*.test.*',
-    '!**/*.spec.*',
+    "!**/*.d.ts", // Exclude TypeScript definitions
+    "!**/*.map", // Exclude source maps
+    "!**/test/**",
+    "!**/tests/**",
+    "!**/__tests__/**",
+    "!**/*.test.*",
+    "!**/*.spec.*",
     // Exclude platform-specific native binaries for non-target platforms
     // Windows x64 builds: exclude darwin, linux, android, and ia32 binaries
     // Note: Only exclude prebuilds for non-Windows platforms
     // The actual Windows binaries will be included via asarUnpack
-    '!**/usb/prebuilds/darwin-*/**',
-    '!**/usb/prebuilds/linux-*/**',
-    '!**/usb/prebuilds/android-*/**',
-    '!**/usb/prebuilds/win32-ia32/**',
-    '!**/usb/prebuilds/win32-arm64/**',
-    '!**/usb/bin/darwin-*/**',
-    '!**/better-sqlite3/bin/darwin-*/**',
-    '!**/better-sqlite3/bin/linux-*/**',
-    '!**/better-sqlite3/bin/android-*/**',
-    '!**/node-hid/prebuilds/darwin-*/**',
-    '!**/node-hid/prebuilds/linux-*/**',
-    '!**/node-hid/prebuilds/android-*/**',
-    '!**/node-hid/prebuilds/win32-ia32/**',
-    '!**/node-hid/prebuilds/win32-arm64/**',
-    '!**/serialport/prebuilds/darwin-*/**',
-    '!**/serialport/prebuilds/linux-*/**',
-    '!**/serialport/prebuilds/android-*/**',
-    '!**/serialport/prebuilds/win32-ia32/**',
-    '!**/serialport/prebuilds/win32-arm64/**',
-    ...await getListOfFilesFromEachWorkspace(),
+    "!**/usb/prebuilds/darwin-*/**",
+    "!**/usb/prebuilds/linux-*/**",
+    "!**/usb/prebuilds/android-*/**",
+    "!**/usb/prebuilds/win32-ia32/**",
+    "!**/usb/prebuilds/win32-arm64/**",
+    "!**/usb/bin/darwin-*/**",
+    "!**/better-sqlite3/bin/darwin-*/**",
+    "!**/better-sqlite3/bin/linux-*/**",
+    "!**/better-sqlite3/bin/android-*/**",
+    "!**/node-hid/prebuilds/darwin-*/**",
+    "!**/node-hid/prebuilds/linux-*/**",
+    "!**/node-hid/prebuilds/android-*/**",
+    "!**/node-hid/prebuilds/win32-ia32/**",
+    "!**/node-hid/prebuilds/win32-arm64/**",
+    "!**/serialport/prebuilds/darwin-*/**",
+    "!**/serialport/prebuilds/linux-*/**",
+    "!**/serialport/prebuilds/android-*/**",
+    "!**/serialport/prebuilds/win32-ia32/**",
+    "!**/serialport/prebuilds/win32-arm64/**",
+    ...(await getListOfFilesFromEachWorkspace()),
   ],
   // Unpack native modules from asar (required for native .node files)
   asarUnpack: [
-    '**/better-sqlite3/**/*.node',
-    '**/node-hid/**/*.node',
-    '**/serialport/**/*.node',
-    '**/usb/**/*.node',
+    "**/better-sqlite3/**/*.node",
+    "**/node-hid/**/*.node",
+    "**/serialport/**/*.node",
+    "**/usb/**/*.node",
   ],
   // Include migrations as extraResources so they're accessible outside asar if needed
   // IMPORTANT: Include ALL files including meta/_journal.json and snapshot files
   extraResources: [
     {
-      from: 'packages/main/dist/migrations',
-      to: 'migrations',
-      filter: ['**/*'],  // Include all files: .sql, meta/_journal.json, meta/*.json
+      from: "packages/main/dist/migrations",
+      to: "migrations",
+      filter: ["**/*"], // Include all files: .sql, meta/_journal.json, meta/*.json
     },
   ],
 });
@@ -201,7 +202,6 @@ export default /** @type import('electron-builder').Configuration */
  * ```
  */
 async function getListOfFilesFromEachWorkspace() {
-
   /**
    * @type {Map<string, string>}
    */
@@ -213,12 +213,14 @@ async function getListOfFilesFromEachWorkspace() {
   const allFilesToInclude = [];
 
   for (const [name, path] of workspaces) {
-    const pkgPath = join(path, 'package.json');
-    const {default: workspacePkg} = await import(pathToFileURL(pkgPath), {with: {type: 'json'}});
+    const pkgPath = join(path, "package.json");
+    const { default: workspacePkg } = await import(pathToFileURL(pkgPath), {
+      with: { type: "json" },
+    });
 
-    let patterns = workspacePkg.files || ['dist/**', 'package.json'];
+    let patterns = workspacePkg.files || ["dist/**", "package.json"];
 
-    patterns = patterns.map(p => join('node_modules', name, p));
+    patterns = patterns.map((p) => join("node_modules", name, p));
     allFilesToInclude.push(...patterns);
   }
 

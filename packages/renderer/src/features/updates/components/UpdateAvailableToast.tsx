@@ -3,11 +3,18 @@
  * Displays when a new update is available
  */
 
-import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Gift, Download, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Gift,
+  Download,
+  Clock,
+  ExternalLink,
+} from "lucide-react";
 import type { UpdateInfo } from "@app/shared";
+
+// GitHub releases URL for changelog
+const GITHUB_RELEASES_URL = "https://github.com/AurSwift/AurSwift/releases";
 
 interface UpdateAvailableToastProps {
   updateInfo: UpdateInfo;
@@ -22,15 +29,6 @@ export function UpdateAvailableToast({
   onDownload,
   onPostpone,
 }: UpdateAvailableToastProps) {
-  const [showNotes, setShowNotes] = useState(false);
-
-  // Release notes are now pre-formatted by the main process
-  const releaseNotes =
-    typeof updateInfo.releaseNotes === "string"
-      ? updateInfo.releaseNotes
-      : "Release notes available on GitHub";
-  const hasNotes = releaseNotes.length > 0;
-
   return (
     <div className="flex flex-col gap-3 w-full max-w-md bg-card border-2 border-border rounded-lg shadow-xl p-4 backdrop-blur-sm">
       {/* Header */}
@@ -51,29 +49,17 @@ export function UpdateAvailableToast({
         </div>
       </div>
 
-      {/* Release Notes (Expandable) */}
-      {hasNotes && (
-        <div className="border-t pt-2">
-          <button
-            onClick={() => setShowNotes(!showNotes)}
-            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full"
-          >
-            {showNotes ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-            <span>{showNotes ? "Hide" : "View"} release notes</span>
-          </button>
-          {showNotes && (
-            <div className="mt-2 p-2 bg-muted/50 rounded-md text-xs text-muted-foreground max-h-32 overflow-y-auto">
-              <pre className="whitespace-pre-wrap font-sans">
-                {releaseNotes}
-              </pre>
-            </div>
-          )}
-        </div>
-      )}
+      {/* Changelog Link */}
+      <a
+        href={`${GITHUB_RELEASES_URL}/tag/v${updateInfo.version}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-2 text-xs text-primary hover:text-primary/80 transition-colors border-t pt-2"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <ExternalLink className="h-3.5 w-3.5" />
+        <span>View release notes</span>
+      </a>
 
       {/* Actions */}
       <div className="flex items-center gap-2 pt-1">
@@ -97,7 +83,7 @@ export function showUpdateAvailableToast(
   updateInfo: UpdateInfo,
   currentVersion: string,
   onDownload: () => void,
-  onPostpone: () => void
+  onPostpone: () => void,
 ): string | number {
   return toast.custom(
     (t) => (
@@ -118,6 +104,6 @@ export function showUpdateAvailableToast(
       duration: Infinity, // Don't auto-dismiss
       position: "top-right",
       id: "update-available", // Use fixed ID to replace any existing toast
-    }
+    },
   );
 }

@@ -14,11 +14,9 @@ import { toast } from "sonner";
 import {
   showUpdateAvailableToast,
   showDownloadProgressToast,
-  showUpdateReadyToast,
   showUpdateErrorToast,
 } from "../components";
 import { getLogger } from "@/shared/utils/logger";
-import { useAppFlow } from "@/app/context/app-flow-context";
 import {
   UpdateToastContext,
   type UpdateContextValue,
@@ -37,9 +35,6 @@ export function UpdateToastProvider({ children }: UpdateToastProviderProps) {
   const [error, setError] = useState<UpdateError | null>(null);
   const [postponeCount, setPostponeCount] = useState(0);
   const [currentVersion, setCurrentVersion] = useState("1.0.0");
-
-  // Simple flag: don't show toasts on license activation screen
-  const { suppressUpdateToasts } = useAppFlow();
 
   // Fetch app version on mount
   useEffect(() => {
@@ -80,40 +75,6 @@ export function UpdateToastProvider({ children }: UpdateToastProviderProps) {
     toast.dismiss("update-ready");
   }, []);
 
-  // Helper to show appropriate toast based on current state
-  const showToastForCurrentState = useCallback(() => {
-    dismissAllUpdateToasts();
-
-    if (state === "downloading" && progress) {
-      showDownloadProgressToast(progress, () => cancelDownloadRef.current?.());
-    } else if (state === "downloaded" && updateInfo) {
-      showUpdateReadyToast(
-        updateInfo,
-        () => installUpdateRef.current?.(),
-        () => postponeUpdateRef.current?.(),
-      );
-    } else if (state === "available" && updateInfo) {
-      showUpdateAvailableToast(
-        updateInfo,
-        currentVersion,
-        () => downloadUpdateRef.current?.(),
-        () => postponeUpdateRef.current?.(),
-      );
-    }
-  }, [currentVersion, dismissAllUpdateToasts, progress, state, updateInfo]);
-
-  // When suppression ends (user leaves activation screen), show any pending update toast
-  useEffect(() => {
-    if (
-      !suppressUpdateToasts &&
-      (state === "available" ||
-        state === "downloaded" ||
-        state === "downloading")
-    ) {
-      showToastForCurrentState();
-    }
-  }, [suppressUpdateToasts, showToastForCurrentState, state]);
-
   // Cleanup listeners on unmount
   useEffect(() => {
     return () => {
@@ -138,8 +99,7 @@ export function UpdateToastProvider({ children }: UpdateToastProviderProps) {
       setUpdateInfo(info);
       setError(null);
 
-      if (suppressUpdateToasts) return;
-
+      // Show Update Available toast with Download Now button and changelog
       dismissAllUpdateToasts();
       showUpdateAvailableToast(
         info,
@@ -151,7 +111,7 @@ export function UpdateToastProvider({ children }: UpdateToastProviderProps) {
 
     window.updateAPI.onUpdateAvailable(handleUpdateAvailable);
     return () => window.updateAPI?.removeAllListeners("update:available");
-  }, [currentVersion, dismissAllUpdateToasts, suppressUpdateToasts]);
+  }, [currentVersion, dismissAllUpdateToasts]);
 
   // Listen for download progress
   useEffect(() => {
@@ -160,8 +120,6 @@ export function UpdateToastProvider({ children }: UpdateToastProviderProps) {
     const handleDownloadProgress = (progressData: DownloadProgress) => {
       setState("downloading");
       setProgress(progressData);
-
-      if (suppressUpdateToasts) return;
 
       toast.dismiss("update-available");
       toast.dismiss("update-ready");
@@ -173,7 +131,7 @@ export function UpdateToastProvider({ children }: UpdateToastProviderProps) {
     window.updateAPI.onDownloadProgress(handleDownloadProgress);
     return () =>
       window.updateAPI?.removeAllListeners("update:download-progress");
-  }, [suppressUpdateToasts]);
+  }, []);
 
   // Listen for download cancelled
   useEffect(() => {
@@ -203,19 +161,23 @@ export function UpdateToastProvider({ children }: UpdateToastProviderProps) {
       setUpdateInfo(info);
       setProgress(null);
 
-      if (suppressUpdateToasts) return;
-
+      // Auto-install immediately after download completes
+      // No user intervention needed - silent install + app restart
       dismissAllUpdateToasts();
-      showUpdateReadyToast(
-        info,
-        () => installUpdateRef.current?.(),
-        () => postponeUpdateRef.current?.(),
-      );
+      toast.info("Installing update...", {
+        id: "update-installing",
+        duration: 2000,
+      });
+
+      // Trigger auto-install after brief toast
+      setTimeout(() => {
+        installUpdateRef.current?.();
+      }, 500);
     };
 
     window.updateAPI.onUpdateDownloaded(handleUpdateDownloaded);
     return () => window.updateAPI?.removeAllListeners("update:downloaded");
-  }, [dismissAllUpdateToasts, suppressUpdateToasts]);
+  }, [dismissAllUpdateToasts]);
 
   // Listen for errors
   useEffect(() => {
