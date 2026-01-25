@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.37.0](https://github.com/AurSwift/AurSwift/compare/v1.36.2...v1.37.0) (2026-01-25)
+
+
+### feat
+
+* **autoupdate:** implement pending update check on renderer mount and enhance update handling ([](https://github.com/AurSwift/AurSwift/commit/d0c1f7cb876a866a202ba9089aff951c63b2305e))
+
 ## [1.36.2](https://github.com/AurSwift/AurSwift/compare/v1.36.1...v1.36.2) (2026-01-24)
 
 
