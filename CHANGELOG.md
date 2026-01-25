@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.38.0](https://github.com/AurSwift/AurSwift/compare/v1.37.0...v1.38.0) (2026-01-25)
+
+
+### feat
+
+* **typography:** enhance typography consistency across components ([](https://github.com/AurSwift/AurSwift/commit/8cdd40f498a9ee920f5c7d8a22c3891663bbbc64))
+
 # [1.37.0](https://github.com/AurSwift/AurSwift/compare/v1.36.2...v1.37.0) (2026-01-25)
 
 
