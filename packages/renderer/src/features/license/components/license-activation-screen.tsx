@@ -217,11 +217,11 @@ export function LicenseActivationScreen({
                 <div className="text-center space-y-[clamp(0.5rem,1.4vw,0.9rem)] [@media(max-height:560px)]:space-y-1.5">
                   {/* Logo Container with Black Background */}
                   <div className="flex justify-center mb-[clamp(0.5rem,1.6vw,1.25rem)] [@media(max-height:560px)]:mb-2">
-                    <div className="relative w-[clamp(3rem,6vw,6rem)] h-[clamp(3rem,6vw,6rem)] rounded-2xl bg-black flex items-center justify-center shadow-2xl ring-4 ring-primary/20 [@media(max-height:560px)]:w-12 [@media(max-height:560px)]:h-12 [@media(max-height:560px)]:ring-2">
+                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 [@media(max-height:560px)]:w-12 [@media(max-height:560px)]:h-12 rounded-2xl bg-black flex items-center justify-center shadow-2xl ring-4 ring-primary/20 [@media(max-height:560px)]:ring-2 overflow-hidden">
                       <img
                         src={logoSrc}
                         alt="Aurswift Logo"
-                        className="w-[80%] h-[80%] object-contain [@media(max-height:560px)]:w-[75%] [@media(max-height:560px)]:h-[75%]"
+                        className="w-[85%] h-auto max-h-[85%] object-contain"
                         onError={(e) => {
                           // Fallback to key icon if logo fails to load
                           const target = e.target as HTMLImageElement;
@@ -232,7 +232,7 @@ export function LicenseActivationScreen({
                         }}
                       />
                       <div className="hidden w-full h-full items-center justify-center">
-                        <KeyRound className="w-[clamp(1.75rem,3vw,3rem)] h-[clamp(1.75rem,3vw,3rem)] text-white [@media(max-height:560px)]:w-7 [@media(max-height:560px)]:h-7" />
+                        <KeyRound className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 [@media(max-height:560px)]:w-7 [@media(max-height:560px)]:h-7 text-white" />
                       </div>
                     </div>
                   </div>
