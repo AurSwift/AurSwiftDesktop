@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.39.0](https://github.com/AurSwift/AurSwift/compare/v1.38.0...v1.39.0) (2026-01-25)
+
+
+### feat
+
+* **autoupdate:** implement cursor-style update handling and enhance logging ([](https://github.com/AurSwift/AurSwift/commit/5a7d608523f1e859b83059209570507c94ac975a))
+
 # [1.38.0](https://github.com/AurSwift/AurSwift/compare/v1.37.0...v1.38.0) (2026-01-25)
 
 
