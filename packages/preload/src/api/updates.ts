@@ -12,7 +12,7 @@ type UpdateDownloadedCallback = (info: UpdateInfo) => void;
 type UpdateErrorCallback = (error: UpdateError) => void;
 type UpdateCheckCompleteCallback = (
   hasUpdate: boolean,
-  version?: string
+  version?: string,
 ) => void;
 
 export const updateAPI = {
@@ -33,7 +33,7 @@ export const updateAPI = {
       "update:download-progress",
       (_, progress: DownloadProgress) => {
         callback(progress);
-      }
+      },
     );
   },
 
@@ -63,7 +63,7 @@ export const updateAPI = {
       "update:check-complete",
       (_, hasUpdate: boolean, version?: string) => {
         callback(hasUpdate, version);
-      }
+      },
     );
   },
 
@@ -124,6 +124,19 @@ export const updateAPI = {
     error?: string;
   }> => {
     return await ipcRenderer.invoke("update:get-postpone-count");
+  },
+
+  /**
+   * Get pending update info (for renderer mount sync)
+   * Call this when the renderer mounts to check if there's a pending update
+   * that was detected before the renderer set up its listeners
+   */
+  getPendingUpdate: async (): Promise<{
+    success: boolean;
+    updateInfo: UpdateInfo | null;
+    isDownloaded?: boolean;
+  }> => {
+    return await ipcRenderer.invoke("update:get-pending-update");
   },
 
   /**

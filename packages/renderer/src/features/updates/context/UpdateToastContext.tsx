@@ -53,6 +53,52 @@ export function UpdateToastProvider({ children }: UpdateToastProviderProps) {
     fetchVersion();
   }, []);
 
+  // Check for pending update on mount (in case update:available was missed)
+  useEffect(() => {
+    const checkPendingUpdate = async () => {
+      try {
+        if (!window.updateAPI?.getPendingUpdate) return;
+
+        const result = await window.updateAPI.getPendingUpdate();
+        if (result?.success && result.updateInfo) {
+          logger.info(
+            `Found pending update on mount: ${result.updateInfo.version}`,
+          );
+
+          // If update is already downloaded, trigger auto-install
+          if (result.isDownloaded) {
+            setState("downloaded");
+            setUpdateInfo(result.updateInfo);
+            // Auto-install after brief delay
+            toast.info("Installing update...", {
+              id: "update-installing",
+              duration: 2000,
+            });
+            setTimeout(() => {
+              installUpdateRef.current?.();
+            }, 500);
+          } else {
+            // Show update available toast
+            setState("available");
+            setUpdateInfo(result.updateInfo);
+            showUpdateAvailableToast(
+              result.updateInfo,
+              currentVersion,
+              () => downloadUpdateRef.current?.(),
+              () => postponeUpdateRef.current?.(),
+            );
+          }
+        }
+      } catch (err) {
+        logger.error("Failed to check pending update:", err);
+      }
+    };
+
+    // Delay slightly to ensure currentVersion is fetched first
+    const timer = setTimeout(checkPendingUpdate, 500);
+    return () => clearTimeout(timer);
+  }, [currentVersion]);
+
   // Refs for callback functions (to avoid stale closures in event handlers)
   const downloadUpdateRef = useRef<(() => Promise<void>) | undefined>(
     undefined,
@@ -92,9 +138,17 @@ export function UpdateToastProvider({ children }: UpdateToastProviderProps) {
 
   // Listen for update available
   useEffect(() => {
-    if (!window.updateAPI) return;
+    if (!window.updateAPI) {
+      logger.warn(
+        "window.updateAPI not available - update listeners not set up",
+      );
+      return;
+    }
+
+    logger.info("Setting up update:available listener");
 
     const handleUpdateAvailable = (info: UpdateInfo) => {
+      logger.info(`Update available event received: ${info.version}`);
       setState("available");
       setUpdateInfo(info);
       setError(null);

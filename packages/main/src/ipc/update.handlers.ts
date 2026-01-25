@@ -15,6 +15,32 @@ const logger = getLogger("update-handlers");
  */
 export function registerUpdateHandlers(): void {
   /**
+   * Get pending update info (for renderer mount sync)
+   * This allows the renderer to check if there's a pending update
+   * when it mounts (in case the update:available event was missed)
+   */
+  ipcMain.handle("update:get-pending-update", async () => {
+    try {
+      const updaterInstance = getAutoUpdaterInstance();
+      if (!updaterInstance) {
+        return { success: false, updateInfo: null };
+      }
+
+      const pendingUpdate = updaterInstance.getPendingUpdateInfo();
+      const isDownloaded = updaterInstance.isUpdateDownloaded();
+
+      return {
+        success: true,
+        updateInfo: pendingUpdate,
+        isDownloaded,
+      };
+    } catch (error) {
+      logger.error("Error getting pending update:", error);
+      return { success: false, updateInfo: null };
+    }
+  });
+
+  /**
    * Handle manual update check request
    */
   ipcMain.handle("update:check", async () => {
@@ -35,7 +61,7 @@ export function registerUpdateHandlers(): void {
             window.webContents.send(
               "update:check-complete",
               true,
-              result.updateInfo.version
+              result.updateInfo.version,
             );
           }
         });
