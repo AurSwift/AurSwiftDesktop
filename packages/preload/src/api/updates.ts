@@ -140,6 +140,23 @@ export const updateAPI = {
   },
 
   /**
+   * Signal that the renderer is ready to receive update events
+   * This tells the main process to:
+   * 1. Start checking for updates (if not already started)
+   * 2. Re-broadcast any pending update info
+   *
+   * This is the Cursor-style approach to avoid race conditions
+   * between main process update checks and renderer IPC setup
+   */
+  signalRendererReady: async (): Promise<{
+    success: boolean;
+    pendingUpdate: UpdateInfo | null;
+    isDownloaded?: boolean;
+  }> => {
+    return await ipcRenderer.invoke("update:renderer-ready");
+  },
+
+  /**
    * Cancel ongoing download
    */
   cancelDownload: async (): Promise<{

@@ -162,6 +162,15 @@ export class AutoUpdater implements AppModule {
       return;
     }
 
+    // ===== DEBUG LOGGING START =====
+    logger.info("========================================");
+    logger.info("🚀 AUTO-UPDATER ENABLING");
+    logger.info(`   NODE_ENV: ${process.env.NODE_ENV}`);
+    logger.info(`   Current Version: ${app.getVersion()}`);
+    logger.info(`   Is Packaged: ${app.isPackaged}`);
+    logger.info("========================================");
+    // ===== DEBUG LOGGING END =====
+
     // Set up update listeners once when enabling (not on every check)
     // This ensures listeners are always ready to receive update events
     const updater = this.getAutoUpdater();
@@ -177,17 +186,26 @@ export class AutoUpdater implements AppModule {
       this.#logger.info("AutoUpdater enabled, listeners set up");
     }
 
-    // Delay initial check to allow app to fully initialize (Performance: Phase 1.1)
+    // CURSOR-STYLE: Don't auto-check on startup. Instead, wait for renderer to signal ready.
+    // This avoids the race condition where update events fire before renderer sets up listeners.
+    // The renderer will call signalRendererReady via IPC, which triggers the check.
+    // Keeping a delayed check as a fallback in case renderer never signals (e.g., dev mode issues)
     setTimeout(() => {
-      this.runAutoUpdater().catch((error) => {
-        const errorMessage = this.formatErrorMessage(error);
-        if (this.#logger) {
-          this.#logger.error(`Startup update check failed: ${errorMessage}`);
-        } else {
-          logger.error("Startup update check failed:", error);
-        }
-      });
-    }, this.#STARTUP_DELAY);
+      // Only run if we don't already have pending update info (renderer hasn't checked yet)
+      if (!this.#postponedUpdateInfo && !this.#downloadedUpdateInfo) {
+        logger.info(
+          "[enable] Fallback check - renderer may not have signaled ready",
+        );
+        this.runAutoUpdater().catch((error) => {
+          const errorMessage = this.formatErrorMessage(error);
+          if (this.#logger) {
+            this.#logger.error(`Fallback update check failed: ${errorMessage}`);
+          } else {
+            logger.error("Fallback update check failed:", error);
+          }
+        });
+      }
+    }, this.#STARTUP_DELAY + 5000); // Extra 5 seconds to give renderer time to signal
 
     this.schedulePeriodicChecks();
     this.trackUserActivity();
@@ -918,11 +936,29 @@ export class AutoUpdater implements AppModule {
     const allWindows = BrowserWindow.getAllWindows();
     let sentCount = 0;
 
-    allWindows.forEach((window) => {
+    // ===== DEBUG LOGGING =====
+    if (this.#logger) {
+      this.#logger.info(
+        `📡 broadcastToAllWindows called for channel: ${channel}`,
+      );
+      this.#logger.info(`   Total windows: ${allWindows.length}`);
+    }
+
+    allWindows.forEach((window, index) => {
       if (window && !window.isDestroyed()) {
         try {
+          // Check if webContents is ready
+          const isLoading = window.webContents.isLoading();
+          if (this.#logger) {
+            this.#logger.info(
+              `   Window ${index}: id=${window.id}, loading=${isLoading}`,
+            );
+          }
           window.webContents.send(channel, data);
           sentCount++;
+          if (this.#logger) {
+            this.#logger.info(`   ✅ Sent to window ${window.id}`);
+          }
         } catch (error) {
           // Silently handle errors - toast system will handle missing events
           if (this.#logger) {
@@ -933,11 +969,20 @@ export class AutoUpdater implements AppModule {
             );
           }
         }
+      } else {
+        if (this.#logger) {
+          this.#logger.warn(`   Window ${index}: destroyed or null`);
+        }
       }
     });
 
-    if (this.#logger && sentCount === 0) {
-      this.#logger.warn(`No windows available to receive ${channel} event`);
+    if (this.#logger) {
+      this.#logger.info(
+        `📡 Broadcast complete: sent to ${sentCount}/${allWindows.length} windows`,
+      );
+      if (sentCount === 0) {
+        this.#logger.warn(`⚠️ NO WINDOWS RECEIVED THE ${channel} EVENT!`);
+      }
     }
   }
 
@@ -1353,6 +1398,16 @@ export class AutoUpdater implements AppModule {
     this.removeUpdateListeners(updater);
 
     const onUpdateAvailable = (info: UpdateInfo) => {
+      // ===== DEBUG LOGGING START =====
+      if (this.#logger) {
+        this.#logger.info("========================================");
+        this.#logger.info("🔔 UPDATE AVAILABLE EVENT FIRED!");
+        this.#logger.info(`   Version: ${info?.version || "MISSING"}`);
+        this.#logger.info(`   Current: ${app.getVersion()}`);
+        this.#logger.info("========================================");
+      }
+      // ===== DEBUG LOGGING END =====
+
       // Validate update info
       if (!info || !info.version) {
         if (this.#logger) {
@@ -1407,6 +1462,19 @@ export class AutoUpdater implements AppModule {
       // or periodic checks, even if they postponed the update earlier.
       // Format notes before sending to ensure consistency with dialogs
       const formattedNotes = this.formatReleaseNotes(info);
+
+      // ===== DEBUG LOGGING START =====
+      if (this.#logger) {
+        const windows = BrowserWindow.getAllWindows();
+        this.#logger.info("📡 BROADCASTING update:available");
+        this.#logger.info(`   Windows count: ${windows.length}`);
+        windows.forEach((w, i) => {
+          this.#logger?.info(
+            `   Window ${i}: id=${w.id}, destroyed=${w.isDestroyed()}, visible=${w.isVisible()}`,
+          );
+        });
+      }
+      // ===== DEBUG LOGGING END =====
 
       // Use UpdateInfo type directly to ensure type compatibility
       this.broadcastToAllWindows<UpdateInfo>("update:available", {

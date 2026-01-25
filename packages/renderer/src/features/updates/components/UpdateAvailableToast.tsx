@@ -5,12 +5,7 @@
 
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Gift,
-  Download,
-  Clock,
-  ExternalLink,
-} from "lucide-react";
+import { Gift, Download, Clock, ExternalLink } from "lucide-react";
 import type { UpdateInfo } from "@app/shared";
 
 // GitHub releases URL for changelog
@@ -85,7 +80,13 @@ export function showUpdateAvailableToast(
   onDownload: () => void,
   onPostpone: () => void,
 ): string | number {
-  return toast.custom(
+  console.log("========================================");
+  console.log("📢 showUpdateAvailableToast CALLED!");
+  console.log(`   Update version: ${updateInfo?.version}`);
+  console.log(`   Current version: ${currentVersion}`);
+  console.log("========================================");
+
+  const toastId = toast.custom(
     (t) => (
       <UpdateAvailableToast
         updateInfo={updateInfo}
@@ -106,4 +107,7 @@ export function showUpdateAvailableToast(
       id: "update-available", // Use fixed ID to replace any existing toast
     },
   );
+
+  console.log(`✅ Toast created with ID: ${toastId}`);
+  return toastId;
 }
