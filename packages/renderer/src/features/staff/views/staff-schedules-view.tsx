@@ -22,10 +22,8 @@ import { useUserPermissions } from "@/features/dashboard/hooks/use-user-permissi
 import { PERMISSIONS } from "@app/shared/constants/permissions";
 import {
   Drawer,
-  DrawerClose,
   DrawerContent,
   DrawerDescription,
-  DrawerFooter,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
@@ -67,10 +65,9 @@ import {
 import { cn } from "@/shared/utils/cn";
 import {
   AdaptiveKeyboard,
-  AdaptiveFormField,
   AdaptiveTextarea,
 } from "@/features/adaptive-keyboard";
-import { useKeyboardWithRHF } from "@/features/adaptive-keyboard/hooks/use-keyboard-with-react-hook-form";
+import { useKeyboardWithRHF } from "@/shared/hooks";
 import type {
   ScheduleFormData,
   ScheduleUpdateData,
@@ -143,7 +140,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
   // Manager: can only schedule cashiers (has SCHEDULES_MANAGE_CASHIERS)
   const canScheduleAll = hasPermission(PERMISSIONS.SCHEDULES_MANAGE_ALL);
   const canScheduleCashiers = hasPermission(
-    PERMISSIONS.SCHEDULES_MANAGE_CASHIERS
+    PERMISSIONS.SCHEDULES_MANAGE_CASHIERS,
   );
 
   // State for cashiers - will be loaded from database (filtered by permissions for form dropdown)
@@ -165,7 +162,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
   // Delete confirmation dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [scheduleToDelete, setScheduleToDelete] = useState<Schedule | null>(
-    null
+    null,
   );
 
   // Get business ID from current authenticated user
@@ -185,14 +182,14 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
         if (response.success && response.data) {
           const allUsers = response.data as Staff[];
           logger.info(
-            `[loadCashiers] Received ${allUsers.length} users from API`
+            `[loadCashiers] Received ${allUsers.length} users from API`,
           );
 
           // Log all users for debugging
           allUsers.forEach((user) => {
             const roleName = getUserRoleName(user);
             logger.info(
-              `[loadCashiers] User: ${user.firstName} ${user.lastName} (${user.id}), roleName: ${user.roleName}, primaryRoleId: ${user.primaryRoleId}, resolved role: ${roleName}`
+              `[loadCashiers] User: ${user.firstName} ${user.lastName} (${user.id}), roleName: ${user.roleName}, primaryRoleId: ${user.primaryRoleId}, resolved role: ${roleName}`,
             );
           });
 
@@ -219,18 +216,18 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
 
             // No permission - don't show any users
             logger.warn(
-              `[loadCashiers] User ${user?.id} has no schedule management permissions`
+              `[loadCashiers] User ${user?.id} has no schedule management permissions`,
             );
             return false;
           });
 
           logger.info(
-            `[loadCashiers] Filtered to ${filteredUsers.length} staff members out of ${allUsers.length} total users (canScheduleAll: ${canScheduleAll}, canScheduleCashiers: ${canScheduleCashiers})`
+            `[loadCashiers] Filtered to ${filteredUsers.length} staff members out of ${allUsers.length} total users (canScheduleAll: ${canScheduleAll}, canScheduleCashiers: ${canScheduleCashiers})`,
           );
 
           if (filteredUsers.length === 0 && allUsers.length > 0) {
             logger.warn(
-              `[loadCashiers] No staff members available for scheduling. Check permissions or ensure users have roles assigned.`
+              `[loadCashiers] No staff members available for scheduling. Check permissions or ensure users have roles assigned.`,
             );
           }
 
@@ -242,12 +239,12 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
           const allNonAdminStaff = allUsers.filter((staffUser) => {
             const staffRoleName = getUserRoleName(staffUser);
             logger.info(
-              `[loadCashiers] allStaff filter: ${staffUser.firstName} ${staffUser.lastName} (${staffUser.id}), roleName: ${staffRoleName}`
+              `[loadCashiers] allStaff filter: ${staffUser.firstName} ${staffUser.lastName} (${staffUser.id}), roleName: ${staffRoleName}`,
             );
             return staffRoleName !== "admin";
           });
           logger.info(
-            `[loadCashiers] Set allStaff to ${allNonAdminStaff.length} users (all non-admin staff for display)`
+            `[loadCashiers] Set allStaff to ${allNonAdminStaff.length} users (all non-admin staff for display)`,
           );
           setAllStaff(allNonAdminStaff);
         } else {
@@ -309,15 +306,15 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
   // Calendar view functions - memoized for performance
   const weekStart = useMemo(
     () => startOfWeek(currentWeek, { weekStartsOn: 1 }),
-    [currentWeek]
+    [currentWeek],
   );
   const weekEnd = useMemo(
     () => endOfWeek(currentWeek, { weekStartsOn: 1 }),
-    [currentWeek]
+    [currentWeek],
   );
   const weekDays = useMemo(
     () => eachDayOfInterval({ start: weekStart, end: weekEnd }),
-    [weekStart, weekEnd]
+    [weekStart, weekEnd],
   );
 
   // Memoized event handlers
@@ -353,7 +350,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
         }
       }
     },
-    [resetForm]
+    [resetForm],
   );
 
   const openDrawer = useCallback(
@@ -361,7 +358,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
       setupDrawerForm(schedule, date);
       setIsDrawerOpen(true);
     },
-    [setupDrawerForm]
+    [setupDrawerForm],
   );
 
   const closeDrawer = useCallback(() => {
@@ -449,7 +446,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
     newEndTime: string,
     selectedDate: Date,
     staffId: string,
-    excludeScheduleId?: string
+    excludeScheduleId?: string,
   ) => {
     // Create proper Date objects for comparison using startOfDay for consistency
     const baseDate = startOfDay(selectedDate);
@@ -507,11 +504,13 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
       newEndTime: string,
       selectedDate: Date,
       staffId: string,
-      excludeScheduleId?: string
+      excludeScheduleId?: string,
     ) => boolean;
     canScheduleAll: boolean;
     canScheduleCashiers: boolean;
     onClose: () => void;
+    isOpen?: boolean;
+    showButtons?: boolean;
     onSuccess: (schedule: Schedule) => void;
   }> = ({
     editingSchedule,
@@ -526,9 +525,11 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
     canScheduleAll,
     canScheduleCashiers,
     onClose,
+    isOpen = true,
+    showButtons = true,
     onSuccess,
   }) => {
-    const { form, handleSubmit, isSubmitting, isEditMode } = useScheduleForm({
+    const { form, handleSubmit: formHandleSubmit, isSubmitting, isEditMode } = useScheduleForm({
       schedule: editingSchedule,
       selectedDate,
       businessId,
@@ -544,7 +545,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
         // Check if user has permission to schedule this staff member
         if (staffRoleName === "manager" && !canScheduleAll) {
           throw new Error(
-            "You do not have permission to schedule managers. Only cashiers can be scheduled."
+            "You do not have permission to schedule managers. Only cashiers can be scheduled.",
           );
         }
 
@@ -563,7 +564,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
             data.endTime,
             new Date(data.date),
             data.staffId,
-            editingSchedule?.id
+            editingSchedule?.id,
           )
         ) {
           const staffMember = cashiers.find((c) => c.id === data.staffId);
@@ -571,7 +572,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
             ? `${staffMember.firstName} ${staffMember.lastName}`
             : "This staff member";
           throw new Error(
-            `${staffName} already has an overlapping shift scheduled.`
+            `${staffName} already has an overlapping shift scheduled.`,
           );
         }
 
@@ -603,6 +604,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
           });
 
           if (response.success && response.data) {
+            keyboard.handleCloseKeyboard();
             onSuccess(response.data as Schedule);
           } else {
             throw new Error(response.message || "Failed to update schedule");
@@ -618,6 +620,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
           });
 
           if (response.success && response.data) {
+            keyboard.handleCloseKeyboard();
             onSuccess(response.data as Schedule);
           } else {
             throw new Error(response.message || "Failed to create schedule");
@@ -627,39 +630,67 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
       onSuccess: onClose,
     });
 
+    const handleSubmit = formHandleSubmit;
+
     // Keyboard integration
     const keyboard = useKeyboardWithRHF<ScheduleFormData | ScheduleUpdateData>({
       setValue: form.setValue,
       watch: form.watch,
       fieldConfigs: {
-        assignedRegister: { keyboardMode: "qwerty" },
         notes: { keyboardMode: "qwerty" },
       },
     });
+
+    // Close keyboard when drawer closes
+    useEffect(() => {
+      if (!isOpen) {
+        keyboard.handleCloseKeyboard();
+      }
+    }, [isOpen, keyboard]);
 
     const startTime = form.watch("startTime");
     const endTime = form.watch("endTime");
 
     return (
-      <>
-        <DrawerHeader className="shrink-0 px-3 sm:px-4 border-b">
-          <DrawerTitle className="text-base sm:text-lg md:text-xl">
-            {isEditMode ? "Edit Staff Schedule" : "Create New Schedule"}
-          </DrawerTitle>
-          <DrawerDescription className="sr-only">
-            {isEditMode
-              ? "Edit the staff schedule details below"
-              : "Fill in the form below to create a new staff schedule"}
-          </DrawerDescription>
-        </DrawerHeader>
+      <Form {...form}>
+        <form
+          onSubmit={handleSubmit}
+          className={showButtons ? "space-y-4" : "flex flex-col h-full"}
+        >
+          {/* Fixed Buttons Section - Only in drawer mode */}
+          {!showButtons && (
+            <div className="border-b bg-background shrink-0">
+              <div className="flex space-x-2 px-6 pt-4 pb-4">
+                <Button
+                  type="submit"
+                  className="flex-1"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting
+                    ? "Saving..."
+                    : isEditMode
+                      ? "Update Schedule"
+                      : "Create Schedule"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    keyboard.handleCloseKeyboard();
+                    onClose();
+                  }}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
 
-        <Form {...form}>
-          <form
-            onSubmit={handleSubmit}
-            className="flex flex-col h-full min-h-0"
-          >
-            <div className="px-3 sm:px-4 md:px-6 pb-3 sm:pb-4 md:pb-6 space-y-3 sm:space-y-4 md:space-y-6 overflow-y-auto flex-1 min-h-0">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+          {/* Scrollable Form Content */}
+          <div className={showButtons ? "" : "p-6 overflow-y-auto flex-1 min-h-0 space-y-4"}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <FormField
                   control={form.control}
                   name="staffId"
@@ -736,7 +767,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
                               variant="outline"
                               className={cn(
                                 "w-full justify-start text-left font-normal",
-                                !field.value && "text-muted-foreground"
+                                !field.value && "text-muted-foreground",
                               )}
                               type="button"
                             >
@@ -766,7 +797,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
                   )}
                 />
 
-                <FormField
+                {/* <FormField
                   control={form.control}
                   name="assignedRegister"
                   render={() => (
@@ -798,7 +829,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
                       <FormMessage />
                     </FormItem>
                   )}
-                />
+                /> */}
 
                 <FormField
                   control={form.control}
@@ -837,13 +868,13 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
                 />
 
                 {startTime && endTime && (
-                  <div className="md:col-span-2 p-3 bg-sky-50 rounded-lg border border-sky-200">
+                  <div className="md:col-span-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Clock className="w-4 h-4 text-sky-600 shrink-0" />
-                      <span className="font-medium text-sky-800 text-sm sm:text-base">
+                      <Clock className="w-4 h-4 text-slate-600 shrink-0" />
+                      <span className="font-medium text-slate-800 text-sm sm:text-base">
                         Shift Duration:
                       </span>
-                      <span className="text-sky-700 text-sm sm:text-base">
+                      <span className="text-slate-700 text-sm sm:text-base">
                         {(() => {
                           const formatTime = (time: string) => {
                             const [hour, minute] = time.split(":").map(Number);
@@ -857,7 +888,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
 
                           const durationMinutes = calculateShiftDuration(
                             startTime,
-                            endTime
+                            endTime,
                           );
 
                           if (durationMinutes === -1) {
@@ -873,7 +904,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
 
                           const isOvernight = isOvernightShift(
                             startTime,
-                            endTime
+                            endTime,
                           );
 
                           let warningText = "";
@@ -888,7 +919,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
                           }
 
                           return `${formatTime(startTime)} - ${formatTime(
-                            endTime
+                            endTime,
                           )}${
                             isOvernight ? " (+1 day)" : ""
                           } (${hours}h ${minutes}m)${warningText}`;
@@ -995,7 +1026,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
                           className={cn(
                             keyboard.activeField === "notes" &&
                               "ring-2 ring-primary border-primary",
-                            isSubmitting && "opacity-50 cursor-not-allowed"
+                            isSubmitting && "opacity-50 cursor-not-allowed",
                           )}
                         />
                       </FormControl>
@@ -1006,50 +1037,73 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
               </div>
             </div>
 
-            {/* Adaptive Keyboard */}
-            <AdaptiveKeyboard
-              visible={keyboard.showKeyboard}
-              initialMode={
-                (
-                  keyboard.activeFieldConfig as {
-                    keyboardMode?: "qwerty" | "numeric" | "symbols";
-                  }
-                )?.keyboardMode || "qwerty"
-              }
-              onInput={keyboard.handleInput}
-              onBackspace={keyboard.handleBackspace}
-              onClear={keyboard.handleClear}
-              onEnter={keyboard.handleCloseKeyboard}
-              onClose={keyboard.handleCloseKeyboard}
-            />
-
-            <DrawerFooter className="px-3 sm:px-4 shrink-0 border-t bg-white gap-2 sm:gap-0">
+          {/* Actions - Only show if showButtons is true */}
+          {showButtons && (
+            <div
+              className={cn(
+                "flex flex-col sm:flex-row gap-2 sm:gap-2 pt-4",
+                keyboard.showKeyboard && "pb-[340px]"
+              )}
+            >
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-linear-to-r from-sky-600 to-sky-500 hover:from-sky-700 hover:to-sky-600 w-full sm:w-auto text-sm sm:text-base"
+                className="flex-1 text-xs sm:text-sm md:text-base lg:text-base h-8 sm:h-9 md:h-10"
               >
                 {isSubmitting
                   ? "Saving..."
                   : isEditMode
-                  ? "Update Schedule"
-                  : "Create Schedule"}
+                    ? "Update Schedule"
+                    : "Create Schedule"}
               </Button>
-              <DrawerClose asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onClose}
-                  disabled={isSubmitting}
-                  className="w-full sm:w-auto text-sm sm:text-base"
-                >
-                  Cancel
-                </Button>
-              </DrawerClose>
-            </DrawerFooter>
-          </form>
-        </Form>
-      </>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  keyboard.handleCloseKeyboard();
+                  onClose();
+                }}
+                disabled={isSubmitting}
+                className="flex-1 text-xs sm:text-sm md:text-base lg:text-base h-8 sm:h-9 md:h-10"
+              >
+                Cancel
+              </Button>
+            </div>
+          )}
+
+          {/* Adaptive Keyboard */}
+          {keyboard.showKeyboard && (
+            <div className={cn(
+              showButtons ? "sticky bottom-0 left-0 right-0 z-50 mt-4 bg-background" : "border-t bg-background px-2 py-2 shrink-0"
+            )}>
+              <div className={showButtons ? "" : "max-w-full overflow-hidden"}>
+                <AdaptiveKeyboard
+                  onInput={keyboard.handleInput}
+                  onBackspace={keyboard.handleBackspace}
+                  onClear={keyboard.handleClear}
+                  onEnter={() => {
+                    // Move to next field or submit if last field
+                    if (keyboard.activeField === "notes") {
+                      handleSubmit();
+                    } else {
+                      keyboard.handleCloseKeyboard();
+                    }
+                  }}
+                  initialMode={
+                    (
+                      keyboard.activeFieldConfig as {
+                        keyboardMode?: "qwerty" | "numeric" | "symbols";
+                      }
+                    )?.keyboardMode || "qwerty"
+                  }
+                  visible={keyboard.showKeyboard}
+                  onClose={keyboard.handleCloseKeyboard}
+                />
+              </div>
+            </div>
+          )}
+        </form>
+      </Form>
     );
   };
 
@@ -1071,7 +1125,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
       const response = await window.scheduleAPI.delete(scheduleToDelete.id);
       if (response.success) {
         setSchedules(
-          schedules.filter((schedule) => schedule.id !== scheduleToDelete.id)
+          schedules.filter((schedule) => schedule.id !== scheduleToDelete.id),
         );
         toast.success("Schedule deleted successfully", { id: toastId });
       } else {
@@ -1134,7 +1188,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
       if (now >= start && now <= end)
         return {
           status: "active",
-          color: "bg-sky-100 text-sky-800 border-sky-200",
+          color: "bg-green-100 text-green-800 border-green-200",
         };
       return {
         status: "completed",
@@ -1163,7 +1217,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
         const staffMember = allStaff.find((s) => s.id === schedule.staffId);
         if (!staffMember) {
           logger.warn(
-            `[filteredSchedules] Staff member not found for schedule ${schedule.id}, staffId: ${schedule.staffId}`
+            `[filteredSchedules] Staff member not found for schedule ${schedule.id}, staffId: ${schedule.staffId}`,
           );
           return false;
         }
@@ -1173,7 +1227,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
       });
 
       logger.info(
-        `[filteredSchedules] Manager view: Filtered ${schedules.length} total schedules to ${cashierSchedules.length} cashier schedules`
+        `[filteredSchedules] Manager view: Filtered ${schedules.length} total schedules to ${cashierSchedules.length} cashier schedules`,
       );
       return cashierSchedules;
     }
@@ -1191,18 +1245,18 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
         return scheduleDate === dateString;
       });
     },
-    [filteredSchedules]
+    [filteredSchedules],
   );
 
   // Memoized schedules for selected date
   const schedulesForSelectedDate = useMemo(
     () => getSchedulesForDate(selectedDate),
-    [getSchedulesForDate, selectedDate]
+    [getSchedulesForDate, selectedDate],
   );
 
   return (
     <div className="w-full min-h-screen p-2 sm:p-3 md:p-4 lg:p-6 pb-6">
-      <div className="max-w-7xl mx-auto animate-slide-down">
+      <div className="max-w-7xl mx-auto">
         {/* Header Section - Optimized for narrow screens */}
         <div className="flex flex-col gap-3 sm:gap-4 mb-4 sm:mb-6 lg:mb-8">
           <div className="flex items-start gap-2 sm:gap-3">
@@ -1236,10 +1290,11 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
                   closeDrawer();
                 }
               }}
+              direction="right"
             >
               <DrawerTrigger asChild>
                 <Button
-                  className="bg-linear-to-r from-sky-600 to-sky-500 hover:from-sky-700 hover:to-sky-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 w-full sm:w-auto"
+                  className="w-full sm:w-auto shadow-sm"
                   size="sm"
                   aria-label="Schedule Shift"
                 >
@@ -1253,32 +1308,47 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
                 </Button>
               </DrawerTrigger>
 
-              <DrawerContent className="h-[90vh] max-h-[90vh] flex flex-col max-w-full sm:max-w-2xl md:max-w-3xl mx-auto">
-                <ScheduleFormContent
-                  editingSchedule={editingSchedule}
-                  selectedDate={selectedDate}
-                  setSelectedDate={setSelectedDate}
-                  isDatePickerOpen={isDatePickerOpen}
-                  setIsDatePickerOpen={setIsDatePickerOpen}
-                  cashiers={cashiers}
-                  isLoadingCashiers={isLoadingCashiers}
-                  businessId={businessId}
-                  checkShiftOverlap={checkShiftOverlap}
-                  canScheduleAll={canScheduleAll}
-                  canScheduleCashiers={canScheduleCashiers}
-                  onClose={closeDrawer}
-                  onSuccess={(schedule) => {
-                    if (editingSchedule) {
-                      setSchedules(
-                        schedules.map((s) =>
-                          s.id === editingSchedule.id ? schedule : s
-                        )
-                      );
-                    } else {
-                      setSchedules([...schedules, schedule]);
-                    }
-                  }}
-                />
+              <DrawerContent className="h-full w-[95%] sm:w-[600px] md:w-[700px] lg:w-[800px] sm:max-w-none mt-0 rounded-none fixed right-0 top-0 overflow-hidden">
+                <DrawerHeader className="border-b shrink-0">
+                  <DrawerTitle>
+                    {editingSchedule ? "Edit Staff Schedule" : "Create New Schedule"}
+                  </DrawerTitle>
+                  <DrawerDescription>
+                    {editingSchedule
+                      ? "Edit the staff schedule details below"
+                      : "Fill in the form below to create a new staff schedule"}
+                  </DrawerDescription>
+                </DrawerHeader>
+
+                <div className="flex-1 min-h-0">
+                  <ScheduleFormContent
+                    editingSchedule={editingSchedule}
+                    selectedDate={selectedDate}
+                    setSelectedDate={setSelectedDate}
+                    isDatePickerOpen={isDatePickerOpen}
+                    setIsDatePickerOpen={setIsDatePickerOpen}
+                    cashiers={cashiers}
+                    isLoadingCashiers={isLoadingCashiers}
+                    businessId={businessId}
+                    checkShiftOverlap={checkShiftOverlap}
+                    canScheduleAll={canScheduleAll}
+                    canScheduleCashiers={canScheduleCashiers}
+                    onClose={closeDrawer}
+                    isOpen={isDrawerOpen}
+                    showButtons={false}
+                    onSuccess={(schedule) => {
+                      if (editingSchedule) {
+                        setSchedules(
+                          schedules.map((s) =>
+                            s.id === editingSchedule.id ? schedule : s,
+                          ),
+                        );
+                      } else {
+                        setSchedules([...schedules, schedule]);
+                      }
+                    }}
+                  />
+                </div>
               </DrawerContent>
             </Drawer>
           </div>
@@ -1291,7 +1361,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
               <Button
                 variant="outline"
                 onClick={goToToday}
-                className="bg-sky-50 border-sky-200 text-sky-700 hover:bg-sky-100 w-full sm:w-auto text-xs sm:text-sm"
+                className="w-full sm:w-auto text-xs sm:text-sm"
                 aria-label="Go to today's date"
               >
                 Today
@@ -1336,7 +1406,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
               <Button
                 variant={viewMode === "week" ? "default" : "outline"}
                 onClick={() => setViewMode("week")}
-                className="bg-sky-600 text-white hover:bg-sky-700 flex-1 sm:flex-none text-xs sm:text-sm md:text-base"
+                className="flex-1 sm:flex-none text-xs sm:text-sm md:text-base"
               >
                 Week View
               </Button>
@@ -1358,11 +1428,11 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
                 className={cn(
                   "text-center p-1 sm:p-1.5 md:p-2 rounded-md sm:rounded-lg border transition-colors cursor-pointer min-w-0",
                   isToday(day)
-                    ? "bg-sky-100 border-sky-300 text-sky-800 font-semibold"
+                    ? "bg-slate-100 border-slate-300 text-slate-800 font-semibold"
                     : "bg-slate-50 border-slate-200",
                   isSameDay(day, selectedDate)
-                    ? "ring-2 ring-sky-400 ring-opacity-50"
-                    : ""
+                    ? "ring-2 ring-primary ring-opacity-50"
+                    : "",
                 )}
                 onClick={() => setSelectedDate(day)}
                 role="button"
@@ -1417,7 +1487,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
 
         {isLoadingSchedules ? (
           <div className="text-center py-8 sm:py-12 md:py-16">
-            <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-b-2 border-sky-600 mx-auto mb-3 sm:mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-b-2 border-slate-600 mx-auto mb-3 sm:mb-4"></div>
             <p className="text-sm sm:text-base text-slate-500">
               Loading schedules...
             </p>
@@ -1444,7 +1514,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
             <Button
               onClick={() => openDrawer(undefined, selectedDate)}
               variant="outline"
-              className="mb-3 sm:mb-4 border-sky-300 text-sky-700 hover:bg-sky-50 w-full sm:w-auto text-xs sm:text-sm md:text-base"
+              className="mb-3 sm:mb-4 w-full sm:w-auto text-xs sm:text-sm md:text-base"
               size="sm"
             >
               <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
@@ -1464,22 +1534,22 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
                 {schedulesForSelectedDate.map((schedule, index) => {
                   const scheduleStatus = getScheduleStatus(
                     schedule.startTime,
-                    schedule.endTime
+                    schedule.endTime,
                   );
                   const duration = getShiftDuration(
                     schedule.startTime,
-                    schedule.endTime
+                    schedule.endTime,
                   );
 
                   // Find staff member details - use allStaff for display (not filtered by permissions)
                   const staffMember = allStaff.find(
-                    (c) => c.id === schedule.staffId
+                    (c) => c.id === schedule.staffId,
                   );
 
                   // Defensive fallback: log missing staff member for debugging
                   if (!staffMember) {
                     logger.warn(
-                      `[StaffSchedules] Staff member not found for schedule ${schedule.id}, staffId: ${schedule.staffId}. Available allStaff: ${allStaff.length} users`
+                      `[StaffSchedules] Staff member not found for schedule ${schedule.id}, staffId: ${schedule.staffId}. Available allStaff: ${allStaff.length} users`,
                     );
                   }
 
@@ -1498,7 +1568,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
                           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
                             <div className="space-y-1 min-w-0 flex-1">
                               <CardTitle className="text-base sm:text-xl text-slate-900 flex items-center gap-2">
-                                <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-sky-600 shrink-0" />
+                                <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600 shrink-0" />
                                 <span className="truncate">{staffName}</span>
                               </CardTitle>
                               <p className="text-xs sm:text-sm text-slate-600 truncate">
@@ -1521,16 +1591,16 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
                         <CardContent className="space-y-3 sm:space-y-4">
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
                             <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-600">
-                              <CalendarIcon className="w-3 h-3 sm:w-4 sm:h-4 text-sky-500 shrink-0" />
+                              <CalendarIcon className="w-3 h-3 sm:w-4 sm:h-4 text-slate-500 shrink-0" />
                               <span className="truncate">
                                 {format(
                                   new Date(schedule.startTime),
-                                  "MMM dd, yyyy"
+                                  "MMM dd, yyyy",
                                 )}
                               </span>
                             </div>
                             <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-600">
-                              <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-sky-500 shrink-0" />
+                              <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-slate-500 shrink-0" />
                               <span>{duration}</span>
                             </div>
                           </div>
@@ -1567,7 +1637,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
                                 onClick={() => openDrawer(schedule)}
                                 size="sm"
                                 variant="outline"
-                                className="flex-1 hover:bg-sky-50 hover:border-sky-300 text-xs sm:text-sm"
+                                className="flex-1 text-xs sm:text-sm"
                                 aria-label={`Edit schedule for ${staffName}`}
                               >
                                 <Edit2
@@ -1612,14 +1682,14 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
               {scheduleToDelete &&
                 (() => {
                   const staffMember = allStaff.find(
-                    (c) => c.id === scheduleToDelete.staffId
+                    (c) => c.id === scheduleToDelete.staffId,
                   );
                   const staffName = staffMember
                     ? `${staffMember.firstName} ${staffMember.lastName}`
                     : "This staff member";
                   return `Are you sure you want to delete the schedule for ${staffName} on ${format(
                     new Date(scheduleToDelete.startTime),
-                    "PPP"
+                    "PPP",
                   )}? This action cannot be undone.`;
                 })()}
             </AlertDialogDescription>

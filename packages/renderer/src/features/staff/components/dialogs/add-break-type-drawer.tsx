@@ -5,26 +5,29 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { EditUserForm } from "../forms/edit-user-form";
-import type { UserUpdateFormData } from "@/features/users/schemas/user-schema";
-import type { StaffUser } from "@/features/users/schemas/types";
+import { AddBreakTypeForm } from "../forms/add-break-type-form";
+import type {
+  BreakTypeFormData,
+  BreakTypeUpdateData,
+} from "../../schemas/break-type-schema";
+import type { BreakTypeDefinition } from "@/shared/types/api/break-policy";
 
-interface EditUserDrawerProps {
+interface AddBreakTypeDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  user: StaffUser;
-  onSubmit: (data: UserUpdateFormData) => Promise<void>;
+  onSubmit: (data: BreakTypeFormData | BreakTypeUpdateData) => Promise<void>;
   isLoading: boolean;
+  editingBreakType?: BreakTypeDefinition | null;
 }
 
-export function EditUserDrawer({
+export function AddBreakTypeDrawer({
   open,
   onOpenChange,
-  user,
   onSubmit,
   isLoading,
-}: EditUserDrawerProps) {
-  const handleSubmit = async (data: UserUpdateFormData) => {
+  editingBreakType,
+}: AddBreakTypeDrawerProps) {
+  const handleSubmit = async (data: BreakTypeFormData | BreakTypeUpdateData) => {
     await onSubmit(data);
   };
 
@@ -32,24 +35,25 @@ export function EditUserDrawer({
     <Drawer open={open} onOpenChange={onOpenChange} direction="right">
       <DrawerContent className="h-full w-[95%] sm:w-[600px] md:w-[700px] lg:w-[800px] sm:max-w-none mt-0 rounded-none fixed right-0 top-0 overflow-hidden">
         <DrawerHeader className="border-b shrink-0">
-          <DrawerTitle>Edit Staff Member</DrawerTitle>
+          <DrawerTitle>
+            {editingBreakType ? "Edit Break Type" : "Add Break Type"}
+          </DrawerTitle>
           <DrawerDescription>
-            Update staff member information and permissions.
+            Define a type of break available to staff
           </DrawerDescription>
         </DrawerHeader>
 
         <div className="flex-1 min-h-0">
-          <EditUserForm
-            user={user}
+          <AddBreakTypeForm
             onSubmit={handleSubmit}
             onCancel={() => onOpenChange(false)}
             isLoading={isLoading}
             isOpen={open}
             showButtons={false}
+            editingBreakType={editingBreakType}
           />
         </div>
       </DrawerContent>
     </Drawer>
   );
 }
-

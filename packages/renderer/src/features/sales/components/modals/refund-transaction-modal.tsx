@@ -1,9 +1,12 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { AnimatePresence } from "@/components/animate-presence";
 import { useAuth } from "@/shared/hooks/use-auth";
 import { getUserRoleName } from "@/shared/utils/rbac-helpers";
 import { toast } from "sonner";
 import { AdaptiveKeyboard } from "@/features/adaptive-keyboard/adaptive-keyboard";
+import { AdaptiveTextarea } from "@/features/adaptive-keyboard/adaptive-textarea";
+import { useKeyboardWithRHF } from "@/shared/hooks";
+import { cn } from "@/shared/utils/cn";
 
 import { getLogger } from "@/shared/utils/logger";
 const logger = getLogger("refund-transaction-modal");
@@ -440,7 +443,7 @@ const RefundTransactionModal: React.FC<RefundModalProps> = ({
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-hidden min-h-0">
             <AnimatePresence mode="wait" exitAnimation="slide-left-exit" exitDuration={200}>
               {currentView === "search" ? (
                 <SearchView
@@ -799,36 +802,73 @@ const RefundView: React.FC<{
   onBack,
   onProcess,
 }) => {
-  const [showKeyboard, setShowKeyboard] = useState(false);
+  const rightColumnRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLDivElement>(null);
 
-  // Keyboard handlers
-  const handleKeyboardInput = useCallback(
-    (char: string) => {
-      setRefundReason(refundReason + char);
+  // Form state for keyboard integration
+  const [refundReasonForm, setRefundReasonForm] = useState({
+    refundReason: refundReason,
+  });
+
+  // Keyboard integration hook
+  const keyboard = useKeyboardWithRHF({
+    setValue: ((name: string, value: string) => {
+      if (name === "refundReason") {
+        setRefundReasonForm((prev) => ({ ...prev, [name]: value }));
+        setRefundReason(value);
+      }
+    }) as any,
+    watch: (() => refundReasonForm) as any,
+    fieldConfigs: {
+      refundReason: { keyboardMode: "qwerty" },
     },
-    [refundReason, setRefundReason]
-  );
+  });
 
-  const handleKeyboardBackspace = useCallback(() => {
-    setRefundReason(refundReason.slice(0, -1));
-  }, [refundReason, setRefundReason]);
+  // Sync form state with prop
+  useEffect(() => {
+    setRefundReasonForm({ refundReason });
+  }, [refundReason]);
 
-  const handleKeyboardClear = useCallback(() => {
-    setRefundReason("");
-  }, [setRefundReason]);
-
-  const handleKeyboardClose = useCallback(() => {
-    setShowKeyboard(false);
-  }, []);
+  // Scroll to textarea when keyboard opens
+  useEffect(() => {
+    if (keyboard.showKeyboard && textareaRef.current && rightColumnRef.current) {
+      const textarea = textareaRef.current;
+      const container = rightColumnRef.current;
+      
+      // Small delay to ensure keyboard is rendered
+      const timeoutId = setTimeout(() => {
+        if (!textarea || !container) return;
+        
+        const textareaRect = textarea.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        const keyboardHeight = 340; // Approximate keyboard height
+        
+        // Calculate if textarea is visible above keyboard
+        const textareaBottom = textareaRect.bottom - containerRect.top + container.scrollTop;
+        const visibleAreaBottom = container.scrollTop + containerRect.height - keyboardHeight;
+        
+        // If textarea is below the visible area (above keyboard), scroll to show it
+        if (textareaBottom > visibleAreaBottom) {
+          const targetScroll = textareaBottom - (containerRect.height - keyboardHeight) + 20;
+          container.scrollTo({
+            top: Math.max(0, targetScroll),
+            behavior: "smooth",
+          });
+        }
+      }, 150);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [keyboard.showKeyboard]);
 
   if (!originalTransaction) return null;
 
   return (
-    <div className="h-full overflow-y-auto animate-slide-right">
+    <div className="h-full overflow-hidden animate-slide-right flex flex-col">
       {/* Single scrollable container */}
-      <div className="flex flex-col lg:flex-row lg:h-full">
+      <div className="flex flex-col lg:flex-row flex-1 min-h-0 h-full overflow-hidden">
         {/* Left Panel - Transaction Details */}
-        <div className="lg:w-1/2 lg:border-r border-b lg:border-b-0 border-slate-200 p-3 sm:p-4 lg:p-6 lg:overflow-y-auto">
+        <div className="lg:w-1/2 lg:border-r border-b lg:border-b-0 border-slate-200 p-3 sm:p-4 lg:p-6 overflow-y-auto flex-1 min-h-0">
           <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 lg:mb-6">
             <button
               onClick={onBack}
@@ -962,10 +1002,19 @@ const RefundView: React.FC<{
         </div>
 
         {/* Right Panel - Refund Configuration */}
-        <div className="lg:w-1/2 p-3 sm:p-4 lg:p-6 overflow-y-auto flex-1">
-          <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-slate-900 mb-3 sm:mb-4 lg:mb-6">
-            Refund Configuration
-          </h3>
+        <div 
+          ref={rightColumnRef}
+          className="lg:w-1/2 flex-1 flex flex-col h-full max-h-full overflow-hidden bg-white relative"
+        >
+          {/* Header - Fixed at top */}
+          <div className="p-3 sm:p-4 lg:p-6 pb-0 shrink-0">
+            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-slate-900 mb-3 sm:mb-4 lg:mb-6">
+              Refund Configuration
+            </h3>
+          </div>
+          
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 sm:px-4 lg:px-6 pb-3 sm:pb-4 lg:pb-6 min-h-0">
 
           {selectedItems.size > 0 ? (
             <div className="space-y-4 sm:space-y-6">
@@ -1116,13 +1165,22 @@ const RefundView: React.FC<{
                 <label className="text-caption lg:text-sm font-medium text-slate-900 block mb-1 sm:mb-2">
                   Overall Refund Reason
                 </label>
-                <textarea
-                  placeholder="Provide a detailed reason for this refund..."
-                  value={refundReason}
-                  readOnly
-                  onClick={() => setShowKeyboard(true)}
-                  className="w-full p-2 sm:p-3 border border-slate-300 rounded-lg focus:outline-none focus:border-green-500 min-h-16 sm:min-h-20 lg:min-h-24 resize-vertical text-xs sm:text-sm lg:text-base cursor-pointer"
-                />
+                <div ref={textareaRef}>
+                  <AdaptiveTextarea
+                    id="refundReason"
+                    label=""
+                    value={String(keyboard.formValues?.refundReason || refundReason || "")}
+                    placeholder="Provide a detailed reason for this refund..."
+                    readOnly
+                    onClick={() => keyboard.handleFieldFocus("refundReason")}
+                    onFocus={() => keyboard.handleFieldFocus("refundReason")}
+                    className={cn(
+                      "w-full p-2 sm:p-3 border border-slate-300 rounded-lg focus:outline-none min-h-16 sm:min-h-20 lg:min-h-24 resize-vertical text-xs sm:text-sm lg:text-base cursor-pointer",
+                      keyboard.activeField === "refundReason" &&
+                        "ring-2 ring-primary border-primary"
+                    )}
+                  />
+                </div>
               </div>
 
               {/* Refund Total */}
@@ -1167,25 +1225,30 @@ const RefundView: React.FC<{
               </p>
             </div>
           )}
+          </div>
+
+          {/* Adaptive Keyboard - Flex positioned at bottom */}
+          {keyboard.showKeyboard && (
+            <div className="shrink-0 w-full z-10 bg-background border-t shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+              <AdaptiveKeyboard
+                visible={keyboard.showKeyboard}
+                initialMode={
+                  (
+                    keyboard.activeFieldConfig as {
+                      keyboardMode?: "qwerty" | "numeric" | "symbols";
+                    }
+                  )?.keyboardMode || "qwerty"
+                }
+                onInput={keyboard.handleInput}
+                onBackspace={keyboard.handleBackspace}
+                onClear={keyboard.handleClear}
+                onEnter={keyboard.handleCloseKeyboard}
+                onClose={keyboard.handleCloseKeyboard}
+              />
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Adaptive Keyboard - Fixed Overlay */}
-      {showKeyboard && (
-        <div className="fixed inset-0 z-[9999] flex items-end pointer-events-none">
-          <div className="w-full pointer-events-auto">
-            <AdaptiveKeyboard
-              visible={showKeyboard}
-              initialMode="qwerty"
-              onInput={handleKeyboardInput}
-              onBackspace={handleKeyboardBackspace}
-              onClear={handleKeyboardClear}
-              onEnter={handleKeyboardClose}
-              onClose={handleKeyboardClose}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 };

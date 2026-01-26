@@ -216,11 +216,27 @@ export function TerminalForm({
     }
   };
 
+  // When keyboard opens or active field changes, ensure the focused field is visible
+  useEffect(() => {
+    if (!keyboard.showKeyboard || !keyboard.activeField) return;
+
+    const targetId = keyboard.activeField as string;
+
+    // Let React paint the keyboard first, then scroll.
+    const raf = requestAnimationFrame(() => {
+      const el = document.getElementById(targetId);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+
+    return () => cancelAnimationFrame(raf);
+  }, [keyboard.activeField, keyboard.showKeyboard]);
+
   const activeInputType =
     keyboard.activeField === "terminalNumber" ? "tel" : "text";
 
   return (
-    <div className="space-y-6">
+    <div className={cn("space-y-6", keyboard.showKeyboard && "pb-[340px]")}>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* Basic Terminal Information */}

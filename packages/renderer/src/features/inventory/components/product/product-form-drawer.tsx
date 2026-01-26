@@ -310,8 +310,8 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
       onOpenChange={(open) => !open && handleClose()}
       direction="right"
     >
-      <DrawerContent className="h-full w-[95%] sm:w-[900px] md:w-[1000px] lg:w-[1200px] xl:w-[1400px] sm:max-w-none mt-0 rounded-none fixed right-0 top-0">
-        <DrawerHeader className="border-b">
+      <DrawerContent className="h-full w-[95%] sm:w-[900px] md:w-[1000px] lg:w-[1200px] xl:w-[1400px] sm:max-w-none mt-0 rounded-none fixed right-0 top-0 overflow-hidden">
+        <DrawerHeader className="border-b shrink-0">
           <DrawerTitle>
             {editingProduct ? "Edit Product" : "Add New Product"}
           </DrawerTitle>
@@ -322,8 +322,9 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
           </DrawerDescription>
         </DrawerHeader>
 
-        <Form {...form}>
-          <form onSubmit={handleSubmit} className="flex flex-col h-full">
+        <div className="flex-1 min-h-0">
+          <Form {...form}>
+            <form onSubmit={handleSubmit} className="flex flex-col h-full">
             <Tabs
               value={activeTab}
               onValueChange={setActiveTab}
@@ -1620,7 +1621,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
 
             {/* Adaptive Keyboard */}
             {keyboard.showKeyboard && (
-              <div className="border-t bg-background px-2 py-2">
+              <div className="border-t bg-background px-2 py-2 shrink-0">
                 <div className="max-w-full overflow-hidden">
                   <AdaptiveKeyboard
                     onInput={keyboard.handleInput}
@@ -1648,8 +1649,9 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                 </div>
               </div>
             )}
-          </form>
-        </Form>
+            </form>
+          </Form>
+        </div>
       </DrawerContent>
     </Drawer>
   );

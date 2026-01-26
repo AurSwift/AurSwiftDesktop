@@ -18,7 +18,18 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { AdaptiveFormField } from "@/features/adaptive-keyboard/adaptive-form-field";
+import { AdaptiveKeyboard } from "@/features/adaptive-keyboard/adaptive-keyboard";
+import { useKeyboardWithRHF } from "@/shared/hooks";
+import { cn } from "@/shared/utils/cn";
+import { useForm } from "react-hook-form";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+} from "@/components/ui/form";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +38,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AddBreakTypeDrawer } from "../components/dialogs/add-break-type-drawer";
+import { AddPolicyRuleDrawer } from "../components/dialogs/add-policy-rule-drawer";
+import type {
+  BreakTypeFormData,
+  BreakTypeUpdateData,
+} from "../schemas/break-type-schema";
+import type {
+  PolicyRuleFormData,
+  PolicyRuleUpdateData,
+} from "../schemas/policy-rule-schema";
 import {
   Table,
   TableBody,
@@ -93,16 +114,6 @@ interface BreakTypeFormData {
   color: string;
 }
 
-interface PolicyRuleFormData {
-  break_type_id: number;
-  min_shift_hours: number;
-  max_shift_hours: number | null;
-  allowed_count: number;
-  is_mandatory: boolean;
-  earliest_after_hours: number | null;
-  latest_before_end_hours: number | null;
-}
-
 const DEFAULT_BREAK_TYPE: BreakTypeFormData = {
   name: "",
   code: "",
@@ -119,15 +130,6 @@ const DEFAULT_BREAK_TYPE: BreakTypeFormData = {
   color: "#6B7280",
 };
 
-const DEFAULT_POLICY_RULE: PolicyRuleFormData = {
-  break_type_id: 0,
-  min_shift_hours: 4,
-  max_shift_hours: null,
-  allowed_count: 1,
-  is_mandatory: false,
-  earliest_after_hours: null,
-  latest_before_end_hours: null,
-};
 
 export default function BreakPolicySettingsView({
   onBack,
@@ -138,6 +140,27 @@ export default function BreakPolicySettingsView({
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [hasSetup, setHasSetup] = useState(false);
+
+  // Settings form for keyboard integration
+  const settingsForm = useForm<{
+    max_consecutive_hours: string;
+    warn_before_required_minutes: string;
+  }>({
+    defaultValues: {
+      max_consecutive_hours: "",
+      warn_before_required_minutes: "",
+    },
+  });
+
+  // Keyboard integration for settings tab
+  const settingsKeyboard = useKeyboardWithRHF({
+    setValue: settingsForm.setValue,
+    watch: settingsForm.watch,
+    fieldConfigs: {
+      max_consecutive_hours: { keyboardMode: "numeric" },
+      warn_before_required_minutes: { keyboardMode: "numeric" },
+    },
+  });
 
   // Data state
   const [breakTypes, setBreakTypes] = useState<BreakTypeDefinition[]>([]);
@@ -151,12 +174,11 @@ export default function BreakPolicySettingsView({
   const [editingBreakType, setEditingBreakType] =
     useState<BreakTypeDefinition | null>(null);
   const [editingRule, setEditingRule] = useState<BreakPolicyRule | null>(null);
+  const [activeTab, setActiveTab] = useState("types");
 
-  // Form state
+  // Form state (kept for backward compatibility, but not used in drawer mode)
   const [breakTypeForm, setBreakTypeForm] =
     useState<BreakTypeFormData>(DEFAULT_BREAK_TYPE);
-  const [ruleForm, setRuleForm] =
-    useState<PolicyRuleFormData>(DEFAULT_POLICY_RULE);
 
   // Load data
   const loadData = useCallback(async () => {
@@ -231,17 +253,33 @@ export default function BreakPolicySettingsView({
   };
 
   // Break Type CRUD
-  const handleSaveBreakType = async () => {
+  const handleSaveBreakType = async (
+    data: BreakTypeFormData | BreakTypeUpdateData
+  ) => {
     if (!user?.businessId) return;
 
     try {
       setIsSaving(true);
 
-      if (editingBreakType) {
+      if (editingBreakType && "id" in data) {
         // Update existing
         const res = await window.breakPolicyAPI.updateBreakType(
           editingBreakType.id,
-          breakTypeForm
+          {
+            name: data.name,
+            code: data.code,
+            description: data.description,
+            default_duration_minutes: data.default_duration_minutes,
+            min_duration_minutes: data.min_duration_minutes,
+            max_duration_minutes: data.max_duration_minutes,
+            is_paid: data.is_paid,
+            is_required: data.is_required,
+            counts_as_worked_time: data.counts_as_worked_time,
+            allowed_window_start: data.allowed_window_start || undefined,
+            allowed_window_end: data.allowed_window_end || undefined,
+            icon: data.icon,
+            color: data.color,
+          }
         );
         if (res.success) {
           toast.success("Break type updated");
@@ -251,7 +289,19 @@ export default function BreakPolicySettingsView({
       } else {
         // Create new
         const res = await window.breakPolicyAPI.createBreakType({
-          ...breakTypeForm,
+          name: data.name,
+          code: data.code,
+          description: data.description,
+          default_duration_minutes: data.default_duration_minutes,
+          min_duration_minutes: data.min_duration_minutes,
+          max_duration_minutes: data.max_duration_minutes,
+          is_paid: data.is_paid,
+          is_required: data.is_required,
+          counts_as_worked_time: data.counts_as_worked_time,
+          allowed_window_start: data.allowed_window_start || undefined,
+          allowed_window_end: data.allowed_window_end || undefined,
+          icon: data.icon,
+          color: data.color,
           business_id: user.businessId,
         });
         if (res.success) {
@@ -270,6 +320,7 @@ export default function BreakPolicySettingsView({
       toast.error(
         error instanceof Error ? error.message : "Failed to save break type"
       );
+      throw error; // Re-throw so form can handle it
     } finally {
       setIsSaving(false);
     }
@@ -291,22 +342,26 @@ export default function BreakPolicySettingsView({
   };
 
   // Policy Rule CRUD
-  const handleSaveRule = async () => {
+  const handleSaveRule = async (
+    data: PolicyRuleFormData | PolicyRuleUpdateData
+  ) => {
     if (!activePolicy) return;
 
     try {
       setIsSaving(true);
 
-      if (editingRule) {
+      if (editingRule && "id" in data) {
         // Update existing
         const res = await window.breakPolicyAPI.updatePolicyRule(
           editingRule.id,
           {
-            ...ruleForm,
-            max_shift_hours: ruleForm.max_shift_hours ?? undefined,
-            earliest_after_hours: ruleForm.earliest_after_hours ?? undefined,
-            latest_before_end_hours:
-              ruleForm.latest_before_end_hours ?? undefined,
+            break_type_id: data.break_type_id,
+            min_shift_hours: data.min_shift_hours,
+            max_shift_hours: data.max_shift_hours ?? undefined,
+            allowed_count: data.allowed_count,
+            is_mandatory: data.is_mandatory,
+            earliest_after_hours: data.earliest_after_hours ?? undefined,
+            latest_before_end_hours: data.latest_before_end_hours ?? undefined,
           }
         );
         if (res.success) {
@@ -317,12 +372,14 @@ export default function BreakPolicySettingsView({
       } else {
         // Create new
         const res = await window.breakPolicyAPI.createPolicyRule({
-          ...ruleForm,
+          break_type_id: data.break_type_id,
+          min_shift_hours: data.min_shift_hours,
+          max_shift_hours: data.max_shift_hours ?? undefined,
+          allowed_count: data.allowed_count,
+          is_mandatory: data.is_mandatory,
+          earliest_after_hours: data.earliest_after_hours ?? undefined,
+          latest_before_end_hours: data.latest_before_end_hours ?? undefined,
           policy_id: activePolicy.id,
-          max_shift_hours: ruleForm.max_shift_hours ?? undefined,
-          earliest_after_hours: ruleForm.earliest_after_hours ?? undefined,
-          latest_before_end_hours:
-            ruleForm.latest_before_end_hours ?? undefined,
         });
         if (res.success) {
           toast.success("Rule created");
@@ -333,13 +390,13 @@ export default function BreakPolicySettingsView({
 
       setShowRuleDialog(false);
       setEditingRule(null);
-      setRuleForm(DEFAULT_POLICY_RULE);
       await loadData();
     } catch (error) {
       logger.error("Failed to save rule:", error);
       toast.error(
         error instanceof Error ? error.message : "Failed to save rule"
       );
+      throw error; // Re-throw so form can handle it
     } finally {
       setIsSaving(false);
     }
@@ -389,38 +446,24 @@ export default function BreakPolicySettingsView({
     }
   };
 
+  // Sync settings form with active policy
+  useEffect(() => {
+    if (activePolicy) {
+      settingsForm.reset({
+        max_consecutive_hours: activePolicy.max_consecutive_hours?.toString() || "",
+        warn_before_required_minutes: activePolicy.warn_before_required_minutes?.toString() || "",
+      });
+    }
+  }, [activePolicy, settingsForm]);
+
   // Open edit dialogs
   const openEditBreakType = (type: BreakTypeDefinition) => {
     setEditingBreakType(type);
-    setBreakTypeForm({
-      name: type.name,
-      code: type.code,
-      description: type.description || "",
-      default_duration_minutes: type.default_duration_minutes,
-      min_duration_minutes: type.min_duration_minutes,
-      max_duration_minutes: type.max_duration_minutes,
-      is_paid: type.is_paid,
-      is_required: type.is_required,
-      counts_as_worked_time: type.counts_as_worked_time,
-      allowed_window_start: type.allowed_window_start || "",
-      allowed_window_end: type.allowed_window_end || "",
-      icon: type.icon || "coffee",
-      color: type.color || "#6B7280",
-    });
     setShowBreakTypeDialog(true);
   };
 
   const openEditRule = (rule: BreakPolicyRule) => {
     setEditingRule(rule);
-    setRuleForm({
-      break_type_id: rule.break_type_id,
-      min_shift_hours: rule.min_shift_hours,
-      max_shift_hours: rule.max_shift_hours ?? null,
-      allowed_count: rule.allowed_count,
-      is_mandatory: rule.is_mandatory,
-      earliest_after_hours: rule.earliest_after_hours ?? null,
-      latest_before_end_hours: rule.latest_before_end_hours ?? null,
-    });
     setShowRuleDialog(true);
   };
 
@@ -533,7 +576,13 @@ export default function BreakPolicySettingsView({
         </div>
       </div>
 
-      <Tabs defaultValue="types" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={(value) => {
+        setActiveTab(value);
+        // Close keyboard when switching tabs
+        if (value !== "settings") {
+          settingsKeyboard.handleCloseKeyboard();
+        }
+      }} className="space-y-6">
         <TabsList>
           <TabsTrigger value="types">Break Types</TabsTrigger>
           <TabsTrigger value="rules">Policy Rules</TabsTrigger>
@@ -552,7 +601,6 @@ export default function BreakPolicySettingsView({
             <Button
               onClick={() => {
                 setEditingBreakType(null);
-                setBreakTypeForm(DEFAULT_BREAK_TYPE);
                 setShowBreakTypeDialog(true);
               }}
               className="gap-2"
@@ -642,10 +690,6 @@ export default function BreakPolicySettingsView({
             <Button
               onClick={() => {
                 setEditingRule(null);
-                setRuleForm({
-                  ...DEFAULT_POLICY_RULE,
-                  break_type_id: breakTypes[0]?.id || 0,
-                });
                 setShowRuleDialog(true);
               }}
               className="gap-2"
@@ -766,7 +810,7 @@ export default function BreakPolicySettingsView({
         </TabsContent>
 
         {/* Settings Tab */}
-        <TabsContent value="settings" className="space-y-4">
+        <TabsContent value="settings" className="space-y-4 relative">
           {activePolicy && (
             <Card>
               <CardHeader>
@@ -775,49 +819,121 @@ export default function BreakPolicySettingsView({
                   Configure enforcement and compliance settings
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="max-consecutive">
-                      Max Consecutive Hours (before required break)
-                    </Label>
-                    <Input
-                      id="max-consecutive"
-                      type="number"
-                      step="0.5"
-                      value={activePolicy.max_consecutive_hours}
-                      onChange={(e) =>
-                        handleUpdatePolicy({
-                          max_consecutive_hours: parseFloat(e.target.value),
-                        })
-                      }
+              <CardContent className={cn(
+                "space-y-6",
+                settingsKeyboard.showKeyboard && "pb-[340px]"
+              )}>
+                <Form {...settingsForm}>
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <FormField
+                      control={settingsForm.control}
+                      name="max_consecutive_hours"
+                      render={() => (
+                        <FormItem>
+                          <FormLabel>
+                            Max Consecutive Hours (before required break)
+                          </FormLabel>
+                          <FormControl>
+                            <AdaptiveFormField
+                              {...settingsForm.register("max_consecutive_hours")}
+                              label=""
+                              value={settingsKeyboard.formValues.max_consecutive_hours || ""}
+                              placeholder="6.0"
+                              readOnly
+                              onClick={() =>
+                                settingsKeyboard.handleFieldFocus("max_consecutive_hours")
+                              }
+                              onFocus={() =>
+                                settingsKeyboard.handleFieldFocus("max_consecutive_hours")
+                              }
+                              className={cn(
+                                "text-xs sm:text-sm md:text-base lg:text-base h-8 sm:h-9 md:h-10",
+                                settingsKeyboard.activeField === "max_consecutive_hours" &&
+                                  "ring-2 ring-primary border-primary"
+                              )}
+                            />
+                          </FormControl>
+                          <p className="text-xs text-muted-foreground">
+                            Working Time Directive requires a break after 6 hours
+                          </p>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const value = parseFloat(
+                                settingsKeyboard.formValues.max_consecutive_hours || "0"
+                              );
+                              if (!isNaN(value) && activePolicy) {
+                                handleUpdatePolicy({
+                                  max_consecutive_hours: value,
+                                });
+                                settingsKeyboard.handleCloseKeyboard();
+                              }
+                            }}
+                            className="text-xs h-7 px-2"
+                          >
+                            Save
+                          </Button>
+                        </FormItem>
+                      )}
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Working Time Directive requires a break after 6 hours
-                    </p>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="warn-before">
-                      Warning Before Required Break (minutes)
-                    </Label>
-                    <Input
-                      id="warn-before"
-                      type="number"
-                      value={activePolicy.warn_before_required_minutes}
-                      onChange={(e) =>
-                        handleUpdatePolicy({
-                          warn_before_required_minutes: parseInt(
-                            e.target.value
-                          ),
-                        })
-                      }
+                    <FormField
+                      control={settingsForm.control}
+                      name="warn_before_required_minutes"
+                      render={() => (
+                        <FormItem>
+                          <FormLabel>
+                            Warning Before Required Break (minutes)
+                          </FormLabel>
+                          <FormControl>
+                            <AdaptiveFormField
+                              {...settingsForm.register("warn_before_required_minutes")}
+                              label=""
+                              value={settingsKeyboard.formValues.warn_before_required_minutes || ""}
+                              placeholder="15"
+                              readOnly
+                              onClick={() =>
+                                settingsKeyboard.handleFieldFocus("warn_before_required_minutes")
+                              }
+                              onFocus={() =>
+                                settingsKeyboard.handleFieldFocus("warn_before_required_minutes")
+                              }
+                              className={cn(
+                                "text-xs sm:text-sm md:text-base lg:text-base h-8 sm:h-9 md:h-10",
+                                settingsKeyboard.activeField === "warn_before_required_minutes" &&
+                                  "ring-2 ring-primary border-primary"
+                              )}
+                            />
+                          </FormControl>
+                          <p className="text-xs text-muted-foreground">
+                            Show warning this many minutes before break is required
+                          </p>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const value = parseInt(
+                                settingsKeyboard.formValues.warn_before_required_minutes || "0"
+                              );
+                              if (!isNaN(value) && activePolicy) {
+                                handleUpdatePolicy({
+                                  warn_before_required_minutes: value,
+                                });
+                                settingsKeyboard.handleCloseKeyboard();
+                              }
+                            }}
+                            className="text-xs h-7 px-2"
+                          >
+                            Save
+                          </Button>
+                        </FormItem>
+                      )}
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Show warning this many minutes before break is required
-                    </p>
                   </div>
-                </div>
+                </Form>
 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
@@ -869,7 +985,7 @@ export default function BreakPolicySettingsView({
                 </div>
 
                 <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-950/20 flex gap-3">
-                  <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
                   <div className="text-sm">
                     <p className="font-medium text-blue-900 dark:text-blue-100">
                       Working Time Directive
@@ -884,375 +1000,86 @@ export default function BreakPolicySettingsView({
               </CardContent>
             </Card>
           )}
+
+          {/* Adaptive Keyboard for Settings Tab - Full width, bottommost */}
+          {activeTab === "settings" && settingsKeyboard.showKeyboard && (
+            <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t shadow-lg w-full">
+              <div className="w-full max-w-full overflow-hidden">
+                <AdaptiveKeyboard
+                  onInput={settingsKeyboard.handleInput}
+                  onBackspace={settingsKeyboard.handleBackspace}
+                  onClear={settingsKeyboard.handleClear}
+                  onEnter={() => {
+                    // Save the current field value
+                    if (settingsKeyboard.activeField === "max_consecutive_hours") {
+                      const value = parseFloat(
+                        settingsKeyboard.formValues.max_consecutive_hours || "0"
+                      );
+                      if (!isNaN(value) && activePolicy) {
+                        handleUpdatePolicy({
+                          max_consecutive_hours: value,
+                        });
+                      }
+                    } else if (settingsKeyboard.activeField === "warn_before_required_minutes") {
+                      const value = parseInt(
+                        settingsKeyboard.formValues.warn_before_required_minutes || "0"
+                      );
+                      if (!isNaN(value) && activePolicy) {
+                        handleUpdatePolicy({
+                          warn_before_required_minutes: value,
+                        });
+                      }
+                    }
+                    settingsKeyboard.handleCloseKeyboard();
+                  }}
+                  initialMode={
+                    (
+                      settingsKeyboard.activeFieldConfig as {
+                        keyboardMode?: "qwerty" | "numeric" | "symbols";
+                      }
+                    )?.keyboardMode || "numeric"
+                  }
+                  visible={settingsKeyboard.showKeyboard}
+                  onClose={settingsKeyboard.handleCloseKeyboard}
+                />
+              </div>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
 
-      {/* Break Type Dialog */}
-      <Dialog open={showBreakTypeDialog} onOpenChange={setShowBreakTypeDialog}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>
-              {editingBreakType ? "Edit Break Type" : "Add Break Type"}
-            </DialogTitle>
-            <DialogDescription>
-              Define a type of break available to staff
-            </DialogDescription>
-          </DialogHeader>
+      {/* Break Type Drawer */}
+      <AddBreakTypeDrawer
+        open={showBreakTypeDialog}
+        onOpenChange={(open) => {
+          setShowBreakTypeDialog(open);
+          if (!open) {
+            setEditingBreakType(null);
+            setBreakTypeForm(DEFAULT_BREAK_TYPE);
+          }
+        }}
+        onSubmit={handleSaveBreakType}
+        isLoading={isSaving}
+        editingBreakType={editingBreakType}
+      />
 
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  value={breakTypeForm.name}
-                  onChange={(e) =>
-                    setBreakTypeForm({ ...breakTypeForm, name: e.target.value })
-                  }
-                  placeholder="Tea Break"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="code">Code</Label>
-                <Input
-                  id="code"
-                  value={breakTypeForm.code}
-                  onChange={(e) =>
-                    setBreakTypeForm({ ...breakTypeForm, code: e.target.value })
-                  }
-                  placeholder="tea"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={breakTypeForm.description}
-                onChange={(e) =>
-                  setBreakTypeForm({
-                    ...breakTypeForm,
-                    description: e.target.value,
-                  })
-                }
-                placeholder="Short break for tea/coffee"
-                rows={2}
-              />
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="default-duration">Default (min)</Label>
-                <Input
-                  id="default-duration"
-                  type="number"
-                  value={breakTypeForm.default_duration_minutes}
-                  onChange={(e) =>
-                    setBreakTypeForm({
-                      ...breakTypeForm,
-                      default_duration_minutes: parseInt(e.target.value),
-                    })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="min-duration">Min (min)</Label>
-                <Input
-                  id="min-duration"
-                  type="number"
-                  value={breakTypeForm.min_duration_minutes}
-                  onChange={(e) =>
-                    setBreakTypeForm({
-                      ...breakTypeForm,
-                      min_duration_minutes: parseInt(e.target.value),
-                    })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="max-duration">Max (min)</Label>
-                <Input
-                  id="max-duration"
-                  type="number"
-                  value={breakTypeForm.max_duration_minutes}
-                  onChange={(e) =>
-                    setBreakTypeForm({
-                      ...breakTypeForm,
-                      max_duration_minutes: parseInt(e.target.value),
-                    })
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="window-start">Window Start</Label>
-                <Input
-                  id="window-start"
-                  type="time"
-                  value={breakTypeForm.allowed_window_start}
-                  onChange={(e) =>
-                    setBreakTypeForm({
-                      ...breakTypeForm,
-                      allowed_window_start: e.target.value,
-                    })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="window-end">Window End</Label>
-                <Input
-                  id="window-end"
-                  type="time"
-                  value={breakTypeForm.allowed_window_end}
-                  onChange={(e) =>
-                    setBreakTypeForm({
-                      ...breakTypeForm,
-                      allowed_window_end: e.target.value,
-                    })
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-4">
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="is-paid"
-                  checked={breakTypeForm.is_paid}
-                  onCheckedChange={(checked) =>
-                    setBreakTypeForm({ ...breakTypeForm, is_paid: checked })
-                  }
-                />
-                <Label htmlFor="is-paid">Paid Break</Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="is-required"
-                  checked={breakTypeForm.is_required}
-                  onCheckedChange={(checked) =>
-                    setBreakTypeForm({ ...breakTypeForm, is_required: checked })
-                  }
-                />
-                <Label htmlFor="is-required">Required by Law</Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="counts-as-worked"
-                  checked={breakTypeForm.counts_as_worked_time}
-                  onCheckedChange={(checked) =>
-                    setBreakTypeForm({
-                      ...breakTypeForm,
-                      counts_as_worked_time: checked,
-                    })
-                  }
-                />
-                <Label htmlFor="counts-as-worked">Counts as Worked Time</Label>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="icon">Icon</Label>
-                <Select
-                  value={breakTypeForm.icon}
-                  onValueChange={(value) =>
-                    setBreakTypeForm({ ...breakTypeForm, icon: value })
-                  }
-                >
-                  <SelectTrigger id="icon">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="coffee">☕ Coffee</SelectItem>
-                    <SelectItem value="utensils">🍽️ Meal</SelectItem>
-                    <SelectItem value="pause">⏸️ Pause</SelectItem>
-                    <SelectItem value="clock">⏰ Clock</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="color">Color</Label>
-                <Input
-                  id="color"
-                  type="color"
-                  value={breakTypeForm.color}
-                  onChange={(e) =>
-                    setBreakTypeForm({
-                      ...breakTypeForm,
-                      color: e.target.value,
-                    })
-                  }
-                />
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowBreakTypeDialog(false)}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleSaveBreakType} disabled={isSaving}>
-              {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {editingBreakType ? "Save Changes" : "Create"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Policy Rule Dialog */}
-      <Dialog open={showRuleDialog} onOpenChange={setShowRuleDialog}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>
-              {editingRule ? "Edit Policy Rule" : "Add Policy Rule"}
-            </DialogTitle>
-            <DialogDescription>
-              Define when this break type is available based on shift length
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="break-type">Break Type</Label>
-              <Select
-                value={ruleForm.break_type_id.toString()}
-                onValueChange={(value) =>
-                  setRuleForm({ ...ruleForm, break_type_id: parseInt(value) })
-                }
-              >
-                <SelectTrigger id="break-type">
-                  <SelectValue placeholder="Select break type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {breakTypes.map((type) => (
-                    <SelectItem key={type.id} value={type.id.toString()}>
-                      {type.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="min-shift">Min Shift Hours</Label>
-                <Input
-                  id="min-shift"
-                  type="number"
-                  step="0.5"
-                  value={ruleForm.min_shift_hours}
-                  onChange={(e) =>
-                    setRuleForm({
-                      ...ruleForm,
-                      min_shift_hours: parseFloat(e.target.value),
-                    })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="max-shift">Max Shift Hours (optional)</Label>
-                <Input
-                  id="max-shift"
-                  type="number"
-                  step="0.5"
-                  value={ruleForm.max_shift_hours || ""}
-                  onChange={(e) =>
-                    setRuleForm({
-                      ...ruleForm,
-                      max_shift_hours: e.target.value
-                        ? parseFloat(e.target.value)
-                        : null,
-                    })
-                  }
-                  placeholder="No limit"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="allowed-count">Allowed Count</Label>
-                <Input
-                  id="allowed-count"
-                  type="number"
-                  value={ruleForm.allowed_count}
-                  onChange={(e) =>
-                    setRuleForm({
-                      ...ruleForm,
-                      allowed_count: parseInt(e.target.value),
-                    })
-                  }
-                />
-              </div>
-              <div className="flex items-center gap-2 pt-8">
-                <Switch
-                  id="is-mandatory"
-                  checked={ruleForm.is_mandatory}
-                  onCheckedChange={(checked) =>
-                    setRuleForm({ ...ruleForm, is_mandatory: checked })
-                  }
-                />
-                <Label htmlFor="is-mandatory">Mandatory Break</Label>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="earliest-after">Earliest After (hours)</Label>
-                <Input
-                  id="earliest-after"
-                  type="number"
-                  step="0.5"
-                  value={ruleForm.earliest_after_hours || ""}
-                  onChange={(e) =>
-                    setRuleForm({
-                      ...ruleForm,
-                      earliest_after_hours: e.target.value
-                        ? parseFloat(e.target.value)
-                        : null,
-                    })
-                  }
-                  placeholder="Any time"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="latest-before">Latest Before End (hours)</Label>
-                <Input
-                  id="latest-before"
-                  type="number"
-                  step="0.5"
-                  value={ruleForm.latest_before_end_hours || ""}
-                  onChange={(e) =>
-                    setRuleForm({
-                      ...ruleForm,
-                      latest_before_end_hours: e.target.value
-                        ? parseFloat(e.target.value)
-                        : null,
-                    })
-                  }
-                  placeholder="Any time"
-                />
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRuleDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveRule} disabled={isSaving}>
-              {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {editingRule ? "Save Changes" : "Create"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Policy Rule Drawer */}
+      {activePolicy && (
+        <AddPolicyRuleDrawer
+          open={showRuleDialog}
+          onOpenChange={(open) => {
+            setShowRuleDialog(open);
+            if (!open) {
+              setEditingRule(null);
+            }
+          }}
+          onSubmit={handleSaveRule}
+          isLoading={isSaving}
+          editingRule={editingRule}
+          breakTypes={breakTypes}
+          policyId={activePolicy.id}
+        />
+      )}
     </div>
   );
 }

@@ -143,8 +143,8 @@ export function CategoryFormDrawer({
 
   return (
     <Drawer open={isOpen} onOpenChange={onClose} direction="right">
-      <DrawerContent className="h-full w-[95%] sm:w-[900px] md:w-[1000px] lg:w-[1200px] xl:w-[1400px] sm:max-w-none mt-0 rounded-none fixed right-0 top-0">
-        <DrawerHeader className="border-b">
+      <DrawerContent className="h-full w-[95%] sm:w-[900px] md:w-[1000px] lg:w-[1200px] xl:w-[1400px] sm:max-w-none mt-0 rounded-none fixed right-0 top-0 overflow-hidden">
+        <DrawerHeader className="border-b shrink-0">
           <DrawerTitle>
             {isEditMode ? "Edit Category" : "Add New Category"}
           </DrawerTitle>
@@ -155,10 +155,11 @@ export function CategoryFormDrawer({
           </DrawerDescription>
         </DrawerHeader>
 
-        <Form {...form}>
-          <form onSubmit={handleSubmit} className="flex flex-col h-full">
+        <div className="flex-1 min-h-0">
+          <Form {...form}>
+            <form onSubmit={handleSubmit} className="flex flex-col h-full">
             {/* Fixed Buttons Section */}
-            <div className="border-b bg-background sticky top-0 z-10">
+            <div className="border-b bg-background shrink-0">
               <div className="flex space-x-2 px-6 pt-4 pb-4">
                 <Button
                   type="submit"
@@ -186,7 +187,7 @@ export function CategoryFormDrawer({
             </div>
 
             {/* Scrollable Form Content */}
-            <div className="p-6 overflow-y-auto flex-1 space-y-4">
+            <div className="p-6 overflow-y-auto flex-1 min-h-0 space-y-4">
               <FormField
                 control={form.control}
                 name="name"
@@ -435,7 +436,7 @@ export function CategoryFormDrawer({
 
             {/* Adaptive Keyboard */}
             {keyboard.showKeyboard && (
-              <div className="border-t bg-background px-2 py-2">
+              <div className="border-t bg-background px-2 py-2 shrink-0">
                 <div className="max-w-full overflow-hidden">
                   <AdaptiveKeyboard
                     onInput={keyboard.handleInput}
@@ -457,8 +458,9 @@ export function CategoryFormDrawer({
                 </div>
               </div>
             )}
-          </form>
-        </Form>
+            </form>
+          </Form>
+        </div>
       </DrawerContent>
     </Drawer>
   );

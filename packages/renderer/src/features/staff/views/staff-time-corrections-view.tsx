@@ -167,7 +167,7 @@ export default function StaffTimeCorrectionsView({
 
   return (
     <div className="w-full min-h-screen p-2 sm:p-3 md:p-4 lg:p-6 pb-6">
-      <div className="max-w-7xl mx-auto animate-slide-down">
+      <div className="max-w-7xl mx-auto">
         <div className="flex items-start gap-2 sm:gap-3 mb-4 sm:mb-6 lg:mb-8">
           <Button
             onClick={onBack}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,6 +13,8 @@ import {
   Scale,
   FileSpreadsheet,
 } from "lucide-react";
+import { AdaptiveKeyboard } from "@/features/adaptive-keyboard/adaptive-keyboard";
+import { cn } from "@/shared/utils/cn";
 import {
   Select,
   SelectContent,
@@ -132,8 +134,47 @@ const ProductDetailsView: React.FC<ProductDetailsViewProps> = ({
   onProductsImported,
 }) => {
   const [importModalOpen, setImportModalOpen] = useState(false);
+  
+  // Keyboard state for search field
+  const [showSearchKeyboard, setShowSearchKeyboard] = useState(false);
+  const [searchValue, setSearchValue] = useState(searchTerm);
+
+  // Sync searchValue with searchTerm prop
+  React.useEffect(() => {
+    setSearchValue(searchTerm);
+  }, [searchTerm]);
+
+  const handleSearchInput = useCallback((char: string) => {
+    setSearchValue((prev) => {
+      const newValue = prev + char;
+      onSearchChange(newValue);
+      return newValue;
+    });
+  }, [onSearchChange]);
+
+  const handleSearchBackspace = useCallback(() => {
+    setSearchValue((prev) => {
+      const newValue = prev.slice(0, -1);
+      onSearchChange(newValue);
+      return newValue;
+    });
+  }, [onSearchChange]);
+
+  const handleSearchClear = useCallback(() => {
+    setSearchValue("");
+    onSearchChange("");
+  }, [onSearchChange]);
+
+  const handleSearchFocus = useCallback(() => {
+    setShowSearchKeyboard(true);
+  }, []);
+
+  const handleCloseSearchKeyboard = useCallback(() => {
+    setShowSearchKeyboard(false);
+  }, []);
+
   return (
-    <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden relative">
       {/* Header */}
       <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0 shrink-0 p-4 md:p-6">
         <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
@@ -176,13 +217,25 @@ const ProductDetailsView: React.FC<ProductDetailsViewProps> = ({
           <div className="flex flex-col space-y-4">
             <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search products..."
-                  value={searchTerm}
-                  onChange={(e) => onSearchChange(e.target.value)}
-                  className="pl-10 w-full"
-                />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search products..."
+                    value={searchValue}
+                    readOnly
+                    onFocus={handleSearchFocus}
+                    className={cn(
+                      "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
+                      "pl-10",
+                      "ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium",
+                      "placeholder:text-muted-foreground",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                      "disabled:cursor-not-allowed disabled:opacity-50",
+                      showSearchKeyboard && "ring-2 ring-primary border-primary"
+                    )}
+                  />
+                </div>
               </div>
 
               <Select
@@ -592,6 +645,21 @@ const ProductDetailsView: React.FC<ProductDetailsViewProps> = ({
         importType="product"
         onSuccess={onProductsImported}
       />
+
+      {/* Adaptive Keyboard - Fixed at bottommost */}
+      {showSearchKeyboard && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background shadow-lg">
+          <AdaptiveKeyboard
+            visible={showSearchKeyboard}
+            initialMode="qwerty"
+            onInput={handleSearchInput}
+            onBackspace={handleSearchBackspace}
+            onClear={handleSearchClear}
+            onEnter={handleCloseSearchKeyboard}
+            onClose={handleCloseSearchKeyboard}
+          />
+        </div>
+      )}
     </div>
   );
 };
