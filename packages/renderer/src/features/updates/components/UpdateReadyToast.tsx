@@ -20,7 +20,7 @@ export function UpdateReadyToast({
   onPostpone,
 }: UpdateReadyToastProps) {
   return (
-    <div className="flex flex-col gap-3 w-full max-w-md bg-card border-2 border-border rounded-lg shadow-xl p-4 backdrop-blur-sm">
+    <div className="flex flex-col gap-3 w-full max-w-md bg-card  rounded-lg  p-4">
       {/* Header */}
       <div className="flex items-start gap-3">
         <div className="shrink-0 mt-0.5">
@@ -61,7 +61,7 @@ export function UpdateReadyToast({
 export function showUpdateReadyToast(
   updateInfo: UpdateInfo,
   onInstall: () => void,
-  onPostpone: () => void
+  onPostpone: () => void,
 ): string | number {
   return toast.custom(
     (t) => (
@@ -85,6 +85,6 @@ export function showUpdateReadyToast(
         border: "none", // Remove default border, component has its own
         background: "transparent", // Let component handle background
       },
-    }
+    },
   );
 }
