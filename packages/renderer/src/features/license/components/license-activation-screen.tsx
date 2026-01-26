@@ -24,6 +24,13 @@ import {
 import { AdaptiveKeyboard } from "@/features/adaptive-keyboard/adaptive-keyboard";
 import { getLogger } from "@/shared/utils/logger";
 import { getAppVersion } from "@/shared/utils/version";
+import {
+  showUpdateAvailableToast,
+  showUpdateReadyToast,
+  showUpdateErrorToast,
+  showDownloadProgressToast,
+} from "@/features/updates/components";
+import type { UpdateInfo, UpdateError, DownloadProgress } from "@app/shared";
 
 const logger = getLogger("license-activation");
 
@@ -36,7 +43,12 @@ export function LicenseActivationScreen({
   onActivationSuccess,
   onTestMode,
 }: LicenseActivationScreenProps) {
-  const logoSrc = `${import.meta.env.BASE_URL}logo.png`;
+  const logoSrc = `${import.meta.env.BASE_URL}licenselogo.png`;
+  
+  // Debug: Log the logo source
+  useEffect(() => {
+    logger.info("Logo source:", logoSrc);
+  }, [logoSrc]);
   const { activate, getMachineInfo, isLoading, error, clearError } =
     useLicense();
 
@@ -173,6 +185,80 @@ export function LicenseActivationScreen({
     if (!isSuccess) setKeyboardVisible(true);
   };
 
+  // TEST: Auto-update notification handlers (for testing only - remove later)
+  const handleTestUpdateAvailable = () => {
+    const mockUpdateInfo: UpdateInfo = {
+      version: "2.0.0",
+      releaseDate: new Date().toISOString(),
+      releaseNotes: "Test update with new features and bug fixes",
+    };
+    const currentVersion = getAppVersion();
+    showUpdateAvailableToast(
+      mockUpdateInfo,
+      currentVersion,
+      () => {
+        // Mock download handler
+        logger.info("Test: Download clicked");
+      },
+      () => {
+        // Mock postpone handler
+        logger.info("Test: Postpone clicked");
+      },
+    );
+  };
+
+  const handleTestUpdateReady = () => {
+    const mockUpdateInfo: UpdateInfo = {
+      version: "2.0.0",
+      releaseDate: new Date().toISOString(),
+      releaseNotes: "Test update ready to install",
+    };
+    showUpdateReadyToast(
+      mockUpdateInfo,
+      () => {
+        // Mock install handler
+        logger.info("Test: Install clicked");
+      },
+      () => {
+        // Mock postpone handler
+        logger.info("Test: Postpone clicked");
+      },
+    );
+  };
+
+  const handleTestUpdateError = () => {
+    const mockError: UpdateError = {
+      message:
+        "Test error: Failed to download update. Please check your internet connection.",
+      type: "download",
+      timestamp: new Date(),
+    };
+    showUpdateErrorToast(
+      mockError,
+      () => {
+        // Mock retry handler
+        logger.info("Test: Retry clicked");
+      },
+      () => {
+        // Mock dismiss handler
+        logger.info("Test: Dismiss clicked");
+      },
+    );
+  };
+
+  const handleTestDownloadProgress = () => {
+    const mockProgress: DownloadProgress = {
+      percent: 45,
+      transferred: 45000000,
+      total: 100000000,
+      bytesPerSecond: 5000000,
+    };
+    showDownloadProgressToast(mockProgress, () => {
+      // Mock cancel handler
+      logger.info("Test: Cancel clicked");
+    });
+  };
+
   return (
     <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col">
       {/* Power Button Header */}
@@ -214,30 +300,42 @@ export function LicenseActivationScreen({
                 ].join(" ")}
               >
                 {/* Branded Logo/Header Section */}
-                <div className="text-center space-y-[clamp(0.5rem,1.4vw,0.9rem)] [@media(max-height:560px)]:space-y-1.5">
-                  {/* Logo Container with Black Background */}
-                  <div className="flex justify-center mb-[clamp(0.5rem,1.6vw,1.25rem)] [@media(max-height:560px)]:mb-2">
-                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 [@media(max-height:560px)]:w-12 [@media(max-height:560px)]:h-12 rounded-2xl bg-black flex items-center justify-center shadow-2xl ring-4 ring-primary/20 [@media(max-height:560px)]:ring-2 overflow-hidden">
-                      <img
-                        src={logoSrc}
-                        alt="Aurswift Logo"
-                        className="w-[85%] h-auto max-h-[85%] object-contain"
-                        onError={(e) => {
-                          // Fallback to key icon if logo fails to load
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = "none";
-                          const fallback =
-                            target.nextElementSibling as HTMLElement;
-                          if (fallback) fallback.style.display = "flex";
-                        }}
-                      />
-                      <div className="hidden w-full h-full items-center justify-center">
-                        <KeyRound className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 [@media(max-height:560px)]:w-7 [@media(max-height:560px)]:h-7 text-white" />
-                      </div>
+                <div className="text-center">
+                  {/* Logo Container */}
+                  <div className="flex justify-center relative">
+                    <img
+                      src={logoSrc}
+                      alt="Aurswift Logo"
+                      width="64"
+                      height="64"
+                      className="h-14 w-14 sm:h-16 sm:w-16"
+                      style={{
+                        display: "block",
+                        objectFit: "contain",
+                      }}
+                      onLoad={() => {
+                        logger.info("Logo loaded successfully");
+                      }}
+                      onError={(e) => {
+                        logger.error("Logo failed to load:", logoSrc);
+                        // Fallback to key icon if logo fails to load
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = "none";
+                        const fallback =
+                          target.nextElementSibling as HTMLElement;
+                        if (fallback) fallback.style.display = "flex";
+                      }}
+                    />
+                    {/* Fallback icon when image fails to load */}
+                    <div
+                      className="absolute inset-0 flex items-center justify-center text-white hidden"
+                      aria-hidden="true"
+                    >
+                      <KeyRound className="w-7 h-7 sm:w-8 sm:h-8" />
                     </div>
                   </div>
                   {/* Brand Name and Version */}
-                  <div className="space-y-[clamp(0.25rem,0.8vw,0.5rem)] [@media(max-height:560px)]:space-y-1">
+                  <div className="space-y-1 [@media(max-height:560px)]:space-y-0.5">
                     <h1 className="text-[clamp(1.35rem,3.2vw,2.7rem)] font-bold tracking-tight bg-gradient-to-r from-primary via-primary/90 to-primary/70 bg-clip-text text-transparent [@media(min-width:1400px)]:text-[clamp(1.25rem,2.2vw,2.35rem)] [@media(max-height:560px)]:text-[clamp(1.15rem,2.8vw,2rem)]">
                       Aurswift EPOS
                     </h1>
@@ -334,7 +432,7 @@ export function LicenseActivationScreen({
                       disabled={
                         isLoading || isSuccess || licenseKey.length < 28
                       }
-                      className="w-full text-[clamp(0.8rem,1.05vw,0.95rem)] h-11 sm:h-12 [@media(max-height:560px)]:h-10"
+                      className="w-full  text-[clamp(0.8rem,1.05vw,0.95rem)] h-11 sm:h-12 [@media(max-height:560px)]:h-10"
                       size="lg"
                     >
                       {isLoading ? (
@@ -368,6 +466,51 @@ export function LicenseActivationScreen({
                         Test Mode
                       </Button>
                     )}
+
+                    {/* TEST: Auto-update notification test buttons (remove later) */}
+                    <div className="pt-2 border-t space-y-2">
+                      <p className="text-xs text-muted-foreground font-medium">
+                        TEST: Update Notifications
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          onClick={handleTestUpdateAvailable}
+                          disabled={isLoading || isSuccess}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs h-9"
+                        >
+                          Update Available
+                        </Button>
+                        <Button
+                          onClick={handleTestUpdateReady}
+                          disabled={isLoading || isSuccess}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs h-9"
+                        >
+                          Update Ready
+                        </Button>
+                        <Button
+                          onClick={handleTestUpdateError}
+                          disabled={isLoading || isSuccess}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs h-9"
+                        >
+                          Update Error
+                        </Button>
+                        <Button
+                          onClick={handleTestDownloadProgress}
+                          disabled={isLoading || isSuccess}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs h-9"
+                        >
+                          Download Progress
+                        </Button>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
 
