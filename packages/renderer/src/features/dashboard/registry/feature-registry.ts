@@ -102,13 +102,6 @@ export const FEATURE_REGISTRY: FeatureConfig[] = [
     // Available to all plans (no subscription requirement)
     actions: [
       {
-        id: "new-sale",
-        label: "New Sale",
-        icon: ShoppingCart,
-        onClick: () => {},
-        permissions: [PERMISSIONS.SALES_WRITE],
-      },
-      {
         id: "apply-discount",
         label: "Apply Discount",
         icon: TrendingUp,
