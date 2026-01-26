@@ -24,13 +24,13 @@ import {
 import { AdaptiveKeyboard } from "@/features/adaptive-keyboard/adaptive-keyboard";
 import { getLogger } from "@/shared/utils/logger";
 import { getAppVersion } from "@/shared/utils/version";
-import {
-  showUpdateAvailableToast,
-  showUpdateReadyToast,
-  showUpdateErrorToast,
-  showDownloadProgressToast,
-} from "@/features/updates/components";
-import type { UpdateInfo, UpdateError, DownloadProgress } from "@app/shared";
+// import {
+//   showUpdateAvailableToast,
+//   showUpdateReadyToast,
+//   showUpdateErrorToast,
+//   showDownloadProgressToast,
+// } from "@/features/updates/components";
+// import type { UpdateInfo, UpdateError, DownloadProgress } from "@app/shared";
 
 const logger = getLogger("license-activation");
 
@@ -44,7 +44,7 @@ export function LicenseActivationScreen({
   onTestMode,
 }: LicenseActivationScreenProps) {
   const logoSrc = `${import.meta.env.BASE_URL}licenselogo.png`;
-  
+
   // Debug: Log the logo source
   useEffect(() => {
     logger.info("Logo source:", logoSrc);
@@ -186,78 +186,78 @@ export function LicenseActivationScreen({
   };
 
   // TEST: Auto-update notification handlers (for testing only - remove later)
-  const handleTestUpdateAvailable = () => {
-    const mockUpdateInfo: UpdateInfo = {
-      version: "2.0.0",
-      releaseDate: new Date().toISOString(),
-      releaseNotes: "Test update with new features and bug fixes",
-    };
-    const currentVersion = getAppVersion();
-    showUpdateAvailableToast(
-      mockUpdateInfo,
-      currentVersion,
-      () => {
-        // Mock download handler
-        logger.info("Test: Download clicked");
-      },
-      () => {
-        // Mock postpone handler
-        logger.info("Test: Postpone clicked");
-      },
-    );
-  };
+  // const handleTestUpdateAvailable = () => {
+  //   const mockUpdateInfo: UpdateInfo = {
+  //     version: "2.0.0",
+  //     releaseDate: new Date().toISOString(),
+  //     releaseNotes: "Test update with new features and bug fixes",
+  //   };
+  //   const currentVersion = getAppVersion();
+  //   showUpdateAvailableToast(
+  //     mockUpdateInfo,
+  //     currentVersion,
+  //     () => {
+  //       // Mock download handler
+  //       logger.info("Test: Download clicked");
+  //     },
+  //     () => {
+  //       // Mock postpone handler
+  //       logger.info("Test: Postpone clicked");
+  //     },
+  //   );
+  // };
 
-  const handleTestUpdateReady = () => {
-    const mockUpdateInfo: UpdateInfo = {
-      version: "2.0.0",
-      releaseDate: new Date().toISOString(),
-      releaseNotes: "Test update ready to install",
-    };
-    showUpdateReadyToast(
-      mockUpdateInfo,
-      () => {
-        // Mock install handler
-        logger.info("Test: Install clicked");
-      },
-      () => {
-        // Mock postpone handler
-        logger.info("Test: Postpone clicked");
-      },
-    );
-  };
+  // const handleTestUpdateReady = () => {
+  //   const mockUpdateInfo: UpdateInfo = {
+  //     version: "2.0.0",
+  //     releaseDate: new Date().toISOString(),
+  //     releaseNotes: "Test update ready to install",
+  //   };
+  //   showUpdateReadyToast(
+  //     mockUpdateInfo,
+  //     () => {
+  //       // Mock install handler
+  //       logger.info("Test: Install clicked");
+  //     },
+  //     () => {
+  //       // Mock postpone handler
+  //       logger.info("Test: Postpone clicked");
+  //     },
+  //   );
+  // };
 
-  const handleTestUpdateError = () => {
-    const mockError: UpdateError = {
-      message:
-        "Test error: Failed to download update. Please check your internet connection.",
-      type: "download",
-      timestamp: new Date(),
-    };
-    showUpdateErrorToast(
-      mockError,
-      () => {
-        // Mock retry handler
-        logger.info("Test: Retry clicked");
-      },
-      () => {
-        // Mock dismiss handler
-        logger.info("Test: Dismiss clicked");
-      },
-    );
-  };
+  // const handleTestUpdateError = () => {
+  //   const mockError: UpdateError = {
+  //     message:
+  //       "Test error: Failed to download update. Please check your internet connection.",
+  //     type: "download",
+  //     timestamp: new Date(),
+  //   };
+  //   showUpdateErrorToast(
+  //     mockError,
+  //     () => {
+  //       // Mock retry handler
+  //       logger.info("Test: Retry clicked");
+  //     },
+  //     () => {
+  //       // Mock dismiss handler
+  //       logger.info("Test: Dismiss clicked");
+  //     },
+  //   );
+  // };
 
-  const handleTestDownloadProgress = () => {
-    const mockProgress: DownloadProgress = {
-      percent: 45,
-      transferred: 45000000,
-      total: 100000000,
-      bytesPerSecond: 5000000,
-    };
-    showDownloadProgressToast(mockProgress, () => {
-      // Mock cancel handler
-      logger.info("Test: Cancel clicked");
-    });
-  };
+  // const handleTestDownloadProgress = () => {
+  //   const mockProgress: DownloadProgress = {
+  //     percent: 45,
+  //     transferred: 45000000,
+  //     total: 100000000,
+  //     bytesPerSecond: 5000000,
+  //   };
+  //   showDownloadProgressToast(mockProgress, () => {
+  //     // Mock cancel handler
+  //     logger.info("Test: Cancel clicked");
+  //   });
+  // };
 
   return (
     <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col">
@@ -467,50 +467,52 @@ export function LicenseActivationScreen({
                       </Button>
                     )}
 
-                    {/* TEST: Auto-update notification test buttons (remove later) */}
-                    <div className="pt-2 border-t space-y-2">
-                      <p className="text-xs text-muted-foreground font-medium">
-                        TEST: Update Notifications
-                      </p>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button
-                          onClick={handleTestUpdateAvailable}
-                          disabled={isLoading || isSuccess}
-                          variant="outline"
-                          size="sm"
-                          className="text-xs h-9"
-                        >
-                          Update Available
-                        </Button>
-                        <Button
-                          onClick={handleTestUpdateReady}
-                          disabled={isLoading || isSuccess}
-                          variant="outline"
-                          size="sm"
-                          className="text-xs h-9"
-                        >
-                          Update Ready
-                        </Button>
-                        <Button
-                          onClick={handleTestUpdateError}
-                          disabled={isLoading || isSuccess}
-                          variant="outline"
-                          size="sm"
-                          className="text-xs h-9"
-                        >
-                          Update Error
-                        </Button>
-                        <Button
-                          onClick={handleTestDownloadProgress}
-                          disabled={isLoading || isSuccess}
-                          variant="outline"
-                          size="sm"
-                          className="text-xs h-9"
-                        >
-                          Download Progress
-                        </Button>
+                    {/* TEST: Auto-update notification test buttons (only shown in development) */}
+                    {/* {import.meta.env.DEV && (
+                      <div className="pt-2 border-t space-y-2">
+                        <p className="text-xs text-muted-foreground font-medium">
+                          TEST: Update Notifications
+                        </p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            onClick={handleTestUpdateAvailable}
+                            disabled={isLoading || isSuccess}
+                            variant="outline"
+                            size="sm"
+                            className="text-xs h-9"
+                          >
+                            Update Available
+                          </Button>
+                          <Button
+                            onClick={handleTestUpdateReady}
+                            disabled={isLoading || isSuccess}
+                            variant="outline"
+                            size="sm"
+                            className="text-xs h-9"
+                          >
+                            Update Ready
+                          </Button>
+                          <Button
+                            onClick={handleTestUpdateError}
+                            disabled={isLoading || isSuccess}
+                            variant="outline"
+                            size="sm"
+                            className="text-xs h-9"
+                          >
+                            Update Error
+                          </Button>
+                          <Button
+                            onClick={handleTestDownloadProgress}
+                            disabled={isLoading || isSuccess}
+                            variant="outline"
+                            size="sm"
+                            className="text-xs h-9"
+                          >
+                            Download Progress
+                          </Button>
+                        </div>
                       </div>
-                    </div>
+                    )} */}
                   </CardContent>
                 </Card>
 
