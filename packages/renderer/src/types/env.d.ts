@@ -18,6 +18,12 @@ interface ImportMetaEnv {
 
   /** Current app version */
   readonly VITE_APP_VERSION: string;
+
+  /**
+   * Web app URL for customer-facing pages (release notes, etc.)
+   * Defaults to production URL if not set
+   */
+  readonly VITE_WEB_APP_URL?: string;
 }
 
 interface ImportMeta {

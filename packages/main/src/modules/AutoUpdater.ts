@@ -64,6 +64,10 @@ export class AutoUpdater implements AppModule {
   readonly #MAX_UPDATE_CHECK_ERROR_NOTIFICATIONS = 3; // Max times to show update check failed notification
   readonly #GITHUB_REPO_URL = "https://github.com/AurSwift/AurSwift";
   readonly #GITHUB_RELEASES_URL = `${this.#GITHUB_REPO_URL}/releases`;
+  // Customer-facing release notes URL (web app)
+  readonly #WEB_APP_URL =
+    process.env.AURSWIFT_WEB_URL || "https://aurswift.vercel.app";
+  readonly #WEB_RELEASES_URL = `${this.#WEB_APP_URL}/releases`;
   readonly #STARTUP_DELAY = 5 * 1000; // 5 seconds delay for startup check
   readonly #CACHE_DURATION = 15 * 60 * 1000; // 15 minutes cache duration
   readonly #IDLE_THRESHOLD = 30 * 60 * 1000; // 30 minutes idle threshold
@@ -502,11 +506,11 @@ export class AutoUpdater implements AppModule {
             notification.show();
           }
         } else if (result.response === 1) {
-          // Ensure version tag has 'v' prefix for GitHub URL
-          const versionTag = newVersion.startsWith("v")
-            ? newVersion
-            : `v${newVersion}`;
-          shell.openExternal(`${this.#GITHUB_RELEASES_URL}/tag/${versionTag}`);
+          // Open customer-facing release notes on web app
+          const cleanVersion = newVersion.replace(/^v/, "");
+          shell.openExternal(
+            `${this.#WEB_RELEASES_URL}?version=${cleanVersion}`,
+          );
 
           setTimeout(() => {
             this.showUpdateAvailableDialog(info, isReminder);

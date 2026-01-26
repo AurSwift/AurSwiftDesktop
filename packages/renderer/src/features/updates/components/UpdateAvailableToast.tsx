@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Gift, Download, Clock, ExternalLink } from "lucide-react";
 import type { UpdateInfo } from "@app/shared";
 
-// GitHub releases URL for changelog
-const GITHUB_RELEASES_URL = "https://github.com/AurSwift/AurSwift/releases";
+// Customer-facing release notes URL (web app)
+// Falls back to environment variable or production URL
+const WEB_APP_URL = import.meta.env.VITE_WEB_APP_URL || "https://aurswift.com";
+const WEB_RELEASES_URL = `${WEB_APP_URL}/releases`;
 
 interface UpdateAvailableToastProps {
   updateInfo: UpdateInfo;
@@ -24,6 +26,9 @@ export function UpdateAvailableToast({
   onDownload,
   onPostpone,
 }: UpdateAvailableToastProps) {
+  // Strip 'v' prefix if present for clean URL parameter
+  const cleanVersion = updateInfo.version.replace(/^v/, "");
+
   return (
     <div className="flex flex-col gap-3 w-full max-w-md bg-card rounded-xl p-4">
       {/* Header */}
@@ -44,9 +49,9 @@ export function UpdateAvailableToast({
         </div>
       </div>
 
-      {/* Changelog Link */}
+      {/* Changelog Link - Links to customer-facing web release notes */}
       <a
-        href={`${GITHUB_RELEASES_URL}/tag/v${updateInfo.version}`}
+        href={`${WEB_RELEASES_URL}?version=${cleanVersion}`}
         target="_blank"
         rel="noopener noreferrer"
         className="flex items-center gap-2 text-xs text-primary hover:text-primary/80 transition-colors border-t pt-2"
