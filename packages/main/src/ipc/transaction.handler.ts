@@ -826,6 +826,37 @@ export function registerTransactionHandlers() {
   );
 
   ipcMain.handle(
+    "refunds:getTransactionsByDateRange",
+    async (event, businessId, startDateIso, endDateIso, limit = 1000) => {
+      try {
+        const db = await getDatabase();
+        const startDate = new Date(startDateIso);
+        const endDate = new Date(endDateIso);
+        const transactions =
+          await db.transactions.getTransactionsByDateRange(
+            businessId,
+            startDate,
+            endDate,
+            limit
+          );
+
+        const serializedTransactions = JSON.parse(JSON.stringify(transactions));
+
+        return {
+          success: true,
+          transactions: serializedTransactions,
+        };
+      } catch (error) {
+        logger.error("Get transactions by date range IPC error:", error);
+        return {
+          success: false,
+          message: "Failed to get transactions by date range",
+        };
+      }
+    }
+  );
+
+  ipcMain.handle(
     "refunds:getShiftTransactions",
     async (event, shiftId, limit = 50) => {
       try {

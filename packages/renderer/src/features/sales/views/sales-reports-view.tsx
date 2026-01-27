@@ -227,7 +227,7 @@ const SalesReportsView = ({ onBack }: SalesReportsViewProps) => {
       filteredStats,
       exportToCSV,
       exportToPDF,
-    ]
+    ],
   );
 
   // Handle filter reset
@@ -333,7 +333,7 @@ const SalesReportsView = ({ onBack }: SalesReportsViewProps) => {
           title="Total Revenue"
           value={filteredStats.revenue}
           change={`${getTimePeriodLabel()} • £${filteredStats.revenue.toFixed(
-            2
+            2,
           )}`}
           icon={DollarSign}
           colorTheme="green"
@@ -357,7 +357,7 @@ const SalesReportsView = ({ onBack }: SalesReportsViewProps) => {
           title="Average Order Value"
           value={filteredStats.averageOrderValue}
           change={`${getTimePeriodLabel()} • £${filteredStats.averageOrderValue.toFixed(
-            2
+            2,
           )}`}
           icon={TrendingUp}
           colorTheme="purple"
@@ -376,47 +376,6 @@ const SalesReportsView = ({ onBack }: SalesReportsViewProps) => {
       </div>
 
       {/* Additional Stats Section */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-        <Card className="bg-white border-slate-200 shadow-sm">
-          <CardContent className="pt-6">
-            <div className="text-sm text-slate-600 mb-1">Total Sales</div>
-            <div className="text-2xl font-bold text-green-700">
-              £{totalSales.toFixed(2)}
-            </div>
-            <div className="text-xs text-slate-500 mt-1">
-              {filteredStats.salesCount} transaction
-              {filteredStats.salesCount !== 1 ? "s" : ""}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white border-slate-200 shadow-sm">
-          <CardContent className="pt-6">
-            <div className="text-sm text-slate-600 mb-1">Total Refunds</div>
-            <div className="text-2xl font-bold text-red-700">
-              -£{totalRefunds.toFixed(2)}
-            </div>
-            <div className="text-xs text-slate-500 mt-1">
-              {filteredStats.refundsCount} refund
-              {filteredStats.refundsCount !== 1 ? "s" : ""}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white border-slate-200 shadow-sm">
-          <CardContent className="pt-6">
-            <div className="text-sm text-slate-600 mb-1">
-              Voided Transactions
-            </div>
-            <div className="text-2xl font-bold text-amber-700">
-              {totalVoids}
-            </div>
-            <div className="text-xs text-slate-500 mt-1">
-              Transactions voided
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Transaction Table */}
       <SalesReportsTransactionTable

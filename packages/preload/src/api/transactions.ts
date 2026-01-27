@@ -72,6 +72,20 @@ export const refundAPI = {
   getRecentTransactions: (businessId: string, limit?: number) =>
     ipcRenderer.invoke("refunds:getRecentTransactions", businessId, limit),
 
+  getTransactionsByDateRange: (
+    businessId: string,
+    startDate: string,
+    endDate: string,
+    limit?: number
+  ) =>
+    ipcRenderer.invoke(
+      "refunds:getTransactionsByDateRange",
+      businessId,
+      startDate,
+      endDate,
+      limit ?? 1000
+    ),
+
   getShiftTransactions: (shiftId: string, limit?: number) =>
     ipcRenderer.invoke("refunds:getShiftTransactions", shiftId, limit),
 

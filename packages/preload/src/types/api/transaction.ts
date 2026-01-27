@@ -61,6 +61,13 @@ export interface RefundAPIPreload {
 
   getRecentTransactions: (businessId: string, limit?: number) => Promise<any>;
 
+  getTransactionsByDateRange: (
+    businessId: string,
+    startDate: string,
+    endDate: string,
+    limit?: number
+  ) => Promise<any>;
+
   getShiftTransactions: (shiftId: string, limit?: number) => Promise<any>;
 
   validateEligibility: (

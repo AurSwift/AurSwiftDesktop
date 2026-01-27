@@ -34,20 +34,18 @@ export function SalesReportsHeader({
   className,
 }: SalesReportsHeaderProps) {
   return (
-    <div className={cn("flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4", className)}>
+    <div
+      className={cn(
+        "flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4",
+        className,
+      )}
+    >
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">{title}</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
+          {title}
+        </h1>
         {subtitle && (
           <p className="text-sm sm:text-base text-slate-600 mt-1">{subtitle}</p>
-        )}
-        {dateRange && (
-          <div className="flex items-center gap-2 mt-2 text-xs sm:text-sm text-slate-500">
-            <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span>
-              {dateRange.start.toLocaleDateString()} -{" "}
-              {dateRange.end.toLocaleDateString()}
-            </span>
-          </div>
         )}
       </div>
       <div className="flex items-center gap-2">
@@ -91,4 +89,3 @@ export function SalesReportsHeader({
     </div>
   );
 }
-

@@ -238,6 +238,65 @@ export class TransactionManager {
   }
 
   /**
+   * Get transactions by date range for reports.
+   * Returns completed transactions within [start, end] with items and cashier name.
+   */
+  async getTransactionsByDateRange(
+    businessId: string,
+    startDate: Date,
+    endDate: Date,
+    limit: number = 1000
+  ): Promise<TransactionWithItems[]> {
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+
+    const transactions = await this.db
+      .select({
+        transaction: schema.transactions,
+        shift: schema.shifts,
+        user: schema.users,
+      })
+      .from(schema.transactions)
+      .leftJoin(
+        schema.shifts,
+        eq(schema.transactions.shiftId, schema.shifts.id)
+      )
+      .leftJoin(schema.users, eq(schema.shifts.user_id, schema.users.id))
+      .where(
+        and(
+          eq(schema.transactions.businessId, businessId),
+          eq(schema.transactions.status, "completed"),
+          gte(schema.transactions.timestamp, start.toISOString()),
+          lte(schema.transactions.timestamp, end.toISOString())
+        )
+      )
+      .orderBy(desc(schema.transactions.timestamp))
+      .limit(limit);
+
+    const transactionsWithItems = await Promise.all(
+      transactions.map(async ({ transaction, user }) => {
+        const items = await this.getTransactionItems(transaction.id);
+        return {
+          ...transaction,
+          isPartialRefund: Boolean(transaction.isPartialRefund),
+          items,
+          appliedDiscounts: transaction.appliedDiscounts
+            ? JSON.parse(transaction.appliedDiscounts)
+            : undefined,
+          cashierName: user
+            ? `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+              user.username
+            : undefined,
+        } as TransactionWithItems & { cashierName?: string };
+      })
+    );
+
+    return transactionsWithItems;
+  }
+
+  /**
    * Create transaction with items and modifiers
    */
   async createTransactionWithItems(
