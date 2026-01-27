@@ -3,8 +3,6 @@ import { useState, useEffect, useCallback, memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-import { Badge } from "@/components/ui/badge";
-
 import {
   DollarSign,
   ShoppingCart,
@@ -12,9 +10,9 @@ import {
   RefreshCw,
   AlertTriangle,
   CheckCircle,
-  XCircle,
 } from "lucide-react";
 
+import { SalesReportsTransactionTable } from "@/features/sales/components/sales-reports";
 import { useAuth } from "@/shared/hooks";
 import { useNavigate } from "react-router-dom";
 
@@ -436,107 +434,13 @@ const CashierDashboardView = ({
         </Card>
       </div>
 
-      {/* Recent Transactions */}
-      <Card className="bg-white border-slate-200 shadow-sm flex min-h-0 flex-1 flex-col">
-        <CardHeader className="shrink-0">
-          <CardTitle className="text-base sm:text-lg font-semibold text-slate-700">
-            Recent Transactions
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex min-h-0 flex-1 flex-col">
-          {transactions.length === 0 ? (
-            <div className="flex flex-1 items-center justify-center text-center text-slate-500">
-              <div className="py-6 sm:py-8">
-                <div className="mb-2">
-                  <ShoppingCart className="h-6 w-6 sm:h-8 sm:w-8 mx-auto opacity-50" />
-                </div>
-                <p className="text-xs sm:text-sm">No recent transactions</p>
-                <p className="text-caption mt-1">
-                  Transactions will appear here once processed
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="min-h-0 flex-1 space-y-3 overflow-auto pr-1">
-              {transactions.map((transaction: Transaction) => (
-                <div key={transaction.id}>
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`
-                      p-2 rounded-full
-                      ${
-                        transaction.type === "sale"
-                          ? "bg-green-100 text-green-600"
-                          : ""
-                      }
-                      ${
-                        transaction.type === "refund"
-                          ? "bg-red-100 text-red-600"
-                          : ""
-                      }
-                      ${
-                        transaction.type === "void"
-                          ? "bg-amber-100 text-amber-600"
-                          : ""
-                      }
-                    `}
-                    >
-                      {transaction.type === "sale" && (
-                        <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
-                      )}
-                      {transaction.type === "refund" && (
-                        <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4" />
-                      )}
-                      {transaction.type === "void" && (
-                        <XCircle className="h-3 w-3 sm:h-4 sm:w-4" />
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium text-xs sm:text-sm truncate">
-                        #{transaction.receiptNumber}
-                      </div>
-                      <div className="text-caption text-slate-500 truncate">
-                        {new Date(transaction.timestamp).toLocaleString()} •{" "}
-                        {transaction.items.length} items
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <div className="font-semibold text-xs sm:text-sm text-black">
-                      {transaction.type === "sale"
-                        ? `+£${Math.abs(transaction.total).toFixed(2)}`
-                        : `-£${Math.abs(transaction.total).toFixed(2)}`}
-                    </div>
-                    <Badge
-                      variant="outline"
-                      className={`
-                      text-caption mt-1
-                      ${
-                        transaction.paymentMethod === "cash"
-                          ? "bg-amber-50 text-amber-700"
-                          : ""
-                      }
-                      ${
-                        transaction.paymentMethod === "card"
-                          ? "bg-blue-50 text-blue-700"
-                          : ""
-                      }
-                      ${
-                        transaction.paymentMethod === "mixed"
-                          ? "bg-purple-50 text-purple-700"
-                          : ""
-                      }
-                    `}
-                    >
-                      {transaction.paymentMethod}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Recent Transactions - same implementation as Sales Report page */}
+      <SalesReportsTransactionTable
+        transactions={transactions}
+        isLoading={isLoading}
+        emptyStateMessage="No recent transactions. Transactions will appear here once processed."
+        className="flex min-h-0 flex-1 flex-col"
+      />
     </div>
   );
 };

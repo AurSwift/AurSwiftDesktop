@@ -134,27 +134,6 @@ export const refundAPI = {
   ) => ipcRenderer.invoke("refunds:create", sessionToken, refundData),
 };
 
-export const voidAPI = {
-  validateEligibility: (transactionId: string) =>
-    ipcRenderer.invoke("voids:validateEligibility", transactionId),
-
-  voidTransaction: (
-    sessionToken: string,
-    voidData: {
-      transactionId: string;
-      cashierId: string;
-      reason: string;
-      managerApprovalId?: string;
-    }
-  ) => ipcRenderer.invoke("voids:create", sessionToken, voidData),
-
-  getTransactionById: (transactionId: string) =>
-    ipcRenderer.invoke("voids:getTransactionById", transactionId),
-
-  getTransactionByReceipt: (receiptNumber: string) =>
-    ipcRenderer.invoke("voids:getTransactionByReceipt", receiptNumber),
-};
-
 export const cashDrawerAPI = {
   getExpectedCash: (shiftId: string) =>
     ipcRenderer.invoke("cashDrawer:getExpectedCash", shiftId),

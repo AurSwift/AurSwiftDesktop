@@ -22,7 +22,6 @@ import type { SalesUnitSettingsAPI } from "../types/api/sales-unit-settings";
 import type { StockMovementAPI } from "../types/api/stock-movement";
 import type { ScheduleAPI } from "../types/api/schedule";
 import type { RefundAPI } from "../types/api/refund";
-import type { VoidAPI } from "../types/api/void";
 import type { CashDrawerAPI } from "../types/api/cash-drawer";
 import type { TimeTrackingAPI } from "../types/api/time-tracking";
 import type { AgeVerificationAPI } from "../types/api/age-verification";
@@ -80,9 +79,8 @@ declare global {
     shiftAPI: ShiftAPI;
     scheduleAPI: ScheduleAPI;
 
-    // Refunds & Voids
+    // Refunds
     refundAPI: RefundAPI;
-    voidAPI: VoidAPI;
 
     // Cash Drawer
     cashDrawerAPI: CashDrawerAPI;

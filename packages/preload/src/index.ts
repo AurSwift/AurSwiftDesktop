@@ -9,7 +9,6 @@ import { scheduleAPI, shiftAPI } from "./api/shifts.js";
 import {
   transactionAPI,
   refundAPI,
-  voidAPI,
   cashDrawerAPI,
 } from "./api/transactions.js";
 import {
@@ -54,7 +53,6 @@ contextBridge.exposeInMainWorld("scheduleAPI", scheduleAPI);
 contextBridge.exposeInMainWorld("shiftAPI", shiftAPI);
 contextBridge.exposeInMainWorld("transactionAPI", transactionAPI);
 contextBridge.exposeInMainWorld("refundAPI", refundAPI);
-contextBridge.exposeInMainWorld("voidAPI", voidAPI);
 contextBridge.exposeInMainWorld("cashDrawerAPI", cashDrawerAPI);
 contextBridge.exposeInMainWorld("databaseAPI", databaseAPI);
 contextBridge.exposeInMainWorld("printerAPI", printerAPI);

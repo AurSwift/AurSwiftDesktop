@@ -3,31 +3,35 @@ import {
   ChevronRight,
   LayoutDashboard,
   RotateCcw,
-  XCircle,
   Receipt,
   LogOut,
 } from "lucide-react";
 import React from "react";
 import { useState } from "react";
 // Quick Actions Carousel Component
+const SHIFT_DISABLED_TITLE = "Please start your shift to use this feature";
+const OVERRIDE_DISABLED_TITLE =
+  "Requires override:transactions permission. Ask an admin to add it to your role in Role Management.";
+
 interface QuickActionsCarouselProps {
   onRefund: () => void;
-  onVoid: () => void;
   onCount: () => void;
   onDashboard: () => void;
   onReceipts?: () => void;
   onLogOff?: () => void;
   hasActiveShift?: boolean; // Enable buttons only when cashier has active shift
+  /** When false, Refund is disabled and shows permission tooltip. Requires TRANSACTIONS_OVERRIDE. */
+  canVoidAndRefund?: boolean;
 }
 
 export const QuickActionsCarousel: React.FC<QuickActionsCarouselProps> = ({
   onRefund,
-  onVoid,
   onCount,
   onDashboard,
   onReceipts,
   onLogOff,
   hasActiveShift = false,
+  canVoidAndRefund = true,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [dragStart, setDragStart] = useState(0);
@@ -35,21 +39,19 @@ export const QuickActionsCarousel: React.FC<QuickActionsCarouselProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
+  const refundVoidDisabled = !hasActiveShift || !canVoidAndRefund;
+  const refundVoidDisabledTitle = !canVoidAndRefund
+    ? OVERRIDE_DISABLED_TITLE
+    : SHIFT_DISABLED_TITLE;
+
   const items = [
     {
       icon: RotateCcw,
       title: "Refund",
       onClick: onRefund,
       hoverColor: "hover:bg-blue-50",
-      disabled: !hasActiveShift,
-      requiresShift: true,
-    },
-    {
-      icon: XCircle,
-      title: "Void",
-      onClick: onVoid,
-      hoverColor: "hover:bg-red-50",
-      disabled: !hasActiveShift,
+      disabled: refundVoidDisabled,
+      disabledTitle: refundVoidDisabled ? refundVoidDisabledTitle : undefined,
       requiresShift: true,
     },
     {
@@ -58,6 +60,7 @@ export const QuickActionsCarousel: React.FC<QuickActionsCarouselProps> = ({
       onClick: onCount,
       hoverColor: "hover:bg-green-50",
       disabled: !hasActiveShift,
+      disabledTitle: !hasActiveShift ? SHIFT_DISABLED_TITLE : undefined,
       requiresShift: true,
     },
     {
@@ -66,6 +69,7 @@ export const QuickActionsCarousel: React.FC<QuickActionsCarouselProps> = ({
       onClick: onDashboard,
       hoverColor: "hover:bg-purple-50",
       disabled: false, // Dashboard is always enabled
+      disabledTitle: undefined,
       requiresShift: false,
     },
     ...(onReceipts
@@ -76,6 +80,7 @@ export const QuickActionsCarousel: React.FC<QuickActionsCarouselProps> = ({
             onClick: onReceipts,
             hoverColor: "hover:bg-amber-50",
             disabled: false,
+            disabledTitle: undefined as string | undefined,
             requiresShift: false,
           },
         ]
@@ -88,6 +93,7 @@ export const QuickActionsCarousel: React.FC<QuickActionsCarouselProps> = ({
             onClick: onLogOff,
             hoverColor: "hover:bg-slate-50",
             disabled: false,
+            disabledTitle: undefined as string | undefined,
             requiresShift: false,
           },
         ]
@@ -232,6 +238,7 @@ export const QuickActionsCarousel: React.FC<QuickActionsCarouselProps> = ({
                   onClick={item.onClick}
                   hoverColor={item.hoverColor}
                   disabled={item.disabled}
+                  disabledTitle={item.disabledTitle}
                 />
               </div>
             ))}
@@ -262,7 +269,15 @@ const CarouselCard: React.FC<{
   onClick: () => void;
   hoverColor: string;
   disabled?: boolean;
-}> = ({ icon: Icon, title, onClick, hoverColor, disabled = false }) => (
+  disabledTitle?: string;
+}> = ({
+  icon: Icon,
+  title,
+  onClick,
+  hoverColor,
+  disabled = false,
+  disabledTitle,
+}) => (
   <button
     onClick={disabled ? undefined : onClick}
     disabled={disabled}
@@ -272,7 +287,11 @@ const CarouselCard: React.FC<{
         : `bg-gray-100 hover:shadow-md ${hoverColor}`
     }`}
     style={{ minWidth: "44px", minHeight: "44px" }}
-    title={disabled ? "Please start your shift to use this feature" : undefined}
+    title={
+      disabled
+        ? disabledTitle ?? SHIFT_DISABLED_TITLE
+        : undefined
+    }
   >
     <Icon
       className={`w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 ${

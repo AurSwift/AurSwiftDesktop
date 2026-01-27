@@ -110,24 +110,6 @@ export interface RefundAPIPreload {
   ) => Promise<any>;
 }
 
-export interface VoidAPIPreload {
-  validateEligibility: (transactionId: string) => Promise<any>;
-
-  voidTransaction: (
-    sessionToken: string,
-    voidData: {
-      transactionId: string;
-      cashierId: string;
-      reason: string;
-      managerApprovalId?: string;
-    }
-  ) => Promise<any>;
-
-  getTransactionById: (transactionId: string) => Promise<any>;
-
-  getTransactionByReceipt: (receiptNumber: string) => Promise<any>;
-}
-
 export interface CashDrawerAPIPreload {
   getExpectedCash: (shiftId: string) => Promise<any>;
 
