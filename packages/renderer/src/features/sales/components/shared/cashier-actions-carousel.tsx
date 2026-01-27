@@ -188,7 +188,7 @@ export const QuickActionsCarousel: React.FC<QuickActionsCarouselProps> = ({
   };
 
   return (
-    <div className="mb-3 sm:mb-4 p-2 bg-white rounded-lg shadow-sm">
+    <div className="mb-1 p-2 bg-white rounded-lg shadow-sm">
       <div className="flex items-center w-full gap-1.5 sm:gap-2">
         {/* Left Arrow */}
         <button
@@ -287,11 +287,7 @@ const CarouselCard: React.FC<{
         : `bg-gray-100 hover:shadow-md ${hoverColor}`
     }`}
     style={{ minWidth: "44px", minHeight: "44px" }}
-    title={
-      disabled
-        ? disabledTitle ?? SHIFT_DISABLED_TITLE
-        : undefined
-    }
+    title={disabled ? (disabledTitle ?? SHIFT_DISABLED_TITLE) : undefined}
   >
     <Icon
       className={`w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 ${

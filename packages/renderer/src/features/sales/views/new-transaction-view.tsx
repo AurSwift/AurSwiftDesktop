@@ -1189,7 +1189,7 @@ export function NewTransactionView({
         </div>
 
         {/* Right Column - Cart & Payment */}
-        <div className="flex flex-col w-full lg:flex-[0_1_480px] lg:w-[480px] lg:max-w-[520px] gap-2 sm:gap-3 min-h-0">
+        <div className="flex flex-col w-full lg:flex-[0_1_480px] lg:w-[480px] lg:max-w-[520px] min-h-0">
           <QuickActionsCarousel
             onRefund={() => setShowRefundModal(true)}
             onCount={() => setShowCountModal(true)}
@@ -1199,105 +1199,66 @@ export function NewTransactionView({
             hasActiveShift={!!shift.activeShift}
           />
 
-          <div className="bg-white border-t-black-200 shadow-lg shrink-0">
-            <CardContent className="p-2 sm:p-3">
-              {/* Scale Display for Weighted Products (shown by default) */}
-              {weightInput.selectedWeightProduct &&
-                isWeightedProduct(weightInput.selectedWeightProduct) &&
-                !categoryPriceInput.pendingCategory &&
-                showScaleDisplay && (
-                  <div className="mt-2 space-y-2">
-                    <ScaleDisplay
-                      selectedProduct={{
-                        id: weightInput.selectedWeightProduct.id,
-                        name: weightInput.selectedWeightProduct.name,
-                        productType: "WEIGHTED",
-                        basePrice: weightInput.selectedWeightProduct.basePrice,
-                        pricePerUnit:
-                          weightInput.selectedWeightProduct.pricePerKg,
-                        unitOfMeasure: getEffectiveSalesUnit(
-                          weightInput.selectedWeightProduct.salesUnit || "KG",
-                          salesUnitSettings,
-                        ),
-                      }}
-                      onWeightConfirmed={async (weight, scaleReading) => {
-                        const product = weightInput.selectedWeightProduct;
-                        if (!product) return;
+          {/**input for products */}
+          <CardContent className="p-1">
+            {/* Scale Display for Weighted Products (shown by default) */}
+            {weightInput.selectedWeightProduct &&
+              isWeightedProduct(weightInput.selectedWeightProduct) &&
+              !categoryPriceInput.pendingCategory &&
+              showScaleDisplay && (
+                <div className="mt-1 space-y-2">
+                  <ScaleDisplay
+                    selectedProduct={{
+                      id: weightInput.selectedWeightProduct.id,
+                      name: weightInput.selectedWeightProduct.name,
+                      productType: "WEIGHTED",
+                      basePrice: weightInput.selectedWeightProduct.basePrice,
+                      pricePerUnit:
+                        weightInput.selectedWeightProduct.pricePerKg,
+                      unitOfMeasure: getEffectiveSalesUnit(
+                        weightInput.selectedWeightProduct.salesUnit || "KG",
+                        salesUnitSettings,
+                      ),
+                    }}
+                    onWeightConfirmed={async (weight, scaleReading) => {
+                      const product = weightInput.selectedWeightProduct;
+                      if (!product) return;
 
-                        // Check if product requires batch tracking (expiry checking)
-                        const requiresBatchTracking =
-                          product.requiresBatchTracking === true;
+                      // Check if product requires batch tracking (expiry checking)
+                      const requiresBatchTracking =
+                        product.requiresBatchTracking === true;
 
-                        // Age verification should already be completed at this point
-                        // (it was shown first before the scale display)
+                      // Age verification should already be completed at this point
+                      // (it was shown first before the scale display)
 
-                        if (requiresBatchTracking) {
-                          // Each cart addition = 1 item (quantity = 1, regardless of weight value)
-                          // Check if batch has enough quantity (1 item) available
-                          const batchResult = await autoSelectBatches(
-                            product,
-                            1, // Check batch has >= 1 item available (quantity check, not weight)
-                            false, // Don't allow partial - need exactly 1 item
-                          );
+                      if (requiresBatchTracking) {
+                        // Each cart addition = 1 item (quantity = 1, regardless of weight value)
+                        // Check if batch has enough quantity (1 item) available
+                        const batchResult = await autoSelectBatches(
+                          product,
+                          1, // Check batch has >= 1 item available (quantity check, not weight)
+                          false, // Don't allow partial - need exactly 1 item
+                        );
 
-                          if (batchResult.success && batchResult.primaryBatch) {
-                            // Batch has enough quantity (>= 1) - add 1 item to cart
-                            // Cart item: quantity = 1 (for batch deduction), weight = weight value (for pricing only)
-                            const ageVerified =
-                              ageVerifiedForProduct[product.id] || false;
-
-                            await cart.addToCart(
-                              product,
-                              weight, // Weight value (stored in item.weight, used for pricing only)
-                              undefined,
-                              ageVerified,
-                              undefined,
-                              batchResult.primaryBatch,
-                              scaleReading,
-                            );
-
-                            // Show success message
-                            toast.success(`Added ${product.name} to cart`);
-
-                            weightInput.resetWeightInput();
-                            // Clear age verification for this product after use
-                            setAgeVerifiedForProduct((prev) => {
-                              const next = { ...prev };
-                              delete next[product.id];
-                              return next;
-                            });
-                            setShowScaleDisplay(false);
-                          } else if (batchResult.shouldShowModal) {
-                            // Show batch selection modal for manual selection
-                            setPendingWeightForBatchSelection(weight);
-                            setPendingProductForBatchSelection(product);
-                            setPendingQuantityForBatchSelection(weight);
-                            setShowBatchSelectionModal(true);
-                            weightInput.resetWeightInput();
-                            setShowScaleDisplay(false);
-                          } else {
-                            // No batches available - show error
-                            toast.error(
-                              batchResult.error ||
-                                "No batches available for this product",
-                            );
-                            weightInput.resetWeightInput();
-                            setShowScaleDisplay(false);
-                          }
-                        } else {
-                          // No batch tracking, add directly with age verification (already completed)
-                          // Check if age verification was completed for this product
+                        if (batchResult.success && batchResult.primaryBatch) {
+                          // Batch has enough quantity (>= 1) - add 1 item to cart
+                          // Cart item: quantity = 1 (for batch deduction), weight = weight value (for pricing only)
                           const ageVerified =
                             ageVerifiedForProduct[product.id] || false;
+
                           await cart.addToCart(
                             product,
-                            weight,
+                            weight, // Weight value (stored in item.weight, used for pricing only)
                             undefined,
-                            ageVerified, // Use the tracked age verification status
+                            ageVerified,
                             undefined,
-                            null,
-                            scaleReading || null,
+                            batchResult.primaryBatch,
+                            scaleReading,
                           );
+
+                          // Show success message
+                          toast.success(`Added ${product.name} to cart`);
+
                           weightInput.resetWeightInput();
                           // Clear age verification for this product after use
                           setAgeVerifiedForProduct((prev) => {
@@ -1306,45 +1267,81 @@ export function NewTransactionView({
                             return next;
                           });
                           setShowScaleDisplay(false);
+                        } else if (batchResult.shouldShowModal) {
+                          // Show batch selection modal for manual selection
+                          setPendingWeightForBatchSelection(weight);
+                          setPendingProductForBatchSelection(product);
+                          setPendingQuantityForBatchSelection(weight);
+                          setShowBatchSelectionModal(true);
+                          weightInput.resetWeightInput();
+                          setShowScaleDisplay(false);
+                        } else {
+                          // No batches available - show error
+                          toast.error(
+                            batchResult.error ||
+                              "No batches available for this product",
+                          );
+                          weightInput.resetWeightInput();
+                          setShowScaleDisplay(false);
                         }
-                      }}
-                      onCancel={() => {
-                        setShowScaleDisplay(false);
+                      } else {
+                        // No batch tracking, add directly with age verification (already completed)
+                        // Check if age verification was completed for this product
+                        const ageVerified =
+                          ageVerifiedForProduct[product.id] || false;
+                        await cart.addToCart(
+                          product,
+                          weight,
+                          undefined,
+                          ageVerified, // Use the tracked age verification status
+                          undefined,
+                          null,
+                          scaleReading || null,
+                        );
                         weightInput.resetWeightInput();
-                      }}
-                      onManualEntryRequest={() => setShowScaleDisplay(false)}
-                      autoAddOnStable={true}
-                      minWeight={0.001}
-                      maxWeight={50}
-                    />
-                  </div>
-                )}
-
-              {/* Weight Input Display for Weighted Products (manual entry) */}
-              {weightInput.selectedWeightProduct &&
-                isWeightedProduct(weightInput.selectedWeightProduct) &&
-                !categoryPriceInput.pendingCategory &&
-                !showScaleDisplay && (
-                  <WeightInputDisplay
-                    selectedProduct={weightInput.selectedWeightProduct}
-                    weightDisplayPrice={weightInput.weightDisplayPrice}
-                    businessId={user?.businessId}
-                    onShowScaleDisplay={() => setShowScaleDisplay(true)}
+                        // Clear age verification for this product after use
+                        setAgeVerifiedForProduct((prev) => {
+                          const next = { ...prev };
+                          delete next[product.id];
+                          return next;
+                        });
+                        setShowScaleDisplay(false);
+                      }
+                    }}
+                    onCancel={() => {
+                      setShowScaleDisplay(false);
+                      weightInput.resetWeightInput();
+                    }}
+                    onManualEntryRequest={() => setShowScaleDisplay(false)}
+                    autoAddOnStable={true}
+                    minWeight={0.001}
+                    maxWeight={50}
                   />
-                )}
+                </div>
+              )}
 
-              {/* Category Price Input Display */}
-              {categoryPriceInput.pendingCategory &&
-                !weightInput.selectedWeightProduct && (
-                  <CategoryPriceInputDisplay
-                    pendingCategory={categoryPriceInput.pendingCategory}
-                    categoryDisplayPrice={
-                      categoryPriceInput.categoryDisplayPrice
-                    }
-                  />
-                )}
-            </CardContent>
-          </div>
+            {/* Weight Input Display for Weighted Products (manual entry) */}
+            {weightInput.selectedWeightProduct &&
+              isWeightedProduct(weightInput.selectedWeightProduct) &&
+              !categoryPriceInput.pendingCategory &&
+              !showScaleDisplay && (
+                <WeightInputDisplay
+                  selectedProduct={weightInput.selectedWeightProduct}
+                  weightDisplayPrice={weightInput.weightDisplayPrice}
+                  businessId={user?.businessId}
+                  onShowScaleDisplay={() => setShowScaleDisplay(true)}
+                />
+              )}
+
+            {/* Category Price Input Display */}
+            {categoryPriceInput.pendingCategory &&
+              !weightInput.selectedWeightProduct && (
+                <CategoryPriceInputDisplay
+                  pendingCategory={categoryPriceInput.pendingCategory}
+                  categoryDisplayPrice={categoryPriceInput.categoryDisplayPrice}
+                />
+              )}
+          </CardContent>
 
           <CartPanel
             cartItems={cart.cartItems}
