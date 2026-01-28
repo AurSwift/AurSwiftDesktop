@@ -35,6 +35,7 @@ import {
   LoadingState,
   ShiftBanner,
   OvertimeWarning,
+  TimeChangeBanner,
   StartShiftDialog,
   NoActiveShiftModal,
   ProductSelectionPanel,
@@ -1127,6 +1128,11 @@ export function NewTransactionView({
           <OvertimeWarning
             show={shift.showOvertimeWarning}
             minutes={shift.overtimeMinutes}
+          />
+          <TimeChangeBanner
+            show={shift.timeChangeDetected}
+            timeDifferenceMs={shift.timeChangeInfo?.timeDifference ?? null}
+            onDismiss={shift.dismissTimeChange}
           />
           <ShiftBanner
             isOperationsDisabled={isOperationsDisabled}

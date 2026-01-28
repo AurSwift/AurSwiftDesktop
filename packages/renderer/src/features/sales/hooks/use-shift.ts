@@ -606,6 +606,16 @@ export function useShift({
   }, []);
 
   /**
+   * Dismiss time-change warning (toast action + banner button).
+   * Clears both timeChangeDetected and timeChangeInfo for consistency.
+   */
+  const dismissTimeChange = useCallback(() => {
+    setTimeChangeDetected(false);
+    setTimeChangeInfo(null);
+    toast.dismiss("time-change");
+  }, []);
+
+  /**
    * Time change detection during active shift
    */
   useEffect(() => {
@@ -617,39 +627,50 @@ export function useShift({
       return;
     }
 
+    // Establish baseline immediately so we can detect changes within the first 30s
+    timeChangeDetectorRef.current?.checkTimeChange();
+
+    const notifyTimeChange = (changeInfo: {
+      detected: boolean;
+      timeDifference: number;
+    }) => {
+      setTimeChangeDetected(true);
+      setTimeChangeInfo({
+        detected: true,
+        timeDifference: changeInfo.timeDifference,
+      });
+
+      const formattedDiff = TimeChangeDetector.formatTimeDifference(
+        changeInfo.timeDifference
+      );
+      const direction = changeInfo.timeDifference > 0 ? "forward" : "backward";
+
+      toast.warning(
+        `System time changed ${direction} by ${formattedDiff}. This may affect shift calculations.`,
+        {
+          id: "time-change",
+          duration: 10000,
+          action: {
+            label: "Dismiss",
+            onClick: dismissTimeChange,
+          },
+        }
+      );
+    };
+
     // Check for time changes every 30 seconds
     const timeCheckInterval = setInterval(() => {
-      const changeInfo = timeChangeDetectorRef.current?.checkTimeChange();
-      if (changeInfo?.detected) {
-        setTimeChangeDetected(true);
-        setTimeChangeInfo({
+      const result = timeChangeDetectorRef.current?.checkTimeChange();
+      if (result?.detected) {
+        notifyTimeChange({
           detected: true,
-          timeDifference: changeInfo.timeDifference,
+          timeDifference: result.timeDifference,
         });
-
-        const formattedDiff = TimeChangeDetector.formatTimeDifference(
-          changeInfo.timeDifference
-        );
-        const direction =
-          changeInfo.timeDifference > 0 ? "forward" : "backward";
-
-        toast.warning(
-          `System time changed ${direction} by ${formattedDiff}. This may affect shift calculations.`,
-          {
-            duration: 10000,
-            action: {
-              label: "Dismiss",
-              onClick: () => {
-                setTimeChangeDetected(false);
-              },
-            },
-          }
-        );
       }
-    }, 30000); // Check every 30 seconds
+    }, 30000);
 
     return () => clearInterval(timeCheckInterval);
-  }, [activeShift]);
+  }, [activeShift, dismissTimeChange]);
 
   /**
    * Process offline queue when connection is restored
@@ -745,6 +766,7 @@ export function useShift({
     shiftTimingInfo,
     timeChangeDetected,
     timeChangeInfo,
+    dismissTimeChange,
     loadShiftData,
     handleStartShiftClick,
     confirmStartShift,
