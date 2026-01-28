@@ -5,14 +5,14 @@
  * This is used by the navigation system and dashboard.
  */
 
+import { lazy } from "react";
 import { Icon } from "lucide-react";
 import { {FEATURE}_PERMISSIONS } from "./permissions";
 import { {FEATURE}_ROUTES } from "./navigation";
 import type { FeatureConfig } from "@/features/dashboard/types/feature-config";
 import type { ViewConfig } from "@/navigation/types";
 
-// Import views
-import {Feature}View from "../views/{feature}-view";
+const Lazy{Feature}View = lazy(() => import("../views/{feature}-view"));
 
 /**
  * {Feature} Feature Configuration for Dashboard
@@ -46,7 +46,7 @@ export const {feature}Views: Record<string, ViewConfig> = {
   [{FEATURE}_ROUTES.MANAGEMENT]: {
     id: {FEATURE}_ROUTES.MANAGEMENT,
     level: "root",
-    component: {Feature}View,
+    component: Lazy{Feature}View,
     metadata: {
       title: "{Feature} Management",
       description: "Manage {feature}",
@@ -58,7 +58,7 @@ export const {feature}Views: Record<string, ViewConfig> = {
   {feature}Management: {
     id: "{feature}Management",
     level: "root",
-    component: {Feature}View,
+    component: Lazy{Feature}View,
     metadata: {
       title: "{Feature} Management",
       description: "Manage {feature}",

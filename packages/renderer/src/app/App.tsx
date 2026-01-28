@@ -6,18 +6,26 @@ import {
   Navigate,
 } from "react-router-dom";
 
-import { ProtectedRoute, PublicRoute } from "@/components";
-import { AuthPage } from "@/features/auth";
-import { DashboardView } from "@/features/dashboard";
 import {
-  LicenseActivationScreen,
-  LicenseInfoPage,
-  useLicenseContext,
-} from "@/features/license";
+  LoadingScreen,
+  ProtectedRoute,
+  PublicRoute,
+  RetryableLazyRoute,
+  RouteErrorBoundary,
+} from "@/components";
+import { LicenseActivationScreen, useLicenseContext } from "@/features/license";
 import { ProtectedAppShell } from "@/navigation/components/protected-app-shell";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { sanitizeUserFacingMessage } from "@/shared/utils/user-facing-errors";
+
+const authLoader = () => import("@/features/auth/views/auth-page");
+const dashboardLoader = () =>
+  import("@/features/dashboard/views/dashboard-view");
+const licenseLoader = () =>
+  import("@/features/license/pages/license-info-page").then((m) => ({
+    default: m.LicenseInfoPage,
+  }));
 
 /**
  * System notification listener
@@ -62,7 +70,7 @@ function useSystemNotifications() {
 /**
  * Loading screen shown while checking license status
  */
-function LoadingScreen() {
+function LicenseLoadingScreen() {
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
       <div className="text-center space-y-4">
@@ -86,7 +94,13 @@ function AppContent() {
           path="/auth"
           element={
             <PublicRoute>
-              <AuthPage />
+              <RouteErrorBoundary>
+                <RetryableLazyRoute
+                  loader={authLoader}
+                  fallback={<LoadingScreen />}
+                  debug="none"
+                />
+              </RouteErrorBoundary>
             </PublicRoute>
           }
         />
@@ -94,7 +108,13 @@ function AppContent() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <DashboardView />
+              <RouteErrorBoundary>
+                <RetryableLazyRoute
+                  loader={dashboardLoader}
+                  fallback={<LoadingScreen />}
+                  debug="none"
+                />
+              </RouteErrorBoundary>
             </ProtectedRoute>
           }
         />
@@ -103,7 +123,13 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <ProtectedAppShell subtitle="License">
-                <LicenseInfoPage />
+                <RouteErrorBoundary>
+                  <RetryableLazyRoute
+                    loader={licenseLoader}
+                    fallback={<LoadingScreen />}
+                    debug="none"
+                  />
+                </RouteErrorBoundary>
               </ProtectedAppShell>
             </ProtectedRoute>
           }
@@ -133,7 +159,7 @@ function AppWithLicenseCheck() {
 
   // Show loading screen while checking license
   if (isLoading) {
-    return <LoadingScreen />;
+    return <LicenseLoadingScreen />;
   }
 
   // Bypass license check in test mode

@@ -1395,7 +1395,11 @@ export function NewTransactionView({
 
           {/* Payment Panel / Numeric Keypad Container with Transition */}
           <div className="relative shrink-0 overflow-hidden">
-            <AnimatePresence mode="wait" exitAnimation="slide-left-exit" exitDuration={300}>
+            <AnimatePresence
+              mode="wait"
+              exitAnimation="slide-left-exit"
+              exitDuration={300}
+            >
               {payment.paymentStep && (
                 <PaymentPanel
                   key="payment-panel"
@@ -1414,9 +1418,16 @@ export function NewTransactionView({
                 />
               )}
             </AnimatePresence>
-            <AnimatePresence mode="wait" exitAnimation="slide-right-exit" exitDuration={300}>
+            <AnimatePresence
+              mode="wait"
+              exitAnimation="slide-right-exit"
+              exitDuration={300}
+            >
               {!payment.paymentStep && (
-                <div key="numeric-keypad" className="shrink-0 animate-slide-right">
+                <div
+                  key="numeric-keypad"
+                  className="shrink-0 animate-slide-right"
+                >
                   <NumericKeypad
                     onInput={async (value) => {
                       // Handle weight input
@@ -1424,7 +1435,8 @@ export function NewTransactionView({
                         weightInput.selectedWeightProduct &&
                         !categoryPriceInput.pendingCategory
                       ) {
-                        const weightValue = weightInput.handleWeightInput(value);
+                        const weightValue =
+                          weightInput.handleWeightInput(value);
                         if (
                           value === "Enter" &&
                           weightValue !== undefined &&
@@ -1441,7 +1453,8 @@ export function NewTransactionView({
 
                       // Handle category price input
                       if (categoryPriceInput.pendingCategory) {
-                        const priceValue = categoryPriceInput.handlePriceInput(value);
+                        const priceValue =
+                          categoryPriceInput.handlePriceInput(value);
                         if (
                           value === "Enter" &&
                           priceValue !== undefined &&

@@ -46,14 +46,10 @@ interface ViewTransitionContainerProps {
  * @example
  * ```tsx
  * const views = {
- *   dashboard: <DashboardView />,
- *   settings: <SettingsView />,
+ *   "sales:new-transaction": <NewTransactionView />,
+ *   "users:management": <UserManagementView />,
  * };
- * 
- * <ViewTransitionContainer
- *   currentView={currentView}
- *   views={views}
- * />
+ * <ViewTransitionContainer currentView={currentView} views={views} />
  * ```
  */
 export function ViewTransitionContainer({

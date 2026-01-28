@@ -5,18 +5,12 @@
  * This is used by the navigation system and dashboard.
  */
 
+import { lazy } from "react";
 import { Users, Coffee } from "lucide-react";
 import { STAFF_PERMISSIONS } from "./permissions";
 import { STAFF_ROUTES } from "./navigation";
 import type { FeatureConfig } from "@/features/dashboard/types/feature-config";
 import type { ViewConfig } from "@/navigation/types";
-
-// Import views from new location
-import ManageCashierView from "../views/manage-cashier-view";
-import StaffSchedulesView from "../views/staff-schedules-view";
-import BreakPolicySettingsView from "../views/break-policy-settings-view";
-import StaffTimeReportsView from "../views/staff-time-reports-view";
-import StaffTimeCorrectionsView from "../views/staff-time-corrections-view";
 
 /**
  * Staff Feature Configuration for Dashboard
@@ -64,7 +58,7 @@ export const staffViews: Record<string, ViewConfig> = {
   [STAFF_ROUTES.MANAGE_CASHIERS]: {
     id: STAFF_ROUTES.MANAGE_CASHIERS,
     level: "root",
-    component: ManageCashierView,
+    component: lazy(() => import("../views/manage-cashier-view")),
     metadata: {
       title: "Cashier Management",
       description: "Manage cashiers",
@@ -75,7 +69,7 @@ export const staffViews: Record<string, ViewConfig> = {
   [STAFF_ROUTES.SCHEDULES]: {
     id: STAFF_ROUTES.SCHEDULES,
     level: "root",
-    component: StaffSchedulesView,
+    component: lazy(() => import("../views/staff-schedules-view")),
     metadata: {
       title: "Staff Schedules",
       description: "Manage staff schedules",
@@ -89,7 +83,7 @@ export const staffViews: Record<string, ViewConfig> = {
   [STAFF_ROUTES.BREAK_POLICIES]: {
     id: STAFF_ROUTES.BREAK_POLICIES,
     level: "root",
-    component: BreakPolicySettingsView,
+    component: lazy(() => import("../views/break-policy-settings-view")),
     metadata: {
       title: "Break Policies",
       description: "Configure break types and rules for staff",
@@ -101,7 +95,7 @@ export const staffViews: Record<string, ViewConfig> = {
   [STAFF_ROUTES.TIME_REPORTS]: {
     id: STAFF_ROUTES.TIME_REPORTS,
     level: "root",
-    component: StaffTimeReportsView,
+    component: lazy(() => import("../views/staff-time-reports-view")),
     metadata: {
       title: "Time & Break Reports",
       description: "Review staff shifts, breaks, and compliance",
@@ -117,7 +111,7 @@ export const staffViews: Record<string, ViewConfig> = {
   [STAFF_ROUTES.TIME_CORRECTIONS]: {
     id: STAFF_ROUTES.TIME_CORRECTIONS,
     level: "root",
-    component: StaffTimeCorrectionsView,
+    component: lazy(() => import("../views/staff-time-corrections-view")),
     metadata: {
       title: "Time Corrections",
       description: "Audit and review time overrides and corrections",

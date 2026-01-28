@@ -43,13 +43,3 @@ export const LEGACY_ROUTE_MAP: Record<string, string> = {
 export function mapLegacyRoute(routeId: string): string {
   return LEGACY_ROUTE_MAP[routeId] || routeId;
 }
-
-/**
- * Check if a route is a legacy route
- *
- * @param routeId - Route identifier to check
- * @returns Whether the route is a legacy route
- */
-export function isLegacyRoute(routeId: string): boolean {
-  return routeId in LEGACY_ROUTE_MAP;
-}

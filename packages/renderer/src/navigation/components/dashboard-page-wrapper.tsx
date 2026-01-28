@@ -3,21 +3,29 @@
  *
  * Wrapper component that renders the appropriate dashboard page
  * based on user role. Uses the new navigation system.
+ * Role-specific views are lazy-loaded so they can be code-split
+ * (e.g. sales:cashier-dashboard gets its own chunk).
  */
 
+import { lazy, Suspense } from "react";
 import { useAuth } from "@/shared/hooks";
 import { getUserRoleName } from "@/shared/utils/rbac-helpers";
-import {
-  AdminDashboardView,
-  CashierDashboardView,
-  ManagerDashboardView,
-} from "@/features/dashboard";
 import { USERS_ROUTES } from "@/features/users/config/navigation";
 import { SALES_ROUTES } from "@/features/sales/config/navigation";
 
 import { useNavigation } from "../hooks/use-navigation";
 import { useDashboardNavigation } from "../hooks/use-dashboard-navigation";
-import { LoadingScreen } from "@/components/loading-screen";
+import { LoadingScreen, ViewLoadingFallback } from "@/components";
+
+const AdminDashboardView = lazy(() =>
+  import("@/features/dashboard/views/admin-dashboard-view"),
+);
+const ManagerDashboardView = lazy(() =>
+  import("@/features/dashboard/views/manager-dashboard-view"),
+);
+const CashierDashboardView = lazy(() =>
+  import("@/features/dashboard/views/cashier-dashboard-view"),
+);
 
 /**
  * Dashboard Page Wrapper
@@ -47,20 +55,30 @@ export function DashboardPageWrapper() {
   switch (role) {
     case "admin":
       return (
-        <AdminDashboardView
-          onFront={() => navigateTo(USERS_ROUTES.MANAGEMENT)}
-          onActionClick={handleActionClick}
-        />
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <AdminDashboardView
+            onFront={() => navigateTo(USERS_ROUTES.MANAGEMENT)}
+            onActionClick={handleActionClick}
+          />
+        </Suspense>
       );
 
     case "manager":
-      return <ManagerDashboardView onActionClick={handleActionClick} />;
+      return (
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <ManagerDashboardView onActionClick={handleActionClick} />
+        </Suspense>
+      );
 
     case "cashier":
       return (
-        <CashierDashboardView
-          onNewTransaction={() => handleNavigate(SALES_ROUTES.NEW_TRANSACTION)}
-        />
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <CashierDashboardView
+            onNewTransaction={() =>
+              handleNavigate(SALES_ROUTES.NEW_TRANSACTION)
+            }
+          />
+        </Suspense>
       );
 
     default:

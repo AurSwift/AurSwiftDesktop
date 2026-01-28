@@ -20,7 +20,7 @@ export function UpdateReadyToast({
   onPostpone,
 }: UpdateReadyToastProps) {
   return (
-    <div className="flex flex-col gap-3 w-full max-w-md bg-card  rounded-lg  p-4">
+    <div className="flex flex-col gap-3 w-full max-w-md bg-card rounded-lg  p-4">
       {/* Header */}
       <div className="flex items-start gap-3">
         <div className="shrink-0 mt-0.5">

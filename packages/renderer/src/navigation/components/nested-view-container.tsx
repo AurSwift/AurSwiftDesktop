@@ -5,9 +5,13 @@
  * Handles navigation between child views.
  */
 
-import { useMemo } from "react";
+import { Suspense, useMemo } from "react";
 import { useNestedNavigation } from "../hooks/use-nested-navigation";
 import { getView } from "../registry/view-registry";
+import {
+  ViewLoadErrorBoundary,
+  ViewLoadingFallback,
+} from "@/components";
 import { ViewTransitionContainer } from "@/components/view-transition-container";
 import { getLogger } from "@/shared/utils/logger";
 
@@ -60,7 +64,13 @@ export function NestedViewContainer({
         const defaultView = getView(defaultViewId);
         if (defaultView && defaultView.parentId === parentViewId) {
           const Component = defaultView.component;
-          return <Component {...currentNestedParams} onBack={goBack} />;
+          return (
+            <ViewLoadErrorBoundary viewId={defaultViewId}>
+              <Suspense fallback={<ViewLoadingFallback />}>
+                <Component {...currentNestedParams} onBack={goBack} />
+              </Suspense>
+            </ViewLoadErrorBoundary>
+          );
         }
       }
       return null;
@@ -82,7 +92,13 @@ export function NestedViewContainer({
 
     try {
       const Component = currentNestedView.component;
-      return <Component {...currentNestedParams} onBack={goBack} />;
+      return (
+        <ViewLoadErrorBoundary viewId={viewId}>
+          <Suspense fallback={<ViewLoadingFallback />}>
+            <Component {...currentNestedParams} onBack={goBack} />
+          </Suspense>
+        </ViewLoadErrorBoundary>
+      );
     } catch (error) {
       logger.error(`Error rendering nested view ${viewId}:`, error);
       return (

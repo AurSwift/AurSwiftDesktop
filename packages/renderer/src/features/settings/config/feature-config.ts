@@ -5,16 +5,12 @@
  * This is used by the navigation system and dashboard.
  */
 
+import { lazy } from "react";
 import { Settings, CreditCard, Building2 } from "lucide-react";
 import { SETTINGS_PERMISSIONS } from "./permissions";
 import { SETTINGS_ROUTES } from "./navigation";
 import type { FeatureConfig } from "@/features/dashboard/types/feature-config";
 import type { ViewConfig } from "@/navigation/types";
-
-// Import views
-import GeneralSettingsView from "../views/general-settings-view";
-import StoreConfigurationView from "../views/store-configuration-view";
-import VivaWalletSettingsView from "../views/viva-wallet-settings-view";
 
 /**
  * Settings Feature Configuration for Dashboard
@@ -62,7 +58,7 @@ export const settingsViews: Record<string, ViewConfig> = {
   [SETTINGS_ROUTES.GENERAL]: {
     id: SETTINGS_ROUTES.GENERAL,
     level: "root",
-    component: GeneralSettingsView,
+    component: lazy(() => import("../views/general-settings-view")),
     metadata: {
       title: "General Settings",
       description: "System settings",
@@ -73,7 +69,7 @@ export const settingsViews: Record<string, ViewConfig> = {
   [SETTINGS_ROUTES.STORE_CONFIGURATION]: {
     id: SETTINGS_ROUTES.STORE_CONFIGURATION,
     level: "root",
-    component: StoreConfigurationView,
+    component: lazy(() => import("../views/store-configuration-view")),
     metadata: {
       title: "Terminal Configuration",
       description: "Terminal configuration",
@@ -84,7 +80,7 @@ export const settingsViews: Record<string, ViewConfig> = {
   [SETTINGS_ROUTES.VIVA_WALLET]: {
     id: SETTINGS_ROUTES.VIVA_WALLET,
     level: "root",
-    component: VivaWalletSettingsView,
+    component: lazy(() => import("../views/viva-wallet-settings-view")),
     metadata: {
       title: "Viva Wallet Settings",
       description: "Configure Viva Wallet payment terminals",

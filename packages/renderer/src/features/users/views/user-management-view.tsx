@@ -2,7 +2,6 @@ import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Plus, Shield } from "lucide-react";
 import { useAuth } from "@/shared/hooks/use-auth";
-// import { getUserRoleName } from "@/shared/utils/rbac-helpers"; // Removed unused import
 import { useUserPermissions } from "@/features/dashboard/hooks/use-user-permissions";
 import { PERMISSIONS } from "@app/shared/constants/permissions";
 
@@ -58,7 +57,6 @@ export default function UserManagementView({ onBack }: { onBack: () => void }) {
   const { updateStaffUser, isLoading: isUpdating } = useUpdateUser();
   const { deleteStaffUser } = useDeleteUser();
 
-  // const userRole = getUserRoleName(user); // Removed unused variable
   const canManageUsers = hasPermission(PERMISSIONS.USERS_MANAGE);
 
   // Handle loading state

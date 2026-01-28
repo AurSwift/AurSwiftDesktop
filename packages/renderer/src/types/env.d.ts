@@ -24,6 +24,20 @@ interface ImportMetaEnv {
    * Defaults to production URL if not set
    */
   readonly VITE_WEB_APP_URL?: string;
+
+  /**
+   * When "true" and in dev, lazy loaders wrapped with lazyWithDebugDelay
+   * add an artificial delay so Suspense fallbacks stay visible for testing.
+   * Usage: VITE_DEBUG_FALLBACKS=true npm run start
+   */
+  readonly VITE_DEBUG_FALLBACKS?: string;
+
+  /**
+   * When "true" and in dev, lazy loaders wrapped with lazyWithDebugError
+   * reject instead of loading, so RouteErrorBoundary / ViewLoadErrorBoundary
+   * ("Failed to load" + Retry) can be tested. Usage: VITE_DEBUG_ERROR_BOUNDARY=true npm run start
+   */
+  readonly VITE_DEBUG_ERROR_BOUNDARY?: string;
 }
 
 interface ImportMeta {

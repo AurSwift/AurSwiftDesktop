@@ -5,17 +5,13 @@
  * This is used by the navigation system and dashboard.
  */
 
+import { lazy } from "react";
 import { ShoppingCart } from "lucide-react";
 import { SALES_PERMISSIONS } from "./permissions";
 import { SALES_ROUTES } from "./navigation";
 import { PERMISSIONS } from "@app/shared/constants/permissions";
 import type { FeatureConfig } from "@/features/dashboard/types/feature-config";
 import type { ViewConfig } from "@/navigation/types";
-
-// Import views from new location
-import NewTransactionView from "../views/new-transaction-view";
-import CashierDashboardView from "@/features/dashboard/views/cashier-dashboard-view";
-import SalesReportsView from "../views/sales-reports-view";
 
 /**
  * Sales Feature Configuration for Dashboard
@@ -49,7 +45,7 @@ export const salesViews: Record<string, ViewConfig> = {
   [SALES_ROUTES.NEW_TRANSACTION]: {
     id: SALES_ROUTES.NEW_TRANSACTION,
     level: "root",
-    component: NewTransactionView,
+    component: lazy(() => import("../views/new-transaction-view")),
     metadata: {
       title: "New Transaction",
       description: "Create a new sale",
@@ -61,7 +57,9 @@ export const salesViews: Record<string, ViewConfig> = {
   [SALES_ROUTES.CASHIER_DASHBOARD]: {
     id: SALES_ROUTES.CASHIER_DASHBOARD,
     level: "root",
-    component: CashierDashboardView,
+    component: lazy(() =>
+      import("@/features/dashboard/views/cashier-dashboard-view"),
+    ),
     metadata: {
       title: "Cashier Dashboard",
       description: "Cashier dashboard",
@@ -72,7 +70,7 @@ export const salesViews: Record<string, ViewConfig> = {
   [SALES_ROUTES.SALES_REPORTS]: {
     id: SALES_ROUTES.SALES_REPORTS,
     level: "root",
-    component: SalesReportsView,
+    component: lazy(() => import("../views/sales-reports-view")),
     metadata: {
       title: "Sales Reports",
       description: "Comprehensive sales analytics and reports",

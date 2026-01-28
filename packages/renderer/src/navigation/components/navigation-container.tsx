@@ -5,9 +5,13 @@
  * Renders the current view based on navigation state.
  */
 
-import { useMemo } from "react";
+import { Suspense, useMemo } from "react";
 import { useNavigation } from "../hooks/use-navigation";
 import { getView } from "../registry/view-registry";
+import {
+  ViewLoadErrorBoundary,
+  ViewLoadingFallback,
+} from "@/components";
 import { ViewTransitionContainer } from "@/components/view-transition-container";
 import { getLogger } from "@/shared/utils/logger";
 
@@ -53,7 +57,13 @@ export function NavigationContainer() {
         ...currentParams,
         onBack: goBack, // Add onBack prop for backward compatibility
       };
-      return <Component {...mergedParams} />;
+      return (
+        <ViewLoadErrorBoundary viewId={currentViewId}>
+          <Suspense fallback={<ViewLoadingFallback />}>
+            <Component {...mergedParams} />
+          </Suspense>
+        </ViewLoadErrorBoundary>
+      );
     } catch (error) {
       logger.error(`Error rendering view ${currentViewId}:`, error);
       return (
