@@ -115,8 +115,6 @@ export function PaymentPanel({
     }
   }, [paymentMethod?.type, transactionStatus, resetTransaction]);
 
-  if (!paymentStep) return null;
-
   const handleVivaWalletCancel = async () => {
     if (transactionStatus) {
       await cancelTransaction();
@@ -126,7 +124,7 @@ export function PaymentPanel({
   };
 
   return (
-    <div className="animate-slide-up">
+    <div className="animate-slide-left">
       <Card className="bg-white border-slate-200 shadow-sm">
         <CardHeader className="bg-slate-50 py-2 sm:py-3 px-4 sm:px-6">
           <CardTitle className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">

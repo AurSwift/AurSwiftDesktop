@@ -54,6 +54,7 @@ import {
   QuickActionButtons,
   NumericKeypad,
 } from "../components/shared";
+import { AnimatePresence } from "@/components/animate-presence";
 import {
   AgeVerificationModal,
   BatchSelectionModal,
@@ -1366,22 +1367,6 @@ export function NewTransactionView({
             onItemSelect={handleCartItemSelect}
           />
 
-          {/* Payment Panel */}
-          <PaymentPanel
-            paymentStep={payment.paymentStep}
-            paymentMethod={payment.paymentMethod}
-            total={cart.total}
-            cashAmount={payment.cashAmount}
-            cardReaderReady={true}
-            onPaymentMethodSelect={payment.handlePayment}
-            onCashAmountChange={payment.setCashAmount}
-            onCompleteTransaction={() => payment.completeTransaction()}
-            onCancel={() => {
-              payment.setPaymentStep(false);
-              payment.setPaymentMethod(null);
-            }}
-          />
-
           {/* Transaction Complete Message */}
           {payment.transactionComplete && !payment.showReceiptOptions && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-70 p-4 animate-fade-in">
@@ -1408,85 +1393,102 @@ export function NewTransactionView({
             </div>
           )}
 
-          {/* Numeric Keypad */}
-          <div className="shrink-0">
-            <NumericKeypad
-              onInput={async (value) => {
-                // Handle weight input
-                if (
-                  weightInput.selectedWeightProduct &&
-                  !categoryPriceInput.pendingCategory
-                ) {
-                  const weightValue = weightInput.handleWeightInput(value);
-                  if (
-                    value === "Enter" &&
-                    weightValue !== undefined &&
-                    weightValue > 0
-                  ) {
-                    await handleProductClick(
-                      weightInput.selectedWeightProduct,
-                      weightValue,
-                    );
-                    setShowScaleDisplay(false); // Reset scale display after adding via keypad
-                  }
-                  return;
-                }
-
-                // Handle category price input
-                if (categoryPriceInput.pendingCategory) {
-                  const priceValue = categoryPriceInput.handlePriceInput(value);
-                  if (
-                    value === "Enter" &&
-                    priceValue !== undefined &&
-                    priceValue > 0
-                  ) {
-                    await cart.addCategoryToCart(
-                      categoryPriceInput.pendingCategory!,
-                      priceValue,
-                    );
-                    categoryPriceInput.resetPriceInput();
-                  }
-                  return;
-                }
-
-                // Handle other numeric keypad input
-              }}
-              keysOverride={[
-                ["7", "8", "9", "Enter"],
-                ["4", "5", "6", "Clear"],
-                [
-                  "1",
-                  "2",
-                  "3",
-                  weightInput.selectedWeightProduct &&
-                  !categoryPriceInput.pendingCategory ? (
-                    "."
-                  ) : categoryPriceInput.pendingCategory ? (
-                    "."
-                  ) : !payment.paymentStep ? (
-                    <Button
-                      className="w-full h-full min-h-[44px] py-3 sm:py-4 font-semibold text-sm sm:text-lg rounded transition-colors bg-sky-600 hover:bg-sky-700 text-white touch-manipulation"
-                      style={{ minHeight: 44, minWidth: 0 }}
-                      onClick={() => payment.setPaymentStep(true)}
-                      disabled={
-                        cart.cartItems.length === 0 || !cart.cartSession
+          {/* Payment Panel / Numeric Keypad Container with Transition */}
+          <div className="relative shrink-0 overflow-hidden">
+            <AnimatePresence mode="wait" exitAnimation="slide-left-exit" exitDuration={300}>
+              {payment.paymentStep && (
+                <PaymentPanel
+                  key="payment-panel"
+                  paymentStep={payment.paymentStep}
+                  paymentMethod={payment.paymentMethod}
+                  total={cart.total}
+                  cashAmount={payment.cashAmount}
+                  cardReaderReady={true}
+                  onPaymentMethodSelect={payment.handlePayment}
+                  onCashAmountChange={payment.setCashAmount}
+                  onCompleteTransaction={() => payment.completeTransaction()}
+                  onCancel={() => {
+                    payment.setPaymentStep(false);
+                    payment.setPaymentMethod(null);
+                  }}
+                />
+              )}
+            </AnimatePresence>
+            <AnimatePresence mode="wait" exitAnimation="slide-right-exit" exitDuration={300}>
+              {!payment.paymentStep && (
+                <div key="numeric-keypad" className="shrink-0 animate-slide-right">
+                  <NumericKeypad
+                    onInput={async (value) => {
+                      // Handle weight input
+                      if (
+                        weightInput.selectedWeightProduct &&
+                        !categoryPriceInput.pendingCategory
+                      ) {
+                        const weightValue = weightInput.handleWeightInput(value);
+                        if (
+                          value === "Enter" &&
+                          weightValue !== undefined &&
+                          weightValue > 0
+                        ) {
+                          await handleProductClick(
+                            weightInput.selectedWeightProduct,
+                            weightValue,
+                          );
+                          setShowScaleDisplay(false); // Reset scale display after adding via keypad
+                        }
+                        return;
                       }
-                    >
-                      Checkout
-                    </Button>
-                  ) : (
-                    <Button
-                      className="w-full h-full min-h-[44px] py-3 sm:py-4 font-semibold text-sm sm:text-lg rounded transition-colors bg-slate-200 hover:bg-slate-300 text-slate-700 touch-manipulation"
-                      style={{ minHeight: 44, minWidth: 0 }}
-                      onClick={() => payment.setPaymentStep(false)}
-                    >
-                      Back to Cart
-                    </Button>
-                  ),
-                ],
-                ["0", "00", "", ""],
-              ]}
-            />
+
+                      // Handle category price input
+                      if (categoryPriceInput.pendingCategory) {
+                        const priceValue = categoryPriceInput.handlePriceInput(value);
+                        if (
+                          value === "Enter" &&
+                          priceValue !== undefined &&
+                          priceValue > 0
+                        ) {
+                          await cart.addCategoryToCart(
+                            categoryPriceInput.pendingCategory!,
+                            priceValue,
+                          );
+                          categoryPriceInput.resetPriceInput();
+                        }
+                        return;
+                      }
+
+                      // Handle other numeric keypad input
+                    }}
+                    keysOverride={[
+                      ["7", "8", "9", "Enter"],
+                      ["4", "5", "6", "Clear"],
+                      [
+                        "1",
+                        "2",
+                        "3",
+                        weightInput.selectedWeightProduct &&
+                        !categoryPriceInput.pendingCategory ? (
+                          "."
+                        ) : categoryPriceInput.pendingCategory ? (
+                          "."
+                        ) : (
+                          <Button
+                            className="w-full h-full min-h-[44px] py-3 sm:py-4 font-semibold text-sm sm:text-lg rounded transition-colors bg-sky-600 hover:bg-sky-700 text-white touch-manipulation"
+                            style={{ minHeight: 44, minWidth: 0 }}
+                            onClick={() => payment.setPaymentStep(true)}
+                            disabled={
+                              cart.cartItems.length === 0 || !cart.cartSession
+                            }
+                          >
+                            Checkout
+                          </Button>
+                        ),
+                      ],
+                      ["0", "00", "", ""],
+                    ]}
+                  />
+                </div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>
