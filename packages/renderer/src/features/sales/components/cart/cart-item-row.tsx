@@ -6,19 +6,16 @@ import type { CartItemWithProduct } from "@/types";
 
 interface CartItemRowProps {
   item: CartItemWithProduct;
-  onRemove: (itemId: string) => void;
   isSelected?: boolean;
   onSelect?: () => void;
 }
 
 export function CartItemRow({
   item,
-  onRemove,
   isSelected = false,
   onSelect,
 }: CartItemRowProps) {
   const handleRowClick = (e: React.MouseEvent<HTMLTableRowElement>) => {
-    // Don't trigger selection if clicking on the remove button
     if (
       (e.target as HTMLElement).closest('button') ||
       (e.target as HTMLElement).tagName === 'BUTTON'

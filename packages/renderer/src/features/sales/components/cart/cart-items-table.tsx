@@ -26,7 +26,7 @@ interface CartItemsTableProps {
 export function CartItemsTable({
   items,
   loading,
-  onRemove,
+  onRemove: _onRemove,
   selectedItemId,
   onItemSelect,
 }: CartItemsTableProps) {
@@ -89,7 +89,6 @@ export function CartItemsTable({
                   <CartItemRow
                     key={item.id}
                     item={item}
-                    onRemove={onRemove}
                     isSelected={selectedItemId === item.id}
                     onSelect={onItemSelect ? () => onItemSelect(item) : undefined}
                   />

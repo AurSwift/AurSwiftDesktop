@@ -33,7 +33,7 @@ interface PaymentPanelProps {
 }
 
 export function PaymentPanel({
-  paymentStep,
+  paymentStep: _paymentStep,
   paymentMethod,
   total,
   cashAmount,
