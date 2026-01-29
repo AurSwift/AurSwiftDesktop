@@ -65,13 +65,13 @@ jobs:
       APP_FULL_VERSION: ${{ steps.version.outputs.APP_FULL_VERSION }}
       SHOULD_RELEASE: ${{ steps.version.outputs.SHOULD_RELEASE }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           persist-credentials: true
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "22.x"
           # Disable setup-node cache to avoid stale node_modules from different Node versions
@@ -203,10 +203,10 @@ jobs:
     needs: prepare
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "22.x"
           cache: "npm"
@@ -260,13 +260,13 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           persist-credentials: true
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "22.x"
           # Disable setup-node cache to avoid stale node_modules from different Node versions
@@ -287,7 +287,7 @@ jobs:
           PUPPETEER_SKIP_DOWNLOAD: 1
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: windows-${{ inputs.distribution-channel || 'main' }}
           path: dist

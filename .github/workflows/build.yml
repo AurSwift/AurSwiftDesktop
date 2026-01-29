@@ -48,11 +48,11 @@ jobs:
       MSVS-VERSION: 2022
       GYP-MSVS-VERSION: 2022
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       # Setup Node.js FIRST - must run before any cache or npm operations
       - name: Setup Node.js 22 for native module compatibility
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "22.x"
           # Disable setup-node cache to avoid stale node_modules from different Node versions
@@ -73,13 +73,13 @@ jobs:
         uses: microsoft/setup-msbuild@v2
 
       - name: Setup Python for node-gyp
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.x"
 
       # Cache global npm packages (include node version in key)
       - name: Cache global npm packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ${{ runner.temp }}/npm-cache
@@ -205,7 +205,7 @@ jobs:
       # Enhanced caching for node_modules including native modules (with Node version in key)
       - name: Cache node_modules and native builds
         id: cache-deps
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             node_modules
@@ -316,7 +316,7 @@ jobs:
 
       # Cache Vite build outputs to speed up subsequent builds
       - name: Cache Vite build outputs
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             packages/renderer/dist
@@ -414,7 +414,7 @@ jobs:
           subject-path: "dist/aurswift-*, dist/latest*.yml"
 
       - name: Upload compiled app
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: windows-${{inputs.distribution-channel}}
           path: dist
