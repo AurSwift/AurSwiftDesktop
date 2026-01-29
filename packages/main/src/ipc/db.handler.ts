@@ -5,6 +5,11 @@ import path from "path";
 import Database from "better-sqlite3";
 import { getDatabase, closeDatabase } from "../database/index.js";
 import { getLogger } from "../utils/logger.js";
+import {
+  cleanupAllBackups,
+  getBackupStorageInfo,
+} from "../database/utils/backup-cleanup.js";
+import { isDevelopmentMode } from "../database/utils/environment.js";
 
 const logger = getLogger("dbHandlers");
 
@@ -15,6 +20,7 @@ const logger = getLogger("dbHandlers");
 interface LicenseBackupData {
   licenseActivation: any | null;
   licenseValidationLogs: any[];
+  receiptEmailSettings: Array<{ key: string; value: string }> | null;
 }
 
 /**
@@ -28,20 +34,22 @@ function extractLicenseData(dbPath: string): LicenseBackupData | null {
     // Check if license tables exist
     const tables = db
       .prepare(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('license_activation', 'license_validation_log')"
+        "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('license_activation', 'license_validation_log')",
       )
       .all() as Array<{ name: string }>;
 
     const tableNames = tables.map((t) => t.name);
     let licenseActivation = null;
     let licenseValidationLogs: any[] = [];
+    let receiptEmailSettings: Array<{ key: string; value: string }> | null =
+      null;
 
     // Extract license activation (only active one)
     if (tableNames.includes("license_activation")) {
       try {
         licenseActivation = db
           .prepare(
-            "SELECT * FROM license_activation WHERE is_active = 1 LIMIT 1"
+            "SELECT * FROM license_activation WHERE is_active = 1 LIMIT 1",
           )
           .get();
 
@@ -49,7 +57,7 @@ function extractLicenseData(dbPath: string): LicenseBackupData | null {
           logger.info(
             `Extracted license activation for key: ${(
               licenseActivation as any
-            ).license_key?.substring(0, 15)}...`
+            ).license_key?.substring(0, 15)}...`,
           );
         }
       } catch (err) {
@@ -62,25 +70,48 @@ function extractLicenseData(dbPath: string): LicenseBackupData | null {
       try {
         licenseValidationLogs = db
           .prepare(
-            "SELECT * FROM license_validation_log ORDER BY timestamp DESC LIMIT 100"
+            "SELECT * FROM license_validation_log ORDER BY timestamp DESC LIMIT 100",
           )
           .all();
 
         logger.info(
-          `Extracted ${licenseValidationLogs.length} license validation logs`
+          `Extracted ${licenseValidationLogs.length} license validation logs`,
         );
       } catch (err) {
         logger.warn("Could not extract license validation logs:", err);
       }
     }
 
+    // Extract receipt email settings (if present) so they survive imports.
+    if (tableNames.includes("app_settings")) {
+      try {
+        const rows = db
+          .prepare(
+            "SELECT key, value FROM app_settings WHERE key LIKE 'receipt_email:%' ORDER BY key ASC",
+          )
+          .all() as Array<{ key: string; value: string }>;
+        receiptEmailSettings = rows.length > 0 ? rows : null;
+        if (receiptEmailSettings) {
+          logger.info(
+            `Extracted ${receiptEmailSettings.length} receipt email setting(s) from app_settings`,
+          );
+        }
+      } catch (err) {
+        logger.warn("Could not extract receipt email settings:", err);
+      }
+    }
+
     db.close();
 
-    if (!licenseActivation && licenseValidationLogs.length === 0) {
+    if (
+      !licenseActivation &&
+      licenseValidationLogs.length === 0 &&
+      !receiptEmailSettings
+    ) {
       return null;
     }
 
-    return { licenseActivation, licenseValidationLogs };
+    return { licenseActivation, licenseValidationLogs, receiptEmailSettings };
   } catch (error) {
     logger.error("Failed to extract license data:", error);
     return null;
@@ -92,7 +123,7 @@ function extractLicenseData(dbPath: string): LicenseBackupData | null {
  */
 function restoreLicenseData(
   dbPath: string,
-  backupData: LicenseBackupData
+  backupData: LicenseBackupData,
 ): boolean {
   try {
     const db = new Database(dbPath);
@@ -106,7 +137,7 @@ function restoreLicenseData(
         // First, deactivate any existing activations in the imported database
         try {
           db.prepare(
-            "UPDATE license_activation SET is_active = 0 WHERE is_active = 1"
+            "UPDATE license_activation SET is_active = 0 WHERE is_active = 1",
           ).run();
         } catch (err) {
           // Table might not exist - will be created by upsert
@@ -115,13 +146,13 @@ function restoreLicenseData(
         // Check if license_activation table exists, create if not
         const tableExists = db
           .prepare(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='license_activation'"
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='license_activation'",
           )
           .get();
 
         if (!tableExists) {
           logger.warn(
-            "license_activation table doesn't exist in imported database - skipping restoration"
+            "license_activation table doesn't exist in imported database - skipping restoration",
           );
           logger.info("License will need to be re-activated after import");
         } else {
@@ -152,7 +183,7 @@ function restoreLicenseData(
                 last_validated_at = ?,
                 updated_at = ?
               WHERE license_key = ?
-            `
+            `,
             ).run(
               activation.machine_id_hash,
               activation.terminal_name,
@@ -169,7 +200,7 @@ function restoreLicenseData(
               activation.last_heartbeat,
               activation.last_validated_at,
               Date.now(),
-              activation.license_key
+              activation.license_key,
             );
           } else {
             // Insert new record
@@ -181,7 +212,7 @@ function restoreLicenseData(
                 is_active, subscription_status, expires_at, trial_end,
                 activated_at, last_heartbeat, last_validated_at, created_at, updated_at
               ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?)
-            `
+            `,
             ).run(
               activation.license_key,
               activation.machine_id_hash,
@@ -199,15 +230,15 @@ function restoreLicenseData(
               activation.last_heartbeat,
               activation.last_validated_at,
               activation.created_at || Date.now(),
-              Date.now()
+              Date.now(),
             );
           }
 
           logger.info(
             `Restored license activation for key: ${activation.license_key?.substring(
               0,
-              15
-            )}...`
+              15,
+            )}...`,
           );
         }
       }
@@ -216,7 +247,7 @@ function restoreLicenseData(
       if (backupData.licenseValidationLogs.length > 0) {
         const logTableExists = db
           .prepare(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='license_validation_log'"
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='license_validation_log'",
           )
           .get();
 
@@ -236,7 +267,7 @@ function restoreLicenseData(
                 log.machine_id_hash,
                 log.error_message,
                 log.server_response,
-                log.timestamp
+                log.timestamp,
               );
             } catch (err) {
               // Ignore duplicate entries
@@ -244,7 +275,41 @@ function restoreLicenseData(
           }
 
           logger.info(
-            `Restored ${backupData.licenseValidationLogs.length} validation log entries`
+            `Restored ${backupData.licenseValidationLogs.length} validation log entries`,
+          );
+        }
+      }
+
+      // Restore receipt email settings (if available)
+      if (
+        backupData.receiptEmailSettings &&
+        backupData.receiptEmailSettings.length > 0
+      ) {
+        const appSettingsExists = db
+          .prepare(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='app_settings'",
+          )
+          .get();
+
+        if (appSettingsExists) {
+          const now = Date.now();
+          const upsert = db.prepare(
+            "INSERT OR REPLACE INTO app_settings (key, value, created_at, updated_at) VALUES (?, ?, ?, ?)",
+          );
+
+          for (const row of backupData.receiptEmailSettings) {
+            try {
+              upsert.run(row.key, row.value, now, now);
+            } catch (err) {
+              logger.warn(
+                `Failed to restore app_settings key ${row.key}:`,
+                err,
+              );
+            }
+          }
+
+          logger.info(
+            `Restored ${backupData.receiptEmailSettings.length} receipt email setting(s) to app_settings`,
           );
         }
       }
@@ -351,6 +416,10 @@ export function registerDbHandlers() {
       const db = await getDatabase();
       const info = db.getDatabaseInfo();
 
+      // Preserve receipt email settings across empty operations
+      const preservedReceiptEmailSettings =
+        db.settings.getSettingsByPrefix("receipt_email:");
+
       // Create automatic backup before emptying
       const timestamp = new Date()
         .toISOString()
@@ -362,7 +431,7 @@ export function registerDbHandlers() {
         .replace(/:/g, "-");
       const backupPath = info.path.replace(
         ".db",
-        `-backup-before-empty-${timestamp}-${timeStr}.db`
+        `-backup-before-empty-${timestamp}-${timeStr}.db`,
       );
 
       // Create backup
@@ -372,6 +441,20 @@ export function registerDbHandlers() {
       // Get backup file stats
       const backupStats = await fs.stat(backupPath);
       const backupSize = backupStats.size;
+
+      // Cleanup old empty operation backups (keep last 3)
+      try {
+        cleanupAllBackups(
+          info.path,
+          { emptyOperation: 3 },
+          !isDevelopmentMode(),
+        );
+      } catch (cleanupError) {
+        logger.warn(
+          "Failed to cleanup old empty operation backups:",
+          cleanupError,
+        );
+      }
 
       // Empty all tables using the public method
       const result = await db.emptyAllTables();
@@ -387,10 +470,27 @@ export function registerDbHandlers() {
       try {
         await db.reseedDatabase();
         logger.info("✅ Database reseeded after emptying");
+
+        // Restore preserved receipt email settings after reseed
+        if (preservedReceiptEmailSettings.length > 0) {
+          for (const s of preservedReceiptEmailSettings) {
+            try {
+              db.settings.setSetting(s.key, s.value);
+            } catch (err) {
+              logger.warn(
+                `Failed to restore preserved email setting ${s.key}:`,
+                err,
+              );
+            }
+          }
+          logger.info(
+            `✅ Restored ${preservedReceiptEmailSettings.length} receipt email setting(s) after empty`,
+          );
+        }
       } catch (seedError) {
         logger.error(
           "⚠️  Failed to reseed database after emptying:",
-          seedError
+          seedError,
         );
         // Don't fail the entire operation if reseeding fails
         // The database is empty and will be reseeded on next app start
@@ -419,6 +519,15 @@ export function registerDbHandlers() {
 
   // Database Import IPC Handler - Import database from a file
   ipcMain.handle("database:import", async (event) => {
+    // Helper to send progress updates to renderer
+    const sendProgress = (stage: string, percent: number, message: string) => {
+      event.sender.send("database:import:progress", {
+        stage,
+        percent,
+        message,
+      });
+    };
+
     try {
       // Show open file dialog to select database file
       const result = await dialog.showOpenDialog({
@@ -447,10 +556,14 @@ export function registerDbHandlers() {
       const importPath = result.filePaths[0];
       logger.info("Importing database from:", importPath);
 
+      // Stage 1: Validating file
+      sendProgress("validating", 5, "Checking file accessibility...");
+
       // Verify the file exists and is readable
       try {
         await fs.access(importPath);
       } catch (error) {
+        sendProgress("error", 0, "File not accessible");
         return {
           success: false,
           message: "Selected file does not exist or is not accessible",
@@ -475,6 +588,7 @@ export function registerDbHandlers() {
       }
 
       // Validate database file structure
+      sendProgress("validating", 15, "Validating database structure...");
       logger.info("Validating database structure...");
       try {
         const testDb = new Database(importPath, { readonly: true });
@@ -509,18 +623,18 @@ export function registerDbHandlers() {
         // This allows importing older backups that pre-date the license system
 
         const missingTables = requiredTables.filter(
-          (table) => !tableNames.includes(table)
+          (table) => !tableNames.includes(table),
         );
 
         if (missingTables.length > 0) {
           testDb.close();
           logger.warn(
-            `Database missing required tables: ${missingTables.join(", ")}`
+            `Database missing required tables: ${missingTables.join(", ")}`,
           );
           return {
             success: false,
             message: `Invalid aurswift database: Missing required tables (${missingTables.join(
-              ", "
+              ", ",
             )}). This may not be an aurswift database or it may be corrupted.`,
           };
         }
@@ -534,14 +648,16 @@ export function registerDbHandlers() {
 
           if (userCount.count === 0) {
             testDb.close();
+            sendProgress("error", 0, "Cannot import empty database");
             return {
               success: false,
               message:
-                "Database has no users. Cannot import an empty database. Please use the 'Empty Database' feature instead, or ensure the database you're importing has at least one user.",
+                "Cannot import an empty database (no users found). An AuraSwift database must contain at least one user account to be imported. If you want to start fresh, use the 'Empty Database' feature instead which will reset your current database while preserving the default admin account.",
             };
           }
         } catch (userCheckError) {
           testDb.close();
+          sendProgress("error", 0, "Database validation failed");
           logger.error("Failed to check users table:", userCheckError);
           return {
             success: false,
@@ -553,7 +669,7 @@ export function registerDbHandlers() {
         testDb.close();
 
         logger.info(
-          `Database validation passed. Found ${tables.length} tables with ${requiredTables.length} required tables present.`
+          `Database validation passed. Found ${tables.length} tables with ${requiredTables.length} required tables present.`,
         );
       } catch (validationError) {
         logger.error("Database validation failed:", validationError);
@@ -582,7 +698,7 @@ export function registerDbHandlers() {
         .replace(/:/g, "-");
       const backupPath = info.path.replace(
         ".db",
-        `-backup-before-import-${timestamp}-${timeStr}.db`
+        `-backup-before-import-${timestamp}-${timeStr}.db`,
       );
 
       // Backup current database
@@ -590,21 +706,46 @@ export function registerDbHandlers() {
       let licenseBackup: LicenseBackupData | null = null;
 
       if (info.exists) {
+        sendProgress(
+          "backing-up",
+          35,
+          "Creating backup of current database...",
+        );
         try {
           await fs.copyFile(info.path, backupPath);
           logger.info(`Current database backed up to: ${backupPath}`);
           backupCreated = true;
 
+          // Cleanup old import operation backups (keep last 3)
+          try {
+            cleanupAllBackups(
+              info.path,
+              { importOperation: 3 },
+              !isDevelopmentMode(),
+            );
+          } catch (cleanupError) {
+            logger.warn(
+              "Failed to cleanup old import operation backups:",
+              cleanupError,
+            );
+          }
+
           // 🔐 CRITICAL: Extract license data BEFORE replacing database
           // This ensures license persists across database imports
+          sendProgress("backing-up", 45, "Extracting license data...");
           logger.info("Extracting license data from current database...");
           licenseBackup = extractLicenseData(info.path);
           if (licenseBackup?.licenseActivation) {
             logger.info(
-              "✅ License data extracted - will be restored after import"
+              "✅ License data extracted - will be restored after import",
             );
           } else {
             logger.info("No active license found in current database");
+          }
+          if (licenseBackup?.receiptEmailSettings?.length) {
+            logger.info(
+              "✅ Receipt email settings extracted - will be restored after import",
+            );
           }
         } catch (backupError) {
           logger.error("Failed to create backup:", backupError);
@@ -620,6 +761,7 @@ export function registerDbHandlers() {
       }
 
       // Close current database connection
+      sendProgress("copying", 55, "Closing current database connection...");
       closeDatabase();
       logger.info("Database connection closed");
 
@@ -654,6 +796,7 @@ export function registerDbHandlers() {
       }
 
       // Copy imported file to database location
+      sendProgress("copying", 65, "Copying database file...");
       try {
         await fs.copyFile(importPath, info.path);
         logger.info(`Database imported from: ${importPath}`);
@@ -675,6 +818,7 @@ export function registerDbHandlers() {
 
       // Verify the imported database can be opened and is valid
       // This ensures the file is not corrupted and will work when the window reloads
+      sendProgress("reinitializing", 75, "Verifying imported database...");
       logger.info("Verifying imported database can be opened...");
       try {
         const testDb = new Database(info.path, { readonly: true });
@@ -686,7 +830,7 @@ export function registerDbHandlers() {
         testDb.close();
 
         logger.info(
-          `✅ Imported database verified: ${userCount.count} users found`
+          `✅ Imported database verified: ${userCount.count} users found`,
         );
 
         if (userCount.count === 0) {
@@ -714,35 +858,52 @@ export function registerDbHandlers() {
       }
 
       logger.info(
-        "Database file imported and verified successfully. Reinitializing connection..."
+        "Database file imported and verified successfully. Reinitializing connection...",
       );
 
       // CRITICAL: Reinitialize the database immediately so it's ready for API calls
       // The renderer will make auth/settings calls before the reload happens
       // We need a fresh connection to the new database file RIGHT NOW
+      sendProgress(
+        "reinitializing",
+        85,
+        "Reinitializing database connection...",
+      );
       try {
         await getDatabase();
         logger.info(
-          "✅ Database reinitialized successfully with imported file"
+          "✅ Database reinitialized successfully with imported file",
         );
 
         // 🔐 CRITICAL: Restore license data AFTER database is reinitialized
         // This ensures user doesn't need to re-enter license key after import
         if (licenseBackup?.licenseActivation) {
+          sendProgress("restoring-license", 92, "Restoring license data...");
           logger.info("Restoring license data to imported database...");
           const restored = restoreLicenseData(info.path, licenseBackup);
           if (restored) {
             logger.info("✅ License data restored successfully");
           } else {
             logger.warn(
-              "⚠️ License restoration failed - user may need to re-activate"
+              "⚠️ License restoration failed - user may need to re-activate",
             );
+          }
+        } else if (licenseBackup?.receiptEmailSettings?.length) {
+          // Even if there is no license, we may still want to restore receipt email settings.
+          logger.info(
+            "Restoring receipt email settings to imported database...",
+          );
+          const restored = restoreLicenseData(info.path, licenseBackup);
+          if (restored) {
+            logger.info("✅ Receipt email settings restored successfully");
+          } else {
+            logger.warn("⚠️ Receipt email settings restoration failed");
           }
         }
       } catch (reinitError) {
         logger.error(
           "❌ Failed to reinitialize database after import:",
-          reinitError
+          reinitError,
         );
 
         // Restore backup on failure
@@ -755,7 +916,7 @@ export function registerDbHandlers() {
           } catch (restoreError) {
             logger.error(
               "Failed to restore and reinitialize backup:",
-              restoreError
+              restoreError,
             );
           }
         }
@@ -767,6 +928,12 @@ export function registerDbHandlers() {
           }. Your original database has been restored.`,
         };
       }
+
+      // Send complete progress and ready signal
+      sendProgress("complete", 100, "Database import complete!");
+
+      // Notify renderer that database is fully ready for reload
+      event.sender.send("database:import:ready");
 
       // Return success (window will reload from renderer side to refresh UI)
       return {
@@ -791,7 +958,7 @@ export function registerDbHandlers() {
       } catch (reinitError) {
         logger.error(
           "Failed to reinitialize database after error:",
-          reinitError
+          reinitError,
         );
       }
 
@@ -813,6 +980,115 @@ export function registerDbHandlers() {
         success: false,
         version: "unknown",
         error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  });
+
+  // Manual Backup Cleanup IPC Handler - Clean up old backup files
+  ipcMain.handle(
+    "database:cleanup-backups",
+    async (
+      event,
+      options?: {
+        customPolicy?: Record<string, number>;
+        dryRun?: boolean;
+      },
+    ) => {
+      try {
+        const db = await getDatabase();
+        const info = db.getDatabaseInfo();
+        const isProduction = !isDevelopmentMode();
+
+        logger.info("🧹 Manual backup cleanup requested");
+
+        if (options?.dryRun) {
+          logger.info("   Running in dry-run mode (no files will be deleted)");
+        }
+
+        // If dry run, just get storage info
+        if (options?.dryRun) {
+          const storageInfo = getBackupStorageInfo(info.path, 500);
+
+          return {
+            success: true,
+            dryRun: true,
+            storageInfo: {
+              totalSize: storageInfo.totalBackupSize,
+              totalCount: storageInfo.totalBackupCount,
+              backupsByType: Object.fromEntries(storageInfo.backupsByType),
+              warnings: storageInfo.warnings,
+              exceedsThreshold: storageInfo.exceedsThreshold,
+            },
+            message: "Dry run completed - no files deleted",
+          };
+        }
+
+        // Run actual cleanup
+        const summary = cleanupAllBackups(
+          info.path,
+          options?.customPolicy,
+          isProduction,
+        );
+
+        return {
+          success: true,
+          dryRun: false,
+          summary: {
+            totalFilesFound: summary.totalFilesFound,
+            totalFilesDeleted: summary.totalFilesDeleted,
+            totalBytesFreed: summary.totalBytesFreed,
+            byType: summary.backupTypes.map((t) => ({
+              type: t.type,
+              filesFound: t.filesFound,
+              filesDeleted: t.filesDeleted,
+              bytesFreed: t.bytesFreed,
+            })),
+            errors: summary.errors,
+            warnings: summary.warnings,
+          },
+          message: `Cleanup completed: Deleted ${summary.totalFilesDeleted} files, freed ${(summary.totalBytesFreed / (1024 * 1024)).toFixed(2)} MB`,
+        };
+      } catch (error) {
+        logger.error("Backup cleanup error:", error);
+        return {
+          success: false,
+          message:
+            error instanceof Error
+              ? error.message
+              : "Failed to cleanup backups",
+        };
+      }
+    },
+  );
+
+  // Get Backup Storage Info IPC Handler - Get information about backup storage
+  ipcMain.handle("database:backup-storage-info", async () => {
+    try {
+      const db = await getDatabase();
+      const info = db.getDatabaseInfo();
+
+      const storageInfo = getBackupStorageInfo(info.path, 500);
+
+      return {
+        success: true,
+        data: {
+          totalSize: storageInfo.totalBackupSize,
+          totalSizeMB: (storageInfo.totalBackupSize / (1024 * 1024)).toFixed(2),
+          totalCount: storageInfo.totalBackupCount,
+          backupsByType: Object.fromEntries(storageInfo.backupsByType),
+          warnings: storageInfo.warnings,
+          exceedsThreshold: storageInfo.exceedsThreshold,
+          thresholdMB: 500,
+        },
+      };
+    } catch (error) {
+      logger.error("Error getting backup storage info:", error);
+      return {
+        success: false,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to get backup storage info",
       };
     }
   });

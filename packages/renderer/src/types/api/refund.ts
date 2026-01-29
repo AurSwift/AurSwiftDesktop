@@ -15,6 +15,12 @@ export interface RefundAPI {
     businessId: string,
     limit?: number
   ) => Promise<APIResponse>;
+  getTransactionsByDateRange: (
+    businessId: string,
+    startDate: string,
+    endDate: string,
+    limit?: number
+  ) => Promise<APIResponse>;
   getShiftTransactions: (
     shiftId: string,
     limit?: number

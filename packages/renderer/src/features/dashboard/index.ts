@@ -43,10 +43,5 @@ export type {
   FeatureCategory,
 } from "./types";
 
-// Views
-export {
-  DashboardView,
-  AdminDashboardView,
-  CashierDashboardView,
-  ManagerDashboardView,
-} from "./views";
+// Views (DashboardView only; role-specific views are lazy-loaded via DashboardPageWrapper)
+export { DashboardView } from "./views";

@@ -282,7 +282,7 @@ export class ScheduleManager {
   /**
    * Auto-complete schedules that have passed their end time
    * Should be called periodically (e.g., every 30 minutes)
-   * 
+   *
    * @param graceMinutes - Minutes after schedule end to wait before auto-completing (default: 30)
    * @returns Number of schedules auto-completed
    */
@@ -308,9 +308,9 @@ export class ScheduleManager {
 
     // Update all expired schedules to 'completed'
     const scheduleIds = expiredSchedules.map((s) => s.id);
-    
+
     for (const id of scheduleIds) {
-      this.updateScheduleStatus(id, 'completed');
+      this.updateScheduleStatus(id, "completed");
     }
 
     return scheduleIds.length;

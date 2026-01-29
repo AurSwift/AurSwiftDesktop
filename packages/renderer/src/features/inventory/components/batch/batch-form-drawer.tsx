@@ -33,7 +33,7 @@ import {
   AdaptiveKeyboard,
   AdaptiveFormField,
 } from "@/features/adaptive-keyboard";
-import { useKeyboardWithRHF } from "@/features/adaptive-keyboard/hooks/use-keyboard-with-react-hook-form";
+import { useKeyboardWithRHF } from "@/shared/hooks";
 import type {
   BatchFormData,
   BatchUpdateData,
@@ -151,6 +151,13 @@ const BatchFormDrawer: React.FC<BatchFormDrawerProps> = ({
     } as any, // Cast needed due to union type BatchFormData | BatchUpdateData
   });
 
+  // Close keyboard when drawer closes
+  useEffect(() => {
+    if (!isOpen) {
+      keyboard.handleCloseKeyboard();
+    }
+  }, [isOpen, keyboard]);
+
   // Update form when product selection changes
   useEffect(() => {
     if (!isOpen) {
@@ -213,8 +220,8 @@ const BatchFormDrawer: React.FC<BatchFormDrawerProps> = ({
       onOpenChange={(open) => !open && handleClose()}
       direction="right"
     >
-      <DrawerContent className="h-full w-[600px] mt-0 rounded-none fixed right-0 top-0">
-        <DrawerHeader className="border-b">
+      <DrawerContent className="h-full w-[95%] sm:w-[600px] md:w-[700px] lg:w-[800px] sm:max-w-none mt-0 rounded-none fixed right-0 top-0 overflow-hidden">
+        <DrawerHeader className="border-b shrink-0">
           <DrawerTitle>
             {isEditMode ? "Edit Batch" : "Create New Batch"}
           </DrawerTitle>
@@ -225,8 +232,9 @@ const BatchFormDrawer: React.FC<BatchFormDrawerProps> = ({
           </DrawerDescription>
         </DrawerHeader>
 
-        <Form {...form}>
-          <form onSubmit={handleSubmit} className="flex flex-col h-full">
+        <div className="flex-1 min-h-0">
+          <Form {...form}>
+            <form onSubmit={handleSubmit} className="flex flex-col h-full">
             {/* Fixed Buttons Section */}
             <div className="border-b bg-background shrink-0">
               <div className="flex space-x-2 px-6 pt-4 pb-4">
@@ -637,24 +645,23 @@ const BatchFormDrawer: React.FC<BatchFormDrawerProps> = ({
             {/* Adaptive Keyboard */}
             {keyboard.showKeyboard && (
               <div className="border-t bg-background px-2 py-2 shrink-0">
-                <div className="max-w-full overflow-hidden">
-                  <AdaptiveKeyboard
-                    visible={keyboard.showKeyboard}
-                    initialMode={
-                      (keyboard.activeFieldConfig as any)?.keyboardMode ||
-                      "qwerty"
-                    }
-                    onInput={keyboard.handleInput}
-                    onBackspace={keyboard.handleBackspace}
-                    onClear={keyboard.handleClear}
-                    onEnter={keyboard.handleCloseKeyboard}
-                    onClose={keyboard.handleCloseKeyboard}
-                  />
-                </div>
+                <AdaptiveKeyboard
+                  visible={keyboard.showKeyboard}
+                  initialMode={
+                    (keyboard.activeFieldConfig as any)?.keyboardMode ||
+                    "qwerty"
+                  }
+                  onInput={keyboard.handleInput}
+                  onBackspace={keyboard.handleBackspace}
+                  onClear={keyboard.handleClear}
+                  onEnter={keyboard.handleCloseKeyboard}
+                  onClose={keyboard.handleCloseKeyboard}
+                />
               </div>
             )}
-          </form>
-        </Form>
+            </form>
+          </Form>
+        </div>
       </DrawerContent>
     </Drawer>
   );

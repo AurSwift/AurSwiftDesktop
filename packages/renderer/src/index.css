@@ -53,6 +53,8 @@
   /* Font Family Configuration */
   --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Typography scale (rem-based). text-xs (0.75rem) is minimum for UI. */
+  --text-2xs: 0.6875rem;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -163,8 +165,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    font-size: 100%;
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground text-base;
     font-family: var(
       --font-sans,
       "Inter",
@@ -199,6 +204,28 @@
   [data-sonner-toaster][data-x-position="right"] [data-sonner-toast] {
     margin-left: auto;
     margin-right: 0;
+  }
+}
+
+/* Typography semantic utilities — scale from small (narrow window) to large (big monitor) */
+@layer components {
+  .text-caption {
+    @apply text-xs sm:text-sm;
+  }
+  .text-body {
+    @apply text-sm sm:text-base;
+  }
+  .text-body-large {
+    @apply text-base sm:text-lg;
+  }
+  .text-heading-small {
+    @apply text-base sm:text-lg font-semibold;
+  }
+  .text-heading-medium {
+    @apply text-lg sm:text-xl font-semibold;
+  }
+  .text-heading-large {
+    @apply text-xl sm:text-2xl font-bold;
   }
 }
 

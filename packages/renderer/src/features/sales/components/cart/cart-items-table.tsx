@@ -26,7 +26,7 @@ interface CartItemsTableProps {
 export function CartItemsTable({
   items,
   loading,
-  onRemove,
+  onRemove: _onRemove,
   selectedItemId,
   onItemSelect,
 }: CartItemsTableProps) {
@@ -34,34 +34,28 @@ export function CartItemsTable({
     <div className="border border-slate-200 rounded-lg overflow-hidden flex-1 flex flex-col min-h-0">
       <div className="shrink-0">
         <Table>
-          <TableHeader className="bg-gradient-to-r from-sky-200 to-blue-300">
+          <TableHeader className="bg-slate-700">
             <TableRow className="h-8 sm:h-10 border-b-0">
               <TableHead
-                className="text-center font-semibold text-slate-800 h-8 sm:h-10 text-xs sm:text-sm"
+                className="text-center font-semibold text-white h-8 sm:h-10 text-xs sm:text-sm"
                 style={{ width: "100px" }}
               >
                 Unit/Weight
               </TableHead>
-              <TableHead className="text-left font-semibold text-slate-800 h-8 sm:h-10 text-xs sm:text-sm">
+              <TableHead className="text-left font-semibold text-white h-8 sm:h-10 text-xs sm:text-sm">
                 Product
               </TableHead>
               <TableHead
-                className="text-center font-semibold text-slate-800 h-8 sm:h-10 text-xs sm:text-sm"
+                className="text-center font-semibold text-white h-8 sm:h-10 text-xs sm:text-sm"
                 style={{ width: "120px" }}
               >
                 Price
               </TableHead>
               <TableHead
-                className="text-center font-semibold text-slate-800 h-8 sm:h-10 text-xs sm:text-sm"
+                className="text-center font-semibold text-white h-8 sm:h-10 text-xs sm:text-sm"
                 style={{ width: "100px" }}
               >
                 Total
-              </TableHead>
-              <TableHead
-                className="text-center font-semibold text-slate-800 h-8 sm:h-10 text-xs sm:text-sm"
-                style={{ width: "80px" }}
-              >
-                Actions
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -74,7 +68,7 @@ export function CartItemsTable({
               {loading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={4}
                     className="text-slate-400 text-center py-6 sm:py-8 text-xs sm:text-sm"
                   >
                     <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin mx-auto mb-2" />
@@ -84,7 +78,7 @@ export function CartItemsTable({
               ) : items.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={4}
                     className="text-slate-400 text-center py-6 sm:py-8 text-xs sm:text-sm"
                   >
                     No items in Basket. Scan or search for products.
@@ -95,9 +89,10 @@ export function CartItemsTable({
                   <CartItemRow
                     key={item.id}
                     item={item}
-                    onRemove={onRemove}
                     isSelected={selectedItemId === item.id}
-                    onSelect={onItemSelect ? () => onItemSelect(item) : undefined}
+                    onSelect={
+                      onItemSelect ? () => onItemSelect(item) : undefined
+                    }
                   />
                 ))
               )}

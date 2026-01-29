@@ -29,6 +29,7 @@ import {
 } from "@/types/domain/sales-unit";
 import { invalidateSalesUnitSettingsCache } from "@/shared/hooks/use-sales-unit-settings";
 import { BusinessForm } from "../components/business-form";
+import { ReceiptEmailSettingsForm } from "../components/receipt-email-settings-form";
 
 const logger = getLogger("general-settings-view");
 
@@ -252,6 +253,15 @@ export default function GeneralSettingsView({
           Update your business details and contact information.
         </p>
         <BusinessForm />
+      </div>
+
+      {/* Receipt Email (Gmail) */}
+      <div className="bg-white rounded-lg border shadow-sm p-6 mt-6">
+        <h2 className="text-xl font-semibold mb-4">Receipt Email (Gmail)</h2>
+        <p className="text-sm text-muted-foreground mb-6">
+          Configure the Gmail account used to send receipt emails to customers.
+        </p>
+        <ReceiptEmailSettingsForm />
       </div>
     </div>
   );

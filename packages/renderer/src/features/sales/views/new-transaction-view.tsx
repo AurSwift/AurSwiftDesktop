@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 // Hooks
 import { useAuth } from "@/shared/hooks/use-auth";
+import { useActiveShift } from "@/features/dashboard/hooks/use-active-shift";
 import {
   useReceiptPrintingFlow,
   useThermalPrinter,
@@ -34,6 +35,7 @@ import {
   LoadingState,
   ShiftBanner,
   OvertimeWarning,
+  TimeChangeBanner,
   StartShiftDialog,
   NoActiveShiftModal,
   ProductSelectionPanel,
@@ -43,6 +45,8 @@ import {
   CategoryPriceInputDisplay,
 } from "../components";
 import { ReceiptOptionsModal } from "../components/payment/receipt-options-modal";
+import { LockTillBreakDialog } from "../components/lock-till-break-dialog";
+import { LockScreen } from "../components/lock-screen";
 
 // Shared Components
 import {
@@ -50,12 +54,12 @@ import {
   QuickActionButtons,
   NumericKeypad,
 } from "../components/shared";
+import { AnimatePresence } from "@/components/animate-presence";
 import {
   AgeVerificationModal,
   BatchSelectionModal,
   GenericItemPriceModal,
   RefundTransactionView,
-  VoidTransactionModal,
   CashDrawerCountModal,
   QuantityModal,
   SaveBasketModal,
@@ -104,6 +108,18 @@ export function NewTransactionView({
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const salesUnitSettings = useSalesUnitSettings(user?.businessId);
+  void embeddedInDashboard;
+
+  // Active shift hook for break integration
+  const {
+    shift: activeShift,
+    activeBreak,
+    refresh: refreshShift,
+  } = useActiveShift(user?.id);
+
+  // Lock till state
+  const [isTillLocked, setIsTillLocked] = useState(false);
+  const [showLockDialog, setShowLockDialog] = useState(false);
 
   // Search query state
   const [searchQuery] = useState("");
@@ -114,7 +130,6 @@ export function NewTransactionView({
 
   // Modal states
   const [showRefundModal, setShowRefundModal] = useState(false);
-  const [showVoidModal, setShowVoidModal] = useState(false);
   const [showCountModal, setShowCountModal] = useState(false);
   const [showAgeVerificationModal, setShowAgeVerificationModal] =
     useState(false);
@@ -165,9 +180,16 @@ export function NewTransactionView({
   const [pendingWeightForBatchSelection, setPendingWeightForBatchSelection] =
     useState<number | undefined>(undefined);
 
-  // Receipt printing flow
-  const { isShowingStatus, startPrintingFlow, handleSkipReceipt } =
-    useReceiptPrintingFlow();
+  // Receipt printing flow - enhanced with status and error states
+  const {
+    isShowingStatus,
+    startPrintingFlow,
+    handleSkipReceipt,
+    handleRetryPrint,
+    handleCancelPrint,
+    printStatus,
+    printerError,
+  } = useReceiptPrintingFlow();
 
   // Thermal printer
   const { connectPrinter: connectPrinterInternal } = useThermalPrinter();
@@ -181,17 +203,17 @@ export function NewTransactionView({
       }
       return result;
     },
-    [connectPrinterInternal]
+    [connectPrinterInternal],
   );
 
   // Shared state for current category (used by both products and categories hooks)
   const [currentCategoryId, setCurrentCategoryId] = useState<string | null>(
-    null
+    null,
   );
 
   // Products hook - use paginated version for large datasets
   const legacyProducts = useProducts(
-    USE_VIRTUALIZED_PRODUCTS ? undefined : user?.businessId
+    USE_VIRTUALIZED_PRODUCTS ? undefined : user?.businessId,
   );
   const paginatedProducts = usePaginatedProducts({
     businessId: USE_VIRTUALIZED_PRODUCTS ? user?.businessId : undefined,
@@ -269,7 +291,7 @@ export function NewTransactionView({
         setCurrentCategoryId(category.id);
       }
     },
-    [virtualCategories, legacyCategories]
+    [virtualCategories, legacyCategories],
   );
 
   const wrappedBreadcrumbClick = useCallback(
@@ -285,7 +307,7 @@ export function NewTransactionView({
         setCurrentCategoryId(targetId);
       }
     },
-    [virtualCategories, legacyCategories]
+    [virtualCategories, legacyCategories],
   );
 
   // Unified categories interface with wrapped handlers
@@ -381,7 +403,7 @@ export function NewTransactionView({
             const batchResult = await autoSelectBatches(
               product,
               1, // Check batch has >= 1 item available (quantity check, not weight)
-              false // Don't allow partial - need exactly 1 item
+              false, // Don't allow partial - need exactly 1 item
             );
 
             if (batchResult.success && batchResult.primaryBatch) {
@@ -393,7 +415,7 @@ export function NewTransactionView({
                 undefined,
                 ageVerified,
                 undefined,
-                batchResult.primaryBatch
+                batchResult.primaryBatch,
               );
 
               // Show success message
@@ -418,7 +440,7 @@ export function NewTransactionView({
             } else {
               // No batches available - show error
               toast.error(
-                batchResult.error || "No batches available for this product"
+                batchResult.error || "No batches available for this product",
               );
               weightInput.resetWeightInput();
               setShowScaleDisplay(false);
@@ -467,7 +489,7 @@ export function NewTransactionView({
                 undefined,
                 false,
                 undefined,
-                batchResult.primaryBatch
+                batchResult.primaryBatch,
               );
             }
           } else if (batchResult.shouldShowModal) {
@@ -478,7 +500,7 @@ export function NewTransactionView({
           } else {
             // No batches available - show error
             toast.error(
-              batchResult.error || "No batches available for this product"
+              batchResult.error || "No batches available for this product",
             );
           }
         } else if (requiresAgeVerification) {
@@ -498,7 +520,7 @@ export function NewTransactionView({
       cart,
       weightInput,
       categoryPriceInput,
-    ]
+    ],
   );
 
   // Handle generic item click
@@ -515,7 +537,7 @@ export function NewTransactionView({
       setPendingGenericProduct(product);
       setShowGenericPriceModal(true);
     },
-    [isOperationsDisabled, salesMode.requiresShift]
+    [isOperationsDisabled, salesMode.requiresShift],
   );
 
   // Handle basket QR code scan
@@ -530,7 +552,7 @@ export function NewTransactionView({
       if (cart.cartItems.length > 0) {
         // Ask user to confirm replacement
         const confirmed = window.confirm(
-          "You have items in your cart. Do you want to replace them with the saved basket?"
+          "You have items in your cart. Do you want to replace them with the saved basket?",
         );
         if (!confirmed) {
           return;
@@ -543,7 +565,7 @@ export function NewTransactionView({
         toast.success("Basket loaded successfully");
       }
     },
-    [cart, user?.businessId]
+    [cart, user?.businessId],
   );
 
   // Barcode scanner hook - handles keyboard events from barcode scanner
@@ -588,7 +610,7 @@ export function NewTransactionView({
             if (!auditResponse.success) {
               logger.error(
                 "Failed to create age verification record:",
-                auditResponse.message
+                auditResponse.message,
               );
               // Continue even if audit fails - we don't want to block sales
             }
@@ -596,7 +618,7 @@ export function NewTransactionView({
 
           // Check if this is a weighted product
           const isWeighted = isWeightedProduct(
-            pendingProductForAgeVerification
+            pendingProductForAgeVerification,
           );
 
           if (isWeighted && pendingWeightForAgeVerification === undefined) {
@@ -626,7 +648,7 @@ export function NewTransactionView({
                 undefined,
                 true,
                 undefined,
-                pendingBatchDataForAgeVerification || undefined
+                pendingBatchDataForAgeVerification || undefined,
               );
             } else {
               await cart.addToCart(
@@ -635,7 +657,7 @@ export function NewTransactionView({
                 undefined,
                 true,
                 undefined,
-                pendingBatchDataForAgeVerification || undefined
+                pendingBatchDataForAgeVerification || undefined,
               );
             }
 
@@ -684,7 +706,7 @@ export function NewTransactionView({
       weightInput,
       categoryPriceInput,
       user,
-    ]
+    ],
   );
 
   // Handle generic price complete
@@ -697,7 +719,7 @@ export function NewTransactionView({
       setShowGenericPriceModal(false);
       setPendingGenericProduct(null);
     },
-    [pendingGenericProduct, cart]
+    [pendingGenericProduct, cart],
   );
 
   // Handle batch selection complete - adds item with specific batch info
@@ -743,7 +765,7 @@ export function NewTransactionView({
               batchId: batchData.batchId,
               batchNumber: batchData.batchNumber,
               expiryDate: batchData.expiryDate,
-            }
+            },
           );
         } else {
           await cart.addToCart(
@@ -756,14 +778,14 @@ export function NewTransactionView({
               batchId: batchData.batchId,
               batchNumber: batchData.batchNumber,
               expiryDate: batchData.expiryDate,
-            }
+            },
           );
         }
 
         toast.success(
           `Added ${product.name}${
             isWeighted && weight ? ` (${weight.toFixed(2)}kg)` : ""
-          } from batch ${batchData.batchNumber}`
+          } from batch ${batchData.batchNumber}`,
         );
 
         // Clear age verification for this product after use
@@ -785,7 +807,7 @@ export function NewTransactionView({
       pendingWeightForBatchSelection,
       ageVerifiedForProduct,
       cart,
-    ]
+    ],
   );
 
   // Handle auto-select batch (FEFO) - This is now the default behavior, but kept for manual override
@@ -801,7 +823,7 @@ export function NewTransactionView({
     const batchResult = await autoSelectBatches(
       product,
       1, // Check batch has >= 1 item available (quantity check, not weight)
-      false // Don't allow partial - need exactly 1 item
+      false, // Don't allow partial - need exactly 1 item
     );
 
     if (batchResult.success && batchResult.primaryBatch) {
@@ -831,7 +853,7 @@ export function NewTransactionView({
             undefined,
             false,
             undefined,
-            batchResult.primaryBatch
+            batchResult.primaryBatch,
           );
         } else {
           // For unit items: quantity = 1 (will deduct 1 from batch during transaction)
@@ -841,7 +863,7 @@ export function NewTransactionView({
             undefined,
             false,
             undefined,
-            batchResult.primaryBatch
+            batchResult.primaryBatch,
           );
         }
       }
@@ -885,7 +907,7 @@ export function NewTransactionView({
       setShowQuantityModal(false);
       // Keep the item selected after quantity update
     },
-    [selectedCartItem, cart]
+    [selectedCartItem, cart],
   );
 
   // Handle line void - remove selected item (EPOS-style)
@@ -919,8 +941,23 @@ export function NewTransactionView({
   }, []);
 
   const handleLockTill = useCallback(() => {
-    toast.info("Lock till feature coming soon");
+    setShowLockDialog(true);
   }, []);
+
+  const handleLockConfirmed = useCallback(() => {
+    setIsTillLocked(true);
+    logger.info("Till locked");
+  }, []);
+
+  const handleUnlock = useCallback(async () => {
+    setIsTillLocked(false);
+    await refreshShift(); // Refresh to update break status
+    logger.info("Till unlocked");
+  }, [refreshShift]);
+
+  const handleBreakStarted = useCallback(async () => {
+    await refreshShift();
+  }, [refreshShift]);
 
   const handleSaveBasket = useCallback(() => {
     if (cart.cartItems.length === 0) {
@@ -947,7 +984,7 @@ export function NewTransactionView({
   useEffect(() => {
     if (selectedCartItem) {
       const itemStillInCart = cart.cartItems.some(
-        (item) => item.id === selectedCartItem.id
+        (item) => item.id === selectedCartItem.id,
       );
       if (!itemStillInCart) {
         setSelectedCartItem(null);
@@ -970,7 +1007,7 @@ export function NewTransactionView({
       cart
         .initializeCartSession()
         .catch((error) =>
-          logger.error("Failed to initialize cart session", error)
+          logger.error("Failed to initialize cart session", error),
         );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -980,12 +1017,60 @@ export function NewTransactionView({
   useEffect(() => {
     const initPrinter = async () => {
       try {
+        if (!window.printerAPI) return;
+
         const savedConfig = localStorage.getItem("printer_config");
         if (savedConfig) {
-          const config = JSON.parse(savedConfig);
+          let config: PrinterConfig;
+          try {
+            config = JSON.parse(savedConfig) as PrinterConfig;
+          } catch {
+            return;
+          }
+
           const status = await window.printerAPI.getStatus();
           if (!status.connected) {
-            await connectPrinter(config);
+            const iface = String(
+              (config as unknown as { interface?: unknown })?.interface || "",
+            );
+            if (!iface) return;
+
+            // Avoid noisy auto-connect attempts when the saved port isn't currently present
+            // (e.g. printer unplugged). For non-port interfaces like tcp:// or printer:Name,
+            // we still attempt to connect.
+            const isNonPortInterface =
+              iface.startsWith("tcp://") || iface.startsWith("printer:");
+
+            if (isNonPortInterface) {
+              await connectPrinter(config);
+              return;
+            }
+
+            try {
+              const available =
+                await window.printerAPI.getAvailableInterfaces();
+              const isAvailable = Array.isArray(available)
+                ? available.some(
+                    (p: { address?: string }) => p.address === iface,
+                  )
+                : false;
+
+              if (isAvailable) {
+                await connectPrinter(config);
+              } else {
+                logger.info(
+                  "Skipping printer auto-connect: saved interface not available",
+                  {
+                    interface: iface,
+                  },
+                );
+              }
+            } catch (error) {
+              logger.warn(
+                "Skipping printer auto-connect: failed to scan interfaces",
+                error,
+              );
+            }
           }
         }
       } catch (error) {
@@ -1033,8 +1118,8 @@ export function NewTransactionView({
   const displayProducts = USE_VIRTUALIZED_PRODUCTS
     ? products.products // Server-side filtering already applied
     : searchQuery
-    ? legacyProducts.getFilteredProducts(searchQuery)
-    : categories.getCurrentCategoryProducts();
+      ? legacyProducts.getFilteredProducts(searchQuery)
+      : categories.getCurrentCategoryProducts();
 
   return (
     <>
@@ -1045,6 +1130,11 @@ export function NewTransactionView({
             show={shift.showOvertimeWarning}
             minutes={shift.overtimeMinutes}
           />
+          <TimeChangeBanner
+            show={shift.timeChangeDetected}
+            timeDifferenceMs={shift.timeChangeInfo?.timeDifference ?? null}
+            onDismiss={shift.dismissTimeChange}
+          />
           <ShiftBanner
             isOperationsDisabled={isOperationsDisabled}
             todaySchedule={shift.todaySchedule}
@@ -1052,15 +1142,6 @@ export function NewTransactionView({
             onStartShift={shift.handleStartShiftClick}
           />
         </>
-      )}
-
-      {/* Admin Mode Indicator - hidden when embedded in dashboard layout */}
-      {!embeddedInDashboard && !salesMode.requiresShift && (
-        <div className="bg-blue-50 border-b border-blue-200 px-4 py-2 text-sm text-blue-800">
-          <div className="flex items-center justify-between">
-            <span>Admin Mode: Direct sales access (no shift required)</span>
-          </div>
-        </div>
       )}
 
       {/* Main Layout */}
@@ -1115,10 +1196,9 @@ export function NewTransactionView({
         </div>
 
         {/* Right Column - Cart & Payment */}
-        <div className="flex flex-col w-full lg:flex-[0_1_480px] lg:w-[480px] lg:max-w-[520px] gap-2 sm:gap-3 min-h-0">
+        <div className="flex flex-col w-full lg:flex-[0_1_480px] lg:w-[480px] lg:max-w-[520px] min-h-0">
           <QuickActionsCarousel
             onRefund={() => setShowRefundModal(true)}
-            onVoid={() => setShowVoidModal(true)}
             onCount={() => setShowCountModal(true)}
             onDashboard={onBack}
             onReceipts={handleReceipts}
@@ -1126,105 +1206,66 @@ export function NewTransactionView({
             hasActiveShift={!!shift.activeShift}
           />
 
-          <div className="bg-white border-t-black-200 shadow-lg shrink-0">
-            <CardContent className="p-2 sm:p-3">
-              {/* Scale Display for Weighted Products (shown by default) */}
-              {weightInput.selectedWeightProduct &&
-                isWeightedProduct(weightInput.selectedWeightProduct) &&
-                !categoryPriceInput.pendingCategory &&
-                showScaleDisplay && (
-                  <div className="mt-2 space-y-2">
-                    <ScaleDisplay
-                      selectedProduct={{
-                        id: weightInput.selectedWeightProduct.id,
-                        name: weightInput.selectedWeightProduct.name,
-                        productType: "WEIGHTED",
-                        basePrice: weightInput.selectedWeightProduct.basePrice,
-                        pricePerUnit:
-                          weightInput.selectedWeightProduct.pricePerKg,
-                        unitOfMeasure: getEffectiveSalesUnit(
-                          weightInput.selectedWeightProduct.salesUnit || "KG",
-                          salesUnitSettings
-                        ),
-                      }}
-                      onWeightConfirmed={async (weight, scaleReading) => {
-                        const product = weightInput.selectedWeightProduct;
-                        if (!product) return;
+          {/**input for products */}
+          <CardContent className="p-1">
+            {/* Scale Display for Weighted Products (shown by default) */}
+            {weightInput.selectedWeightProduct &&
+              isWeightedProduct(weightInput.selectedWeightProduct) &&
+              !categoryPriceInput.pendingCategory &&
+              showScaleDisplay && (
+                <div className="mt-1 space-y-2">
+                  <ScaleDisplay
+                    selectedProduct={{
+                      id: weightInput.selectedWeightProduct.id,
+                      name: weightInput.selectedWeightProduct.name,
+                      productType: "WEIGHTED",
+                      basePrice: weightInput.selectedWeightProduct.basePrice,
+                      pricePerUnit:
+                        weightInput.selectedWeightProduct.pricePerKg,
+                      unitOfMeasure: getEffectiveSalesUnit(
+                        weightInput.selectedWeightProduct.salesUnit || "KG",
+                        salesUnitSettings,
+                      ),
+                    }}
+                    onWeightConfirmed={async (weight, scaleReading) => {
+                      const product = weightInput.selectedWeightProduct;
+                      if (!product) return;
 
-                        // Check if product requires batch tracking (expiry checking)
-                        const requiresBatchTracking =
-                          product.requiresBatchTracking === true;
+                      // Check if product requires batch tracking (expiry checking)
+                      const requiresBatchTracking =
+                        product.requiresBatchTracking === true;
 
-                        // Age verification should already be completed at this point
-                        // (it was shown first before the scale display)
+                      // Age verification should already be completed at this point
+                      // (it was shown first before the scale display)
 
-                        if (requiresBatchTracking) {
-                          // Each cart addition = 1 item (quantity = 1, regardless of weight value)
-                          // Check if batch has enough quantity (1 item) available
-                          const batchResult = await autoSelectBatches(
-                            product,
-                            1, // Check batch has >= 1 item available (quantity check, not weight)
-                            false // Don't allow partial - need exactly 1 item
-                          );
+                      if (requiresBatchTracking) {
+                        // Each cart addition = 1 item (quantity = 1, regardless of weight value)
+                        // Check if batch has enough quantity (1 item) available
+                        const batchResult = await autoSelectBatches(
+                          product,
+                          1, // Check batch has >= 1 item available (quantity check, not weight)
+                          false, // Don't allow partial - need exactly 1 item
+                        );
 
-                          if (batchResult.success && batchResult.primaryBatch) {
-                            // Batch has enough quantity (>= 1) - add 1 item to cart
-                            // Cart item: quantity = 1 (for batch deduction), weight = weight value (for pricing only)
-                            const ageVerified =
-                              ageVerifiedForProduct[product.id] || false;
-
-                            await cart.addToCart(
-                              product,
-                              weight, // Weight value (stored in item.weight, used for pricing only)
-                              undefined,
-                              ageVerified,
-                              undefined,
-                              batchResult.primaryBatch,
-                              scaleReading
-                            );
-
-                            // Show success message
-                            toast.success(`Added ${product.name} to cart`);
-
-                            weightInput.resetWeightInput();
-                            // Clear age verification for this product after use
-                            setAgeVerifiedForProduct((prev) => {
-                              const next = { ...prev };
-                              delete next[product.id];
-                              return next;
-                            });
-                            setShowScaleDisplay(false);
-                          } else if (batchResult.shouldShowModal) {
-                            // Show batch selection modal for manual selection
-                            setPendingWeightForBatchSelection(weight);
-                            setPendingProductForBatchSelection(product);
-                            setPendingQuantityForBatchSelection(weight);
-                            setShowBatchSelectionModal(true);
-                            weightInput.resetWeightInput();
-                            setShowScaleDisplay(false);
-                          } else {
-                            // No batches available - show error
-                            toast.error(
-                              batchResult.error ||
-                                "No batches available for this product"
-                            );
-                            weightInput.resetWeightInput();
-                            setShowScaleDisplay(false);
-                          }
-                        } else {
-                          // No batch tracking, add directly with age verification (already completed)
-                          // Check if age verification was completed for this product
+                        if (batchResult.success && batchResult.primaryBatch) {
+                          // Batch has enough quantity (>= 1) - add 1 item to cart
+                          // Cart item: quantity = 1 (for batch deduction), weight = weight value (for pricing only)
                           const ageVerified =
                             ageVerifiedForProduct[product.id] || false;
+
                           await cart.addToCart(
                             product,
-                            weight,
+                            weight, // Weight value (stored in item.weight, used for pricing only)
                             undefined,
-                            ageVerified, // Use the tracked age verification status
+                            ageVerified,
                             undefined,
-                            null,
-                            scaleReading || null
+                            batchResult.primaryBatch,
+                            scaleReading,
                           );
+
+                          // Show success message
+                          toast.success(`Added ${product.name} to cart`);
+
                           weightInput.resetWeightInput();
                           // Clear age verification for this product after use
                           setAgeVerifiedForProduct((prev) => {
@@ -1233,45 +1274,81 @@ export function NewTransactionView({
                             return next;
                           });
                           setShowScaleDisplay(false);
+                        } else if (batchResult.shouldShowModal) {
+                          // Show batch selection modal for manual selection
+                          setPendingWeightForBatchSelection(weight);
+                          setPendingProductForBatchSelection(product);
+                          setPendingQuantityForBatchSelection(weight);
+                          setShowBatchSelectionModal(true);
+                          weightInput.resetWeightInput();
+                          setShowScaleDisplay(false);
+                        } else {
+                          // No batches available - show error
+                          toast.error(
+                            batchResult.error ||
+                              "No batches available for this product",
+                          );
+                          weightInput.resetWeightInput();
+                          setShowScaleDisplay(false);
                         }
-                      }}
-                      onCancel={() => {
-                        setShowScaleDisplay(false);
+                      } else {
+                        // No batch tracking, add directly with age verification (already completed)
+                        // Check if age verification was completed for this product
+                        const ageVerified =
+                          ageVerifiedForProduct[product.id] || false;
+                        await cart.addToCart(
+                          product,
+                          weight,
+                          undefined,
+                          ageVerified, // Use the tracked age verification status
+                          undefined,
+                          null,
+                          scaleReading || null,
+                        );
                         weightInput.resetWeightInput();
-                      }}
-                      onManualEntryRequest={() => setShowScaleDisplay(false)}
-                      autoAddOnStable={true}
-                      minWeight={0.001}
-                      maxWeight={50}
-                    />
-                  </div>
-                )}
-
-              {/* Weight Input Display for Weighted Products (manual entry) */}
-              {weightInput.selectedWeightProduct &&
-                isWeightedProduct(weightInput.selectedWeightProduct) &&
-                !categoryPriceInput.pendingCategory &&
-                !showScaleDisplay && (
-                  <WeightInputDisplay
-                    selectedProduct={weightInput.selectedWeightProduct}
-                    weightDisplayPrice={weightInput.weightDisplayPrice}
-                    businessId={user?.businessId}
-                    onShowScaleDisplay={() => setShowScaleDisplay(true)}
+                        // Clear age verification for this product after use
+                        setAgeVerifiedForProduct((prev) => {
+                          const next = { ...prev };
+                          delete next[product.id];
+                          return next;
+                        });
+                        setShowScaleDisplay(false);
+                      }
+                    }}
+                    onCancel={() => {
+                      setShowScaleDisplay(false);
+                      weightInput.resetWeightInput();
+                    }}
+                    onManualEntryRequest={() => setShowScaleDisplay(false)}
+                    autoAddOnStable={true}
+                    minWeight={0.001}
+                    maxWeight={50}
                   />
-                )}
+                </div>
+              )}
 
-              {/* Category Price Input Display */}
-              {categoryPriceInput.pendingCategory &&
-                !weightInput.selectedWeightProduct && (
-                  <CategoryPriceInputDisplay
-                    pendingCategory={categoryPriceInput.pendingCategory}
-                    categoryDisplayPrice={
-                      categoryPriceInput.categoryDisplayPrice
-                    }
-                  />
-                )}
-            </CardContent>
-          </div>
+            {/* Weight Input Display for Weighted Products (manual entry) */}
+            {weightInput.selectedWeightProduct &&
+              isWeightedProduct(weightInput.selectedWeightProduct) &&
+              !categoryPriceInput.pendingCategory &&
+              !showScaleDisplay && (
+                <WeightInputDisplay
+                  selectedProduct={weightInput.selectedWeightProduct}
+                  weightDisplayPrice={weightInput.weightDisplayPrice}
+                  businessId={user?.businessId}
+                  onShowScaleDisplay={() => setShowScaleDisplay(true)}
+                />
+              )}
+
+            {/* Category Price Input Display */}
+            {categoryPriceInput.pendingCategory &&
+              !weightInput.selectedWeightProduct && (
+                <CategoryPriceInputDisplay
+                  pendingCategory={categoryPriceInput.pendingCategory}
+                  categoryDisplayPrice={categoryPriceInput.categoryDisplayPrice}
+                />
+              )}
+          </CardContent>
 
           <CartPanel
             cartItems={cart.cartItems}
@@ -1290,25 +1367,9 @@ export function NewTransactionView({
             onItemSelect={handleCartItemSelect}
           />
 
-          {/* Payment Panel */}
-          <PaymentPanel
-            paymentStep={payment.paymentStep}
-            paymentMethod={payment.paymentMethod}
-            total={cart.total}
-            cashAmount={payment.cashAmount}
-            cardReaderReady={true}
-            onPaymentMethodSelect={payment.handlePayment}
-            onCashAmountChange={payment.setCashAmount}
-            onCompleteTransaction={() => payment.completeTransaction()}
-            onCancel={() => {
-              payment.setPaymentStep(false);
-              payment.setPaymentMethod(null);
-            }}
-          />
-
           {/* Transaction Complete Message */}
           {payment.transactionComplete && !payment.showReceiptOptions && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in">
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-70 p-4 animate-fade-in">
               <div className="bg-white p-4 sm:p-6 rounded-lg text-center w-full max-w-sm animate-modal-enter">
                 <CheckCircle className="h-10 w-10 sm:h-12 sm:w-12 text-green-500 mx-auto mb-3 sm:mb-4" />
                 <h2 className="text-lg sm:text-xl font-bold mb-2 text-slate-800">
@@ -1332,85 +1393,115 @@ export function NewTransactionView({
             </div>
           )}
 
-          {/* Numeric Keypad */}
-          <div className="shrink-0">
-            <NumericKeypad
-              onInput={async (value) => {
-                // Handle weight input
-                if (
-                  weightInput.selectedWeightProduct &&
-                  !categoryPriceInput.pendingCategory
-                ) {
-                  const weightValue = weightInput.handleWeightInput(value);
-                  if (
-                    value === "Enter" &&
-                    weightValue !== undefined &&
-                    weightValue > 0
-                  ) {
-                    await handleProductClick(
-                      weightInput.selectedWeightProduct,
-                      weightValue
-                    );
-                    setShowScaleDisplay(false); // Reset scale display after adding via keypad
-                  }
-                  return;
-                }
-
-                // Handle category price input
-                if (categoryPriceInput.pendingCategory) {
-                  const priceValue = categoryPriceInput.handlePriceInput(value);
-                  if (
-                    value === "Enter" &&
-                    priceValue !== undefined &&
-                    priceValue > 0
-                  ) {
-                    await cart.addCategoryToCart(
-                      categoryPriceInput.pendingCategory!,
-                      priceValue
-                    );
-                    categoryPriceInput.resetPriceInput();
-                  }
-                  return;
-                }
-
-                // Handle other numeric keypad input
-              }}
-              keysOverride={[
-                ["7", "8", "9", "Enter"],
-                ["4", "5", "6", "Clear"],
-                [
-                  "1",
-                  "2",
-                  "3",
-                  weightInput.selectedWeightProduct &&
-                  !categoryPriceInput.pendingCategory ? (
-                    "."
-                  ) : categoryPriceInput.pendingCategory ? (
-                    "."
-                  ) : !payment.paymentStep ? (
-                    <Button
-                      className="w-full h-full min-h-[44px] py-3 sm:py-4 font-semibold text-sm sm:text-lg rounded transition-colors bg-sky-600 hover:bg-sky-700 text-white touch-manipulation"
-                      style={{ minHeight: 44, minWidth: 0 }}
-                      onClick={() => payment.setPaymentStep(true)}
-                      disabled={
-                        cart.cartItems.length === 0 || !cart.cartSession
+          {/* Payment Panel / Numeric Keypad Container with Transition */}
+          <div className="relative shrink-0 overflow-hidden">
+            <AnimatePresence
+              mode="wait"
+              exitAnimation="slide-left-exit"
+              exitDuration={300}
+            >
+              {payment.paymentStep && (
+                <PaymentPanel
+                  key="payment-panel"
+                  paymentStep={payment.paymentStep}
+                  paymentMethod={payment.paymentMethod}
+                  total={cart.total}
+                  cashAmount={payment.cashAmount}
+                  cardReaderReady={true}
+                  onPaymentMethodSelect={payment.handlePayment}
+                  onCashAmountChange={payment.setCashAmount}
+                  onCompleteTransaction={() => payment.completeTransaction()}
+                  onCancel={() => {
+                    payment.setPaymentStep(false);
+                    payment.setPaymentMethod(null);
+                  }}
+                />
+              )}
+            </AnimatePresence>
+            <AnimatePresence
+              mode="wait"
+              exitAnimation="slide-right-exit"
+              exitDuration={300}
+            >
+              {!payment.paymentStep && (
+                <div
+                  key="numeric-keypad"
+                  className="shrink-0 animate-slide-right"
+                >
+                  <NumericKeypad
+                    onInput={async (value) => {
+                      // Handle weight input
+                      if (
+                        weightInput.selectedWeightProduct &&
+                        !categoryPriceInput.pendingCategory
+                      ) {
+                        const weightValue =
+                          weightInput.handleWeightInput(value);
+                        if (
+                          value === "Enter" &&
+                          weightValue !== undefined &&
+                          weightValue > 0
+                        ) {
+                          await handleProductClick(
+                            weightInput.selectedWeightProduct,
+                            weightValue,
+                          );
+                          setShowScaleDisplay(false); // Reset scale display after adding via keypad
+                        }
+                        return;
                       }
-                    >
-                      Checkout
-                    </Button>
-                  ) : (
-                    <Button
-                      className="w-full h-full min-h-[44px] py-3 sm:py-4 font-semibold text-sm sm:text-lg rounded transition-colors bg-slate-200 hover:bg-slate-300 text-slate-700 touch-manipulation"
-                      style={{ minHeight: 44, minWidth: 0 }}
-                      onClick={() => payment.setPaymentStep(false)}
-                    >
-                      Back to Cart
-                    </Button>
-                  ),
-                ],
-                ["0", "00", "", ""],
-              ]}
-            />
+
+                      // Handle category price input
+                      if (categoryPriceInput.pendingCategory) {
+                        const priceValue =
+                          categoryPriceInput.handlePriceInput(value);
+                        if (
+                          value === "Enter" &&
+                          priceValue !== undefined &&
+                          priceValue > 0
+                        ) {
+                          await cart.addCategoryToCart(
+                            categoryPriceInput.pendingCategory!,
+                            priceValue,
+                          );
+                          categoryPriceInput.resetPriceInput();
+                        }
+                        return;
+                      }
+
+                      // Handle other numeric keypad input
+                    }}
+                    keysOverride={[
+                      ["7", "8", "9", "Enter"],
+                      ["4", "5", "6", "Clear"],
+                      [
+                        "1",
+                        "2",
+                        "3",
+                        weightInput.selectedWeightProduct &&
+                        !categoryPriceInput.pendingCategory ? (
+                          "."
+                        ) : categoryPriceInput.pendingCategory ? (
+                          "."
+                        ) : (
+                          <Button
+                            className="w-full h-full min-h-[44px] py-3 sm:py-4 font-semibold text-sm sm:text-lg rounded transition-colors bg-sky-600 hover:bg-sky-700 text-white touch-manipulation"
+                            style={{ minHeight: 44, minWidth: 0 }}
+                            onClick={() => payment.setPaymentStep(true)}
+                            disabled={
+                              cart.cartItems.length === 0 || !cart.cartSession
+                            }
+                          >
+                            Checkout
+                          </Button>
+                        ),
+                      ],
+                      ["0", "00", "", ""],
+                    ]}
+                  />
+                </div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>
@@ -1493,18 +1584,6 @@ export function NewTransactionView({
         />
       )}
 
-      {showVoidModal && user && (
-        <VoidTransactionModal
-          isOpen={showVoidModal}
-          onClose={() => setShowVoidModal(false)}
-          onVoidComplete={() => {
-            setShowVoidModal(false);
-            toast.success("Transaction voided successfully!");
-          }}
-          activeShiftId={user.id}
-        />
-      )}
-
       {showCountModal && user && (
         <CashDrawerCountModal
           isOpen={showCountModal}
@@ -1530,6 +1609,11 @@ export function NewTransactionView({
           onClose={payment.handleCloseReceiptOptions}
           onCancel={payment.handleCancelPayment}
           printerStatus={payment.printerStatus}
+          // Enhanced print status props
+          printStatus={printStatus}
+          printerError={printerError}
+          onRetryPrint={handleRetryPrint}
+          onCancelPrint={handleCancelPrint}
         />
       )}
 
@@ -1573,6 +1657,29 @@ export function NewTransactionView({
           }
         }}
       />
+
+      {/* Lock Till & Break Dialog */}
+      <LockTillBreakDialog
+        isOpen={showLockDialog}
+        onClose={() => setShowLockDialog(false)}
+        shiftId={activeShift?.id || null}
+        userId={user!.id}
+        businessId={user?.businessId}
+        shiftStartTime={activeShift?.clockInEvent?.timestamp}
+        onBreakStarted={handleBreakStarted}
+        onLockConfirmed={handleLockConfirmed}
+      />
+
+      {/* Lock Screen Overlay */}
+      {isTillLocked && user && (
+        <LockScreen
+          isLocked={isTillLocked}
+          onUnlock={handleUnlock}
+          lockedByUserId={user.id}
+          activeBreak={activeBreak}
+          userName={`${user.firstName || ""} ${user.lastName || ""}`.trim()}
+        />
+      )}
     </>
   );
 }

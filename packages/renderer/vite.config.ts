@@ -18,7 +18,7 @@ const appVersion = rootPackageJson.version || "0.0.0";
 process.env.VITE_APP_VERSION = appVersion;
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     tailwindcss(),
@@ -31,6 +31,7 @@ export default defineConfig({
         brotliSize: true,
       }),
   ].filter(Boolean),
+  esbuild: mode === "production" ? { pure: ["console.log"] } : {},
   define: {
     // Provide global and process for Node.js polyfills
     global: "globalThis",
@@ -77,4 +78,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));

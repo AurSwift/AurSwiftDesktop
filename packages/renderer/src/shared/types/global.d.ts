@@ -22,7 +22,6 @@ import type { SalesUnitSettingsAPI } from "../types/api/sales-unit-settings";
 import type { StockMovementAPI } from "../types/api/stock-movement";
 import type { ScheduleAPI } from "../types/api/schedule";
 import type { RefundAPI } from "../types/api/refund";
-import type { VoidAPI } from "../types/api/void";
 import type { CashDrawerAPI } from "../types/api/cash-drawer";
 import type { TimeTrackingAPI } from "../types/api/time-tracking";
 import type { AgeVerificationAPI } from "../types/api/age-verification";
@@ -42,6 +41,8 @@ import type { TerminalsAPI } from "../types/api/terminals";
 import type { LicenseAPI } from "../types/api/license";
 import type { BasketAPI } from "../types/api/basket";
 import type { ReportsExportAPI } from "../types/api/reports-export";
+import type { BreakPolicyAPI } from "../types/api/break-policy";
+import type { EmailSettingsAPI } from "../types/api/email-settings";
 import type { APIResponse } from "../types/api/common";
 
 declare global {
@@ -78,9 +79,8 @@ declare global {
     shiftAPI: ShiftAPI;
     scheduleAPI: ScheduleAPI;
 
-    // Refunds & Voids
+    // Refunds
     refundAPI: RefundAPI;
-    voidAPI: VoidAPI;
 
     // Cash Drawer
     cashDrawerAPI: CashDrawerAPI;
@@ -127,6 +127,12 @@ declare global {
 
     // Reports Export
     reportsExportAPI: ReportsExportAPI;
+
+    // Break Policy Management
+    breakPolicyAPI: BreakPolicyAPI;
+
+    // Receipt Email (Gmail) Settings
+    emailSettingsAPI: EmailSettingsAPI;
 
     // System Notifications
     systemNotificationsAPI?: {

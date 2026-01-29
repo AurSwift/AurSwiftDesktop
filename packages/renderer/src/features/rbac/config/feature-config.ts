@@ -5,15 +5,12 @@
  * This is used by the navigation system and dashboard.
  */
 
+import { lazy } from "react";
 import { Shield } from "lucide-react";
 import { RBAC_PERMISSIONS } from "./permissions";
 import { RBAC_ROUTES } from "./navigation";
 import type { FeatureConfig } from "@/features/dashboard/types/feature-config";
 import type { ViewConfig } from "@/navigation/types";
-
-// Import views from new location
-import RoleManagementView from "../views/role-management-view";
-import UserRoleAssignmentView from "../views/user-role-assignment-view";
 
 /**
  * RBAC Feature Configuration for Dashboard
@@ -54,7 +51,7 @@ export const rbacViews: Record<string, ViewConfig> = {
   [RBAC_ROUTES.ROLE_MANAGEMENT]: {
     id: RBAC_ROUTES.ROLE_MANAGEMENT,
     level: "root",
-    component: RoleManagementView,
+    component: lazy(() => import("../views/role-management-view")),
     metadata: {
       title: "Role Management",
       description: "Manage RBAC roles",
@@ -65,7 +62,7 @@ export const rbacViews: Record<string, ViewConfig> = {
   [RBAC_ROUTES.USER_ROLE_ASSIGNMENT]: {
     id: RBAC_ROUTES.USER_ROLE_ASSIGNMENT,
     level: "root",
-    component: UserRoleAssignmentView,
+    component: lazy(() => import("../views/user-role-assignment-view")),
     metadata: {
       title: "User Role Assignment",
       description: "Assign roles to users",

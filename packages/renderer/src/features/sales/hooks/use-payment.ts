@@ -44,7 +44,7 @@ interface UsePaymentProps {
 const calculatePaymentAmounts = (
   paymentMethod: PaymentMethod["type"],
   cashAmount: number,
-  total: number
+  total: number,
 ): { cashAmount: number | undefined; cardAmount: number | undefined } => {
   switch (paymentMethod) {
     case "cash":
@@ -68,7 +68,7 @@ const getTransactionSuccessMessage = (
   paymentMethod: PaymentMethod | null,
   cashAmount: number,
   total: number,
-  skipPaymentValidation: boolean
+  skipPaymentValidation: boolean,
 ): string => {
   if (paymentMethod?.type === "cash") {
     const change = cashAmount - total;
@@ -101,7 +101,7 @@ const createReceiptData = (
   paymentMethod: PaymentMethod | null,
   cashAmount: number,
   skipPaymentValidation: boolean,
-  transactionId: string // Required: actual database transaction ID
+  transactionId: string, // Required: actual database transaction ID
 ): TransactionData => {
   if (!transactionId) {
     throw new Error("Transaction ID is required for receipt generation");
@@ -110,14 +110,14 @@ const createReceiptData = (
   const amountPaid = skipPaymentValidation
     ? total
     : paymentMethod?.type === "cash"
-    ? cashAmount
-    : total;
+      ? cashAmount
+      : total;
 
   const change = skipPaymentValidation
     ? 0
     : paymentMethod?.type === "cash"
-    ? Math.max(0, cashAmount - total)
-    : 0;
+      ? Math.max(0, cashAmount - total)
+      : 0;
 
   return {
     id: transactionId, // Use actual transaction ID (required, no fallback)
@@ -158,8 +158,8 @@ const createReceiptData = (
         amount: skipPaymentValidation
           ? total
           : paymentMethod?.type === "cash"
-          ? cashAmount
-          : paymentMethod?.amount || total,
+            ? cashAmount
+            : paymentMethod?.amount || total,
       },
     ],
     receiptNumber,
@@ -191,7 +191,7 @@ export function usePayment({
 }: UsePaymentProps) {
   const [paymentStep, setPaymentStep] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
-    null
+    null,
   );
   const [cashAmount, setCashAmount] = useState(0);
   const [transactionComplete, setTransactionComplete] = useState(false);
@@ -267,7 +267,7 @@ export function usePayment({
       if (!status.connected) {
         toast.warning(
           "Printer is not connected. You can still complete the transaction and print later.",
-          { duration: 5000 }
+          { duration: 5000 },
         );
       }
     } catch (error) {
@@ -292,7 +292,7 @@ export function usePayment({
       skipPaymentValidation: boolean,
       validatedUserId: string,
       validatedBusinessId: string,
-      transactionId: string // Required: actual database transaction ID
+      transactionId: string, // Required: actual database transaction ID
     ) => {
       if (!transactionId) {
         logger.error("Transaction ID is missing - cannot generate receipt");
@@ -315,7 +315,7 @@ export function usePayment({
         paymentMethod,
         cashAmount,
         skipPaymentValidation,
-        transactionId // Pass actual transaction ID from database (required)
+        transactionId, // Pass actual transaction ID from database (required)
       );
 
       // FIX #5: Wrap state updates in try-catch to handle partial state update failures
@@ -340,14 +340,14 @@ export function usePayment({
           paymentMethod,
           cashAmount,
           total,
-          skipPaymentValidation
+          skipPaymentValidation,
         );
         toast.success(successMessage);
       } catch (error) {
         logger.error("Failed to update UI state after transaction:", error);
         toast.error(
           "Transaction completed but UI update failed. Please refresh the page.",
-          { duration: 10000 }
+          { duration: 10000 },
         );
         // Still show receipt options even if some state updates failed
         // This ensures user can still access receipt functionality
@@ -370,7 +370,7 @@ export function usePayment({
       paymentMethod,
       cashAmount,
       onResetPrintStatus,
-    ]
+    ],
   );
 
   /**
@@ -380,7 +380,7 @@ export function usePayment({
     async (
       skipPaymentValidation = false,
       actualPaymentMethod?: PaymentMethod["type"],
-      vivaWalletTransactionId?: string
+      vivaWalletTransactionId?: string,
     ) => {
       // CRITICAL FIX #2: Race condition protection
       if (isProcessingRef.current) {
@@ -410,7 +410,7 @@ export function usePayment({
             // Note: This assumes split payment UI provides both amounts
             // If not implemented yet, show error
             toast.error(
-              "Split payment requires both cash and card amounts. Please select a different payment method."
+              "Split payment requires both cash and card amounts. Please select a different payment method.",
             );
             isProcessingRef.current = false;
             return;
@@ -420,7 +420,7 @@ export function usePayment({
             // Voucher payments need voucher validation
             // If not implemented yet, show error
             toast.error(
-              "Voucher payment is not yet implemented. Please select a different payment method."
+              "Voucher payment is not yet implemented. Please select a different payment method.",
             );
             isProcessingRef.current = false;
             return;
@@ -500,7 +500,7 @@ export function usePayment({
           // Determine if shift is required based on EFFECTIVE role
           // This allows admin/manager to switch to "cashier mode" requiring shifts
           const shiftRequired = ["cashier", "supervisor"].includes(
-            effectiveRole || ""
+            effectiveRole || "",
           );
 
           let shiftIdForTransaction: { id: string } | null = null;
@@ -510,7 +510,7 @@ export function usePayment({
             const shiftResponse = await window.shiftAPI.getActive(userId);
             if (!shiftResponse.success || !shiftResponse.data) {
               toast.error(
-                "No active shift found. Please start your shift first."
+                "No active shift found. Please start your shift first.",
               );
               isProcessingRef.current = false;
               return;
@@ -561,7 +561,7 @@ export function usePayment({
             // Add validation warning if no payment method context
             if (!actualPaymentMethod && !paymentMethod) {
               logger.warn(
-                "skipPaymentValidation is true but no payment method context provided"
+                "skipPaymentValidation is true but no payment method context provided",
               );
             }
           } else {
@@ -570,18 +570,6 @@ export function usePayment({
 
           const { cashAmount: finalCashAmount, cardAmount: finalCardAmount } =
             calculatePaymentAmounts(backendPaymentMethod, cashAmount, total);
-
-          // FIX #12: Gate console.log for development only
-          if (process.env.NODE_ENV === "development") {
-            logger.info("💳 Creating transaction with payment method:", {
-              selectedPaymentMethod: paymentMethod?.type,
-              skipPaymentValidation,
-              backendPaymentMethod,
-              cashAmount: finalCashAmount,
-              cardAmount: finalCardAmount,
-              total,
-            });
-          }
 
           // Create transaction
           // shiftId is optional - null for admin/owner mode, required for cashier/manager
@@ -612,7 +600,7 @@ export function usePayment({
           const transactionResponse =
             await window.transactionAPI.createFromCart(
               sessionToken, // Pass sessionToken as first argument
-              transactionData
+              transactionData,
             );
 
           if (!transactionResponse.success) {
@@ -637,7 +625,7 @@ export function usePayment({
             logger.error("Transaction created but ID is missing from response");
             toast.error(
               "Transaction created but receipt cannot be generated. Please contact support.",
-              { duration: 10000 }
+              { duration: 10000 },
             );
             // FIX #6: Cleanup timeout before returning on error
             if (timeoutRef.current) {
@@ -654,30 +642,9 @@ export function usePayment({
           } catch (error) {
             logger.error("Failed to complete cart session:", error);
 
-            // Attempt to void the transaction to maintain data integrity
-            if (transactionId && userId) {
-              try {
-                await window.voidAPI.voidTransaction({
-                  transactionId,
-                  cashierId: userId,
-                  reason: "Cart session completion failed - automatic void",
-                });
-                logger.info(
-                  "Transaction voided successfully after cart completion failure"
-                );
-              } catch (voidError) {
-                logger.error(
-                  "Failed to void transaction after cart completion failure:",
-                  voidError
-                );
-                // Log critical error - transaction exists but cart not completed
-                // This requires manual intervention
-              }
-            }
-
             toast.error(
-              "Transaction created but cart session update failed. Transaction has been voided. Please contact support.",
-              { duration: 10000 }
+              "Transaction was created but cart update failed. Please contact support.",
+              { duration: 10000 },
             );
             // FIX #6: Cleanup timeout before returning on error
             if (timeoutRef.current) {
@@ -703,7 +670,7 @@ export function usePayment({
             skipPaymentValidation,
             userId,
             businessId,
-            transactionId // Pass actual transaction ID from database
+            transactionId, // Pass actual transaction ID from database
           );
         } catch (error) {
           logger.error("Transaction error:", error);
@@ -736,7 +703,7 @@ export function usePayment({
       checkPrinterStatus,
       handleReceiptAfterTransaction,
       transactionComplete,
-    ]
+    ],
   );
 
   /**
@@ -751,7 +718,8 @@ export function usePayment({
       });
 
       if (method === "cash") {
-        setCashAmount(total);
+        // Start empty (cashier will enter received cash in the modal)
+        setCashAmount(0);
         return;
       }
 
@@ -765,12 +733,12 @@ export function usePayment({
       // Handle legacy card/mobile payments (deprecated, use viva_wallet)
       if (method === "card" || method === "mobile") {
         toast.error(
-          "Card payment is now handled by Viva Wallet. Please select Card payment method."
+          "Card payment is now handled by Viva Wallet. Please select Card payment method.",
         );
         return;
       }
     },
-    [total]
+    [total],
   );
 
   /**
@@ -789,7 +757,7 @@ export function usePayment({
       // Validate transaction ID is present
       if (!completedTransactionData.id) {
         throw new Error(
-          "Transaction ID is required for PDF receipt generation"
+          "Transaction ID is required for PDF receipt generation",
         );
       }
 
@@ -800,11 +768,11 @@ export function usePayment({
         receiptNumber: completedTransactionData.receiptNumber,
         transactionId: completedTransactionData.id, // Use actual transaction ID (required, no fallback)
         date: new Date(completedTransactionData.timestamp).toLocaleDateString(
-          "en-GB"
+          "en-GB",
         ),
         time: new Date(completedTransactionData.timestamp).toLocaleTimeString(
           "en-GB",
-          { hour: "2-digit", minute: "2-digit" }
+          { hour: "2-digit", minute: "2-digit" },
         ),
         cashierId: userId || "unknown",
         cashierName: completedTransactionData.cashierName || "Unknown",
@@ -882,27 +850,29 @@ export function usePayment({
 
   /**
    * Handler for printing receipt
+   * Returns a Promise<boolean> indicating success/failure
+   * Status is now handled by PrintStatusIndicator in the modal
    */
-  const handlePrintReceipt = useCallback(async () => {
-    if (!completedTransactionData) return;
+  const handlePrintReceipt = useCallback(async (): Promise<boolean> => {
+    if (!completedTransactionData) return false;
 
     try {
-      toast.info("Printing receipt...");
+      // startPrintingFlow now handles all status updates via the hook
+      // It will show: checking-connection → connecting → printing → success/error
       const printResult = await startPrintingFlow(completedTransactionData);
 
       if (printResult) {
-        toast.success("Receipt printed successfully!");
+        // Auto-close after successful print (delay allows user to see success state)
         setTimeout(() => {
           handleCloseReceiptOptions();
-        }, 1500);
-      } else {
-        toast.error(
-          "Failed to print receipt. Please check printer connection."
-        );
+        }, 2000);
+        return true;
       }
+      // Error state is shown by PrintStatusIndicator
+      return false;
     } catch (error) {
       logger.error("Print error:", error);
-      toast.error("Failed to print receipt");
+      return false;
     }
   }, [completedTransactionData, startPrintingFlow, handleCloseReceiptOptions]);
 
@@ -928,7 +898,7 @@ export function usePayment({
       "⚠️ Cancel Receipt?\n\n" +
         "The transaction has already been completed and saved.\n" +
         "Are you sure you want to skip the receipt?\n\n" +
-        "You can print it later from transaction history."
+        "You can print it later from transaction history.",
     );
 
     if (confirmed) {

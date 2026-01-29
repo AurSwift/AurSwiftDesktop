@@ -32,15 +32,17 @@ const ManagerDashboardView = ({
   );
 
   return (
-    <div className="grid gap-4 sm:gap-6">
-      {/* Manager Stats */}
-      <ManagerStatsCards onActionClick={handleActionClick} />
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 max-w-7xl mx-auto">
+      <div className="grid gap-4 sm:gap-6">
+        {/* Manager Stats */}
+        <ManagerStatsCards onActionClick={handleActionClick} />
 
-      {/* Manager Features - Permission-based rendering */}
-      <DashboardGrid
-        features={managerFeatures}
-        onActionClick={handleActionClick}
-      />
+        {/* Manager Features - Permission-based rendering */}
+        <DashboardGrid
+          features={managerFeatures}
+          onActionClick={handleActionClick}
+        />
+      </div>
     </div>
   );
 };

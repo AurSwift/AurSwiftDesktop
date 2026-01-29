@@ -153,7 +153,7 @@ export function useShift({
         }
       }
     },
-    [userId]
+    [userId],
   );
 
   /**
@@ -306,7 +306,7 @@ export function useShift({
         const today = new Date(now);
         today.setHours(0, 0, 0, 0);
         const daysDiff = Math.abs(
-          (scheduleDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+          (scheduleDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
         );
 
         if (daysDiff > 1) {
@@ -326,7 +326,7 @@ export function useShift({
         };
       }
     },
-    []
+    [],
   );
 
   /**
@@ -369,11 +369,11 @@ export function useShift({
           minute: "2-digit",
           hour12: true,
         })} and is now ${Math.floor(minutesAfterEnd / 60)}h ${Math.floor(
-          minutesAfterEnd % 60
+          minutesAfterEnd % 60,
         )}m overdue. Please contact your manager to reschedule or create a new shift.`,
         {
           duration: 6000,
-        }
+        },
       );
       return;
     }
@@ -391,11 +391,11 @@ export function useShift({
             hour: "2-digit",
             minute: "2-digit",
             hour12: true,
-          }
+          },
         )}. Please wait ${minutesUntilStart} more minutes.`,
         {
           duration: 5000,
-        }
+        },
       );
       return;
     }
@@ -440,7 +440,7 @@ export function useShift({
         `Starting cash exceeds maximum limit of £${MAX_STARTING_CASH.toLocaleString()}. Please verify the amount.`,
         {
           duration: 6000,
-        }
+        },
       );
       return;
     }
@@ -451,7 +451,7 @@ export function useShift({
         `Starting cash amount is unusually large (£${cashAmount.toLocaleString()}). Please verify.`,
         {
           duration: 5000,
-        }
+        },
       );
     }
 
@@ -476,7 +476,7 @@ export function useShift({
         "You are offline. Shift start has been queued and will be processed when connection is restored.",
         {
           duration: 5000,
-        }
+        },
       );
       return;
     }
@@ -508,7 +508,7 @@ export function useShift({
           initialDelay: 1000,
           maxDelay: 5000,
           retryableErrors: (error) => isNetworkError(error),
-        }
+        },
       );
 
       if (response.success && response.data) {
@@ -542,11 +542,11 @@ export function useShift({
           if (isDifferentDevice && existingShift) {
             toast.warning(
               `Shift is already active on another device. Started at ${new Date(
-                existingShift.startTime
+                existingShift.startTime,
               ).toLocaleString()}`,
               {
                 duration: 5000,
-              }
+              },
             );
           } else {
             toast.warning("You already have an active shift running", {
@@ -562,7 +562,7 @@ export function useShift({
             response.message || "Failed to start shift. Please try again.",
             {
               duration: 5000,
-            }
+            },
           );
         }
       }
@@ -579,7 +579,7 @@ export function useShift({
           "Network error. Please check your connection and try again.",
           {
             duration: 5000,
-          }
+          },
         );
       } else {
         toast.error("Failed to start shift. Please try again.", {
@@ -606,6 +606,16 @@ export function useShift({
   }, []);
 
   /**
+   * Dismiss time-change warning (toast action + banner button).
+   * Clears both timeChangeDetected and timeChangeInfo for consistency.
+   */
+  const dismissTimeChange = useCallback(() => {
+    setTimeChangeDetected(false);
+    setTimeChangeInfo(null);
+    toast.dismiss("time-change");
+  }, []);
+
+  /**
    * Time change detection during active shift
    */
   useEffect(() => {
@@ -617,39 +627,50 @@ export function useShift({
       return;
     }
 
+    // Establish baseline immediately so we can detect changes within the first 30s
+    timeChangeDetectorRef.current?.checkTimeChange();
+
+    const notifyTimeChange = (changeInfo: {
+      detected: boolean;
+      timeDifference: number;
+    }) => {
+      setTimeChangeDetected(true);
+      setTimeChangeInfo({
+        detected: true,
+        timeDifference: changeInfo.timeDifference,
+      });
+
+      const formattedDiff = TimeChangeDetector.formatTimeDifference(
+        changeInfo.timeDifference,
+      );
+      const direction = changeInfo.timeDifference > 0 ? "forward" : "backward";
+
+      toast.warning(
+        `System time changed ${direction} by ${formattedDiff}. This may affect shift calculations.`,
+        {
+          id: "time-change",
+          duration: 10000,
+          action: {
+            label: "Dismiss",
+            onClick: dismissTimeChange,
+          },
+        },
+      );
+    };
+
     // Check for time changes every 30 seconds
     const timeCheckInterval = setInterval(() => {
-      const changeInfo = timeChangeDetectorRef.current?.checkTimeChange();
-      if (changeInfo?.detected) {
-        setTimeChangeDetected(true);
-        setTimeChangeInfo({
+      const result = timeChangeDetectorRef.current?.checkTimeChange();
+      if (result?.detected) {
+        notifyTimeChange({
           detected: true,
-          timeDifference: changeInfo.timeDifference,
+          timeDifference: result.timeDifference,
         });
-
-        const formattedDiff = TimeChangeDetector.formatTimeDifference(
-          changeInfo.timeDifference
-        );
-        const direction =
-          changeInfo.timeDifference > 0 ? "forward" : "backward";
-
-        toast.warning(
-          `System time changed ${direction} by ${formattedDiff}. This may affect shift calculations.`,
-          {
-            duration: 10000,
-            action: {
-              label: "Dismiss",
-              onClick: () => {
-                setTimeChangeDetected(false);
-              },
-            },
-          }
-        );
       }
-    }, 30000); // Check every 30 seconds
+    }, 30000);
 
     return () => clearInterval(timeCheckInterval);
-  }, [activeShift]);
+  }, [activeShift, dismissTimeChange]);
 
   /**
    * Process offline queue when connection is restored
@@ -696,7 +717,7 @@ export function useShift({
         toast.warning("Connection lost. Operations will be queued.", {
           duration: 3000,
         });
-      }
+      },
     );
 
     // Process queue on mount if online
@@ -745,6 +766,7 @@ export function useShift({
     shiftTimingInfo,
     timeChangeDetected,
     timeChangeInfo,
+    dismissTimeChange,
     loadShiftData,
     handleStartShiftClick,
     confirmStartShift,

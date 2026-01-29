@@ -119,7 +119,7 @@ function PaymentCapabilityBadges({
       <Badge
         key="tap"
         variant="outline"
-        className="bg-indigo-50 text-indigo-700 border-indigo-200 text-[10px]"
+        className="bg-indigo-50 text-indigo-700 border-indigo-200 text-xs"
       >
         Tap
       </Badge>
@@ -131,7 +131,7 @@ function PaymentCapabilityBadges({
       <Badge
         key="chip"
         variant="outline"
-        className="bg-indigo-50 text-indigo-700 border-indigo-200 text-[10px]"
+        className="bg-indigo-50 text-indigo-700 border-indigo-200 text-xs"
       >
         Chip
       </Badge>
@@ -143,7 +143,7 @@ function PaymentCapabilityBadges({
       <Badge
         key="swipe"
         variant="outline"
-        className="bg-indigo-50 text-indigo-700 border-indigo-200 text-[10px]"
+        className="bg-indigo-50 text-indigo-700 border-indigo-200 text-xs"
       >
         Swipe
       </Badge>

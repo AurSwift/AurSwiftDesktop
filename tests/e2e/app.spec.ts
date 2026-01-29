@@ -411,7 +411,6 @@ test.describe("Preload Security Context (TypeScript Electron)", async () => {
           "scheduleAPI",
           "shiftAPI",
           "refundAPI",
-          "voidAPI",
           "databaseAPI",
         ];
 

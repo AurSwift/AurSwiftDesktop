@@ -72,6 +72,19 @@ export const authAPI = {
 
   getBusinessById: (sessionToken: string, businessId: string) =>
     ipcRenderer.invoke("auth:getBusinessById", sessionToken, businessId),
+
+  verifyPin: (userId: string, pin: string) =>
+    ipcRenderer.invoke("auth:verifyPin", userId, pin),
+
+  // PIN Management
+  changePin: (sessionToken: string, currentPin: string, newPin: string) =>
+    ipcRenderer.invoke("auth:change-pin", sessionToken, currentPin, newPin),
+
+  resetPin: (sessionToken: string, userId: string) =>
+    ipcRenderer.invoke("auth:reset-pin", sessionToken, userId),
+
+  setNewPin: (sessionToken: string, newPin: string) =>
+    ipcRenderer.invoke("auth:set-new-pin", sessionToken, newPin),
 };
 
 export const authStore = {
@@ -109,4 +122,67 @@ export const timeTrackingAPI = {
 
   endBreak: (breakId: string) =>
     ipcRenderer.invoke("timeTracking:endBreak", breakId),
+
+  // ============================================================================
+  // Reporting (Admin/Manager)
+  // ============================================================================
+
+  getRealTimeDashboard: (businessId: string) =>
+    ipcRenderer.invoke("timeTracking:reports:getRealTimeDashboard", businessId),
+
+  getShiftsReport: (args: {
+    businessId: string;
+    startDate: string;
+    endDate: string;
+    filters?: {
+      userIds?: string[];
+      status?: "active" | "ended";
+      complianceOnly?: boolean;
+    };
+  }) => ipcRenderer.invoke("timeTracking:reports:getShifts", args),
+
+  getShiftDetails: (shiftId: string) =>
+    ipcRenderer.invoke("timeTracking:reports:getShiftDetails", shiftId),
+
+  getBreakComplianceReport: (args: {
+    businessId: string;
+    startDate: string;
+    endDate: string;
+  }) => ipcRenderer.invoke("timeTracking:reports:getBreakCompliance", args),
+
+  getPayrollSummary: (args: {
+    businessId: string;
+    startDate: string;
+    endDate: string;
+    hourlyRate?: number;
+  }) => ipcRenderer.invoke("timeTracking:reports:getPayrollSummary", args),
+
+  getPendingTimeCorrections: (businessId: string) =>
+    ipcRenderer.invoke("timeTracking:reports:getPendingTimeCorrections", businessId),
+
+  // ============================================================================
+  // Manager overrides (reason required)
+  // ============================================================================
+
+  forceClockOut: (args: { userId: string; managerId: string; reason: string }) =>
+    ipcRenderer.invoke("timeTracking:manager:forceClockOut", args),
+
+  updateBreak: (args: {
+    breakId: string;
+    managerId: string;
+    reason: string;
+    patch: {
+      startTime?: string;
+      endTime?: string | null;
+      type?: "meal" | "rest" | "other";
+      isPaid?: boolean;
+      notes?: string | null;
+    };
+  }) => ipcRenderer.invoke("timeTracking:manager:updateBreak", args),
+
+  processTimeCorrection: (args: {
+    correctionId: string;
+    managerId: string;
+    approved: boolean;
+  }) => ipcRenderer.invoke("timeTracking:manager:processTimeCorrection", args),
 };

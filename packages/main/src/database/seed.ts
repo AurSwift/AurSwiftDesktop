@@ -377,6 +377,17 @@ export async function seedDefaultData(
       );
     }
 
+    // 8. Seed default break policies
+    logger.info("   ☕ Creating default break policies...");
+    try {
+      await seedDefaultBreakPolicies(db, schema, businessId, logger);
+    } catch (breakPolicyError) {
+      logger.warn(
+        "⚠️ Could not seed break policies (non-fatal):",
+        breakPolicyError
+      );
+    }
+
     logger.info("✅ Database seeding completed successfully!");
     logger.info("\n📋 Default Accounts Created:");
     logger.info("   👨‍💼 Admin:");
@@ -397,4 +408,240 @@ export async function seedDefaultData(
     logger.error("❌ Database seeding failed:", error);
     throw error;
   }
+}
+
+/**
+ * Seed default break policies for a business
+ * UK-compliant defaults: 6 hours max consecutive work, 20 min required break
+ */
+async function seedDefaultBreakPolicies(
+  db: BetterSQLite3Database,
+  schema: any,
+  businessId: string,
+  logger: any
+): Promise<void> {
+  // Check if break types already exist for this business
+  const existingBreakTypes = db
+    .select()
+    .from(schema.breakTypeDefinitions)
+    .where(eq(schema.breakTypeDefinitions.business_id, businessId))
+    .all();
+
+  if (existingBreakTypes.length > 0) {
+    logger.info("   ✅ Break policies already exist, skipping...");
+    return;
+  }
+
+  const now = new Date();
+
+  // Create default break types
+  const breakTypes = [
+    {
+      publicId: uuidv4(),
+      business_id: businessId,
+      name: "Tea Break",
+      code: "tea",
+      description: "Short tea or coffee break",
+      default_duration_minutes: 15,
+      min_duration_minutes: 10,
+      max_duration_minutes: 20,
+      is_paid: true,
+      is_required: false,
+      counts_as_worked_time: true,
+      icon: "coffee",
+      color: "#8B4513",
+      sort_order: 1,
+      is_active: true,
+      createdAt: now,
+    },
+    {
+      publicId: uuidv4(),
+      business_id: businessId,
+      name: "Meal Break",
+      code: "meal",
+      description: "Main meal break (lunch/dinner)",
+      default_duration_minutes: 30,
+      min_duration_minutes: 30,
+      max_duration_minutes: 60,
+      is_paid: false,
+      is_required: true,
+      counts_as_worked_time: false,
+      allowed_window_start: "11:00",
+      allowed_window_end: "15:00",
+      icon: "utensils",
+      color: "#2E7D32",
+      sort_order: 2,
+      is_active: true,
+      createdAt: now,
+    },
+    {
+      publicId: uuidv4(),
+      business_id: businessId,
+      name: "Rest Break",
+      code: "rest",
+      description: "Short rest break",
+      default_duration_minutes: 10,
+      min_duration_minutes: 5,
+      max_duration_minutes: 15,
+      is_paid: true,
+      is_required: false,
+      counts_as_worked_time: true,
+      icon: "pause",
+      color: "#1565C0",
+      sort_order: 3,
+      is_active: true,
+      createdAt: now,
+    },
+    {
+      publicId: uuidv4(),
+      business_id: businessId,
+      name: "Other",
+      code: "other",
+      description: "Other break type",
+      default_duration_minutes: 15,
+      min_duration_minutes: 5,
+      max_duration_minutes: 30,
+      is_paid: false,
+      is_required: false,
+      counts_as_worked_time: false,
+      icon: "clock",
+      color: "#757575",
+      sort_order: 4,
+      is_active: true,
+      createdAt: now,
+    },
+  ];
+
+  // Insert break types
+  const insertedBreakTypes: { id: number; code: string }[] = [];
+  for (const bt of breakTypes) {
+    const result = db.insert(schema.breakTypeDefinitions).values(bt).run();
+    insertedBreakTypes.push({
+      id: Number(result.lastInsertRowid),
+      code: bt.code,
+    });
+  }
+
+  // Create default policy
+  const policyResult = db
+    .insert(schema.breakPolicies)
+    .values({
+      publicId: uuidv4(),
+      business_id: businessId,
+      name: "Default Policy",
+      description: "Working Time Directive compliant break policy",
+      max_consecutive_hours: 6,
+      warn_before_required_minutes: 30,
+      auto_enforce_breaks: false,
+      allow_skip_break: false,
+      require_manager_override: true,
+      is_active: true,
+      is_default: true,
+      createdAt: now,
+    })
+    .run();
+
+  const policyId = Number(policyResult.lastInsertRowid);
+
+  // Create policy rules based on shift length
+  const getBreakTypeId = (code: string) =>
+    insertedBreakTypes.find((bt) => bt.code === code)?.id;
+
+  const rules = [
+    // Short shifts (4-6 hours): 1 tea, 1 rest
+    {
+      policy_id: policyId,
+      break_type_id: getBreakTypeId("tea"),
+      min_shift_hours: 4,
+      max_shift_hours: 6,
+      allowed_count: 1,
+      is_mandatory: false,
+      priority: 1,
+    },
+    {
+      policy_id: policyId,
+      break_type_id: getBreakTypeId("rest"),
+      min_shift_hours: 4,
+      max_shift_hours: 6,
+      allowed_count: 1,
+      is_mandatory: false,
+      priority: 2,
+    },
+    // Medium shifts (6-8 hours): 1 tea, 1 mandatory meal, 1 rest
+    {
+      policy_id: policyId,
+      break_type_id: getBreakTypeId("tea"),
+      min_shift_hours: 6,
+      max_shift_hours: 8,
+      allowed_count: 1,
+      is_mandatory: false,
+      priority: 1,
+    },
+    {
+      policy_id: policyId,
+      break_type_id: getBreakTypeId("meal"),
+      min_shift_hours: 6,
+      max_shift_hours: 8,
+      allowed_count: 1,
+      is_mandatory: true, // UK law: break required after 6 hours
+      earliest_after_hours: 4,
+      priority: 2,
+    },
+    {
+      policy_id: policyId,
+      break_type_id: getBreakTypeId("rest"),
+      min_shift_hours: 6,
+      max_shift_hours: 8,
+      allowed_count: 1,
+      is_mandatory: false,
+      priority: 3,
+    },
+    // Long shifts (8+ hours): 2 tea, 1 mandatory meal, 2 rest
+    {
+      policy_id: policyId,
+      break_type_id: getBreakTypeId("tea"),
+      min_shift_hours: 8,
+      max_shift_hours: null,
+      allowed_count: 2,
+      is_mandatory: false,
+      priority: 1,
+    },
+    {
+      policy_id: policyId,
+      break_type_id: getBreakTypeId("meal"),
+      min_shift_hours: 8,
+      max_shift_hours: null,
+      allowed_count: 1,
+      is_mandatory: true,
+      earliest_after_hours: 4,
+      latest_before_end_hours: 2,
+      priority: 2,
+    },
+    {
+      policy_id: policyId,
+      break_type_id: getBreakTypeId("rest"),
+      min_shift_hours: 8,
+      max_shift_hours: null,
+      allowed_count: 2,
+      is_mandatory: false,
+      priority: 3,
+    },
+  ];
+
+  // Insert rules
+  for (const rule of rules) {
+    if (rule.break_type_id) {
+      db.insert(schema.breakPolicyRules)
+        .values({
+          publicId: uuidv4(),
+          ...rule,
+          createdAt: now,
+        })
+        .run();
+    }
+  }
+
+  logger.info(
+    `   ✅ Created ${breakTypes.length} break types, 1 policy, ${rules.length} rules`
+  );
 }

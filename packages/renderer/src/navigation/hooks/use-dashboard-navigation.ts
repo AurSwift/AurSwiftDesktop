@@ -41,11 +41,14 @@ export function useDashboardNavigation() {
     (featureId: string, actionId: string) => {
       logger.info(`Action clicked: ${featureId} -> ${actionId}`);
 
-      const viewId = mapActionToView(featureId, actionId);
+      const mapped = mapActionToView(featureId, actionId);
 
-      if (viewId) {
-        logger.info(`Navigating to view: ${viewId}`);
-        navigateTo(viewId);
+      if (typeof mapped === "string") {
+        logger.info(`Navigating to view: ${mapped}`);
+        navigateTo(mapped);
+      } else if (mapped?.viewId) {
+        logger.info(`Navigating to view: ${mapped.viewId}`);
+        navigateTo(mapped.viewId, mapped.params);
       } else {
         logger.warn(
           `No view mapping found for feature: ${featureId}, action: ${actionId}`

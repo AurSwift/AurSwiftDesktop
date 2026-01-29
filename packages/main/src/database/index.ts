@@ -31,9 +31,15 @@ import { RoleManager } from "./managers/roleManager.js";
 import { UserRoleManager } from "./managers/userRoleManager.js";
 import { UserPermissionManager } from "./managers/userPermissionManager.js";
 import { TerminalManager } from "./managers/terminalManager.js";
+import { BreakPolicyManager } from "./managers/breakPolicyManager.js";
 import { initializeDrizzle, resetDrizzle } from "./drizzle.js";
 import { getDatabaseInfo } from "./utils/dbInfo.js";
 import { isDevelopmentMode } from "./utils/environment.js";
+import {
+  cleanupAllBackups,
+  getBackupStorageInfo,
+  logStorageInfo,
+} from "./utils/backup-cleanup.js";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
 import * as schema from "./schema.js";
@@ -84,6 +90,9 @@ export interface DatabaseManagers {
   // Terminal management
   terminals: TerminalManager;
 
+  // Break policy management
+  breakPolicy: BreakPolicyManager;
+
   getDatabaseInfo: () => {
     path: string;
     mode: "development" | "production";
@@ -131,10 +140,10 @@ export async function getDatabase(): Promise<DatabaseManagers> {
         logger.error(`   Stack: ${errorStack}`);
       }
       logger.error(
-        "   ⚠️  Warning: Database may be partially initialized. Some default data may be missing."
+        "   ⚠️  Warning: Database may be partially initialized. Some default data may be missing.",
       );
       logger.error(
-        "   💡 You may need to manually seed the database or restart the application."
+        "   💡 You may need to manually seed the database or restart the application.",
       );
 
       // Don't throw - allow app to continue even if seeding fails
@@ -149,41 +158,9 @@ export async function getDatabase(): Promise<DatabaseManagers> {
 
     const uuid = { v4: uuidv4 };
 
-    // Create all manager instances with drizzle support
+    // Eager: only SessionManager and AuditLogManager (required for startup cleanups)
     const sessions = new SessionManager(drizzle, uuid);
-    const timeTracking = new TimeTrackingManager(drizzle, uuid);
-    const schedules = new ScheduleManager(drizzle, uuid);
-    const users = new UserManager(
-      drizzle,
-      bcryptWrapper,
-      uuid,
-      sessions,
-      timeTracking,
-      schedules
-    );
-    const businesses = new BusinessManager(drizzle, uuid);
-    const products = new ProductManager(drizzle, uuid);
-    const categories = new CategoryManager(drizzle, uuid);
-    const shifts = new ShiftManager(drizzle, uuid);
-    const transactions = new TransactionManager(drizzle, uuid);
-    const cashDrawers = new CashDrawerManager(drizzle, uuid);
-    const reports = new ReportManager(drizzle);
     const auditLogs = new AuditLogManager(drizzle, uuid);
-    const discounts = new DiscountManager(drizzle, uuid);
-    const audit = new AuditManager(drizzle, uuid);
-    const timeTrackingReports = new TimeTrackingReportManager(drizzle);
-    const settings = new SettingsManager(drizzle);
-    const ageVerification = new AgeVerificationManager(drizzle, uuid);
-    const batches = new BatchManager(drizzle, uuid);
-    const suppliers = new SupplierManager(drizzle, uuid);
-    const vatCategories = new VatCategoryManager(drizzle, uuid);
-    const expirySettings = new ExpirySettingManager(drizzle, uuid);
-    const expiryNotifications = new ExpiryNotificationManager(drizzle, uuid);
-    const salesUnitSettings = new SalesUnitSettingManager(drizzle, uuid);
-    const stockMovements = new StockMovementManager(drizzle, uuid, batches);
-    const inventory = new InventoryManager(drizzle, uuid, stockMovements);
-    const cart = new CartManager(drizzle, uuid);
-    const savedBaskets = new SavedBasketManager(drizzle, uuid);
 
     // Cleanup expired sessions on startup
     try {
@@ -199,53 +176,184 @@ export async function getDatabase(): Promise<DatabaseManagers> {
       logger.warn("Failed to cleanup old audit logs:", error);
     }
 
-    // RBAC managers
-    const roles = new RoleManager(drizzle, uuid);
-    const userRoles = new UserRoleManager(drizzle, uuid);
-    const userPermissions = new UserPermissionManager(drizzle, uuid);
+    // Cleanup old database backups on startup
+    try {
+      const dbPath = dbManagerInstance.getDatabasePath();
+      const dbInfo = getDatabaseInfo(dbPath);
+      const isProduction = !isDevelopmentMode();
 
-    // Terminal management
-    const terminals = new TerminalManager(drizzle, uuid);
+      // Get storage info and check for warnings
+      const storageInfo = getBackupStorageInfo(dbInfo.path, 500); // 500 MB threshold
 
-    managersInstance = {
-      users,
-      businesses,
+      if (storageInfo.exceedsThreshold || storageInfo.warnings.length > 0) {
+        logger.warn("⚠️  Backup storage warnings detected:");
+        logStorageInfo(storageInfo);
+      }
+
+      // Run cleanup
+      cleanupAllBackups(dbInfo.path, undefined, isProduction);
+    } catch (error) {
+      logger.warn("Failed to cleanup old database backups:", error);
+    }
+
+    // Lazy manager cache; eager instances pre-filled
+    const cache: Record<string, unknown> = {
       sessions,
-      products,
-      categories,
-      inventory,
-      schedules,
-      shifts,
-      transactions,
-      cashDrawers,
-      reports,
       auditLogs,
-      discounts,
+    };
 
-      timeTracking,
-      audit,
-      timeTrackingReports,
-      settings,
-      ageVerification,
-      batches,
-      suppliers,
-      vatCategories,
-      expirySettings,
-      expiryNotifications,
-      salesUnitSettings,
-      stockMovements,
-      cart,
-      savedBaskets,
+    const createLazy = <T>(key: string, factory: () => T): T => {
+      if (!(key in cache)) {
+        cache[key] = factory();
+      }
+      return cache[key] as T;
+    };
 
-      // RBAC managers
-      roles,
-      userRoles,
-      userPermissions,
+    const host: DatabaseManagers = {
+      get users() {
+        const s = host.sessions;
+        const tt = host.timeTracking;
+        const sch = host.schedules;
+        return createLazy("users", () =>
+          new UserManager(drizzle, bcryptWrapper, uuid, s, tt, sch)
+        );
+      },
+      get businesses() {
+        return createLazy("businesses", () => new BusinessManager(drizzle, uuid));
+      },
+      get sessions() {
+        return cache.sessions as SessionManager;
+      },
+      get products() {
+        return createLazy("products", () => new ProductManager(drizzle, uuid));
+      },
+      get categories() {
+        return createLazy("categories", () => new CategoryManager(drizzle, uuid));
+      },
+      get inventory() {
+        const sm = host.stockMovements;
+        return createLazy("inventory", () =>
+          new InventoryManager(drizzle, uuid, sm)
+        );
+      },
+      get schedules() {
+        return createLazy("schedules", () => new ScheduleManager(drizzle, uuid));
+      },
+      get shifts() {
+        return createLazy("shifts", () => new ShiftManager(drizzle, uuid));
+      },
+      get transactions() {
+        return createLazy(
+          "transactions",
+          () => new TransactionManager(drizzle, uuid)
+        );
+      },
+      get cashDrawers() {
+        return createLazy(
+          "cashDrawers",
+          () => new CashDrawerManager(drizzle, uuid)
+        );
+      },
+      get reports() {
+        return createLazy("reports", () => new ReportManager(drizzle));
+      },
+      get auditLogs() {
+        return cache.auditLogs as AuditLogManager;
+      },
+      get discounts() {
+        return createLazy("discounts", () => new DiscountManager(drizzle, uuid));
+      },
+      get timeTracking() {
+        return createLazy(
+          "timeTracking",
+          () => new TimeTrackingManager(drizzle, uuid)
+        );
+      },
+      get audit() {
+        return createLazy("audit", () => new AuditManager(drizzle, uuid));
+      },
+      get timeTrackingReports() {
+        return createLazy(
+          "timeTrackingReports",
+          () => new TimeTrackingReportManager(drizzle)
+        );
+      },
+      get settings() {
+        return createLazy("settings", () => new SettingsManager(drizzle));
+      },
+      get ageVerification() {
+        return createLazy(
+          "ageVerification",
+          () => new AgeVerificationManager(drizzle, uuid)
+        );
+      },
+      get batches() {
+        return createLazy("batches", () => new BatchManager(drizzle, uuid));
+      },
+      get suppliers() {
+        return createLazy("suppliers", () => new SupplierManager(drizzle, uuid));
+      },
+      get vatCategories() {
+        return createLazy(
+          "vatCategories",
+          () => new VatCategoryManager(drizzle, uuid)
+        );
+      },
+      get expirySettings() {
+        return createLazy(
+          "expirySettings",
+          () => new ExpirySettingManager(drizzle, uuid)
+        );
+      },
+      get expiryNotifications() {
+        return createLazy(
+          "expiryNotifications",
+          () => new ExpiryNotificationManager(drizzle, uuid)
+        );
+      },
+      get salesUnitSettings() {
+        return createLazy(
+          "salesUnitSettings",
+          () => new SalesUnitSettingManager(drizzle, uuid)
+        );
+      },
+      get stockMovements() {
+        const b = host.batches;
+        return createLazy("stockMovements", () =>
+          new StockMovementManager(drizzle, uuid, b)
+        );
+      },
+      get cart() {
+        return createLazy("cart", () => new CartManager(drizzle, uuid));
+      },
+      get savedBaskets() {
+        return createLazy(
+          "savedBaskets",
+          () => new SavedBasketManager(drizzle, uuid)
+        );
+      },
+      get roles() {
+        return createLazy("roles", () => new RoleManager(drizzle, uuid));
+      },
+      get userRoles() {
+        return createLazy("userRoles", () => new UserRoleManager(drizzle, uuid));
+      },
+      get userPermissions() {
+        return createLazy(
+          "userPermissions",
+          () => new UserPermissionManager(drizzle, uuid)
+        );
+      },
+      get terminals() {
+        return createLazy("terminals", () => new TerminalManager(drizzle, uuid));
+      },
+      get breakPolicy() {
+        return createLazy(
+          "breakPolicy",
+          () => new BreakPolicyManager(drizzle, uuid)
+        );
+      },
 
-      // Terminal management
-      terminals,
-
-      // Database info methods
       getDatabaseInfo: () => {
         if (!dbManagerInstance) {
           throw new Error("Database not initialized");
@@ -258,15 +366,11 @@ export async function getDatabase(): Promise<DatabaseManagers> {
           throw new Error("Database not initialized");
         }
 
-        // SAFETY CHECK: Prevent running this in production
-        if (!isDevelopmentMode()) {
-          logger.error(
-            "🛑 Blocked attempt to empty all tables in production mode"
-          );
-          throw new Error(
-            "OPERATION DENIED: emptyAllTables may only be used in development mode."
-          );
-        }
+        // Note: This operation is now allowed in production for database management purposes
+        // A backup is always created before emptying via the IPC handler
+        logger.warn(
+          "⚠️ emptyAllTables called - this will delete all data except license info",
+        );
 
         const rawDb = dbManagerInstance.getDb();
 
@@ -353,7 +457,7 @@ export async function getDatabase(): Promise<DatabaseManagers> {
                 "unknown";
               logger.warn(
                 `⚠️  Warning: Failed to empty table ${tableName}:`,
-                error instanceof Error ? error.message : String(error)
+                error instanceof Error ? error.message : String(error),
               );
               // Continue with other tables even if one fails
             }
@@ -363,7 +467,7 @@ export async function getDatabase(): Promise<DatabaseManagers> {
           rawDb.prepare("PRAGMA foreign_keys = ON").run();
 
           logger.info(
-            `✅ Successfully emptied ${tablesEmptied.length} of ${tablesToEmpty.length} tables`
+            `✅ Successfully emptied ${tablesEmptied.length} of ${tablesToEmpty.length} tables`,
           );
           return {
             success: true,
@@ -390,15 +494,11 @@ export async function getDatabase(): Promise<DatabaseManagers> {
           throw new Error("Database not initialized");
         }
 
-        // SAFETY CHECK: Prevent running this in production
-        if (!isDevelopmentMode()) {
-          logger.error(
-            "🛑 Blocked attempt to reseed database in production mode"
-          );
-          throw new Error(
-            "OPERATION DENIED: reseedDatabase may only be used in development mode."
-          );
-        }
+        // Note: This operation is now allowed in production for database management purposes
+        // It creates default admin user and essential data after emptying
+        logger.warn(
+          "⚠️ reseedDatabase called - this will create default admin and seed data",
+        );
 
         try {
           logger.info("🌱 Reseeding database with default data...");
@@ -415,7 +515,8 @@ export async function getDatabase(): Promise<DatabaseManagers> {
       },
     };
 
-    return managersInstance as DatabaseManagers;
+    managersInstance = host;
+    return host;
   })();
 
   return initializationPromise;

@@ -214,7 +214,7 @@ export function useSalesReportsData(
     return calculateDateRange(timePeriod);
   }, [timePeriod, customDateRange]);
 
-  // Fetch transactions - increase limit to get more historical data
+  // Fetch transactions by date range so reports show all transactions in the selected period
   const fetchTransactions = useCallback(async () => {
     if (!user?.businessId) {
       setTransactions([]);
@@ -226,11 +226,15 @@ export function useSalesReportsData(
       setIsLoadingTransactions(true);
       setTransactionsError(null);
 
-      // Use existing API to fetch transactions - increase limit to get more historical data
-      // This allows viewing previous periods (last month, last week, etc.)
-      const response = await window.refundAPI.getRecentTransactions(
+      const startIso = dateRange.start.toISOString();
+      const endIso = dateRange.end.toISOString();
+      const fetchLimit = Math.max(limit, 1000);
+
+      const response = await window.refundAPI.getTransactionsByDateRange(
         user.businessId,
-        Math.max(limit, 500) // Fetch more transactions to cover historical periods
+        startIso,
+        endIso,
+        fetchLimit
       );
 
       if (response.success && "transactions" in response) {
@@ -250,9 +254,9 @@ export function useSalesReportsData(
     } finally {
       setIsLoadingTransactions(false);
     }
-  }, [user?.businessId, limit]);
+  }, [user?.businessId, limit, dateRange.start, dateRange.end]);
 
-  // Fetch transactions on mount and when filters change
+  // Fetch transactions on mount and when date range/filters change
   useEffect(() => {
     fetchTransactions();
   }, [fetchTransactions]);

@@ -121,7 +121,7 @@ export function CashPaymentForm({
               variant="outline"
               size="sm"
               onClick={() => handleAmountChange(amount)}
-              className="text-[10px] sm:text-xs min-h-[44px] h-9 sm:h-10 touch-manipulation"
+              className="text-caption min-h-[44px] h-9 sm:h-10 touch-manipulation"
             >
               £{amount}
             </Button>
@@ -134,7 +134,7 @@ export function CashPaymentForm({
             variant="outline"
             size="sm"
             onClick={() => handleAmountChange(total)}
-            className="flex-1 text-[10px] sm:text-xs min-h-[44px] h-9 sm:h-10 touch-manipulation"
+            className="flex-1 text-caption min-h-[44px] h-9 sm:h-10 touch-manipulation"
           >
             Exact Amount
           </Button>
@@ -143,7 +143,7 @@ export function CashPaymentForm({
             variant="outline"
             size="sm"
             onClick={() => handleAmountChange(Math.ceil(total))}
-            className="flex-1 text-[10px] sm:text-xs min-h-[44px] h-9 sm:h-10 touch-manipulation"
+            className="flex-1 text-caption min-h-[44px] h-9 sm:h-10 touch-manipulation"
           >
             Round Up
           </Button>

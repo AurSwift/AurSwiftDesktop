@@ -77,6 +77,8 @@ export interface AuthAPIPreload {
   deleteUser: (sessionToken: string, userId: string) => Promise<any>;
 
   getBusinessById: (sessionToken: string, businessId: string) => Promise<any>;
+
+  verifyPin: (userId: string, pin: string) => Promise<{ success: boolean; message?: string }>;
 }
 
 export interface AuthStoreAPIPreload {

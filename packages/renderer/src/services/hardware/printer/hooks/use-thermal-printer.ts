@@ -1,37 +1,30 @@
 /**
  * React hooks for thermal receipt printer management
+ *
+ * Enhanced with granular connection states for better UX:
+ * - checking-connection: Verifying printer status
+ * - connecting: Attempting to establish connection
+ * - connection-failed: Connection attempt failed
+ * - printing: Sending data to printer
+ * - success/error/cancelled: Final states
  */
 
 import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import type { TransactionData } from "@/types/domain/transaction";
 import type { PrinterConfig } from "@/types/features/printer";
+import type {
+  PrintStatus,
+  PrinterInfo,
+  PrintJob,
+  PrinterError,
+} from "../types/printer.types";
 
 import { getLogger } from "@/shared/utils/logger";
 const logger = getLogger("use-thermal-printer");
 
-export type PrintStatus =
-  | "idle"
-  | "printing"
-  | "success"
-  | "error"
-  | "cancelled";
-
-export interface PrinterInfo {
-  connected: boolean;
-  interface: string;
-  type: string;
-  error?: string;
-}
-
-export interface PrintJob {
-  id: string;
-  transactionId: string;
-  data: TransactionData;
-  timestamp: Date;
-  status: PrintStatus;
-  retryCount: number;
-}
+// Re-export types for consumers who import from hooks
+export type { PrintStatus, PrinterInfo, PrintJob, PrinterError };
 
 /**
  * Hook for managing thermal printer operations
@@ -41,6 +34,7 @@ export const useThermalPrinter = () => {
   const [printerInfo, setPrinterInfo] = useState<PrinterInfo | null>(null);
   const [printQueue, setPrintQueue] = useState<PrintJob[]>([]);
   const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [printerError, setPrinterError] = useState<PrinterError | null>(null);
 
   /**
    * Check current printer status
@@ -59,6 +53,140 @@ export const useThermalPrinter = () => {
     }
   }, []);
 
+  /**
+   * Ensure printer is connected with granular status updates.
+   * - Always refreshes status from main process
+   * - If disconnected, attempts a best-effort auto-connect using saved config
+   * - Updates printStatus to reflect connection progress
+   */
+  const ensureConnected = useCallback(
+    async (updateStatus = true): Promise<boolean> => {
+      if (!window.printerAPI) {
+        if (updateStatus) {
+          setPrinterError({
+            code: "NOT_FOUND",
+            message: "Printer API not available",
+          });
+          setPrintStatus("connection-failed");
+        }
+        return false;
+      }
+
+      try {
+        // Step 1: Check current connection status
+        if (updateStatus) {
+          setPrintStatus("checking-connection");
+          setPrinterError(null);
+        }
+
+        const status = await window.printerAPI.getStatus();
+        setPrinterInfo(status);
+        setIsConnected(status.connected);
+
+        if (status.connected) {
+          if (updateStatus) setPrintStatus("idle");
+          return true;
+        }
+
+        // Step 2: Try auto-connect using saved config
+        const savedConfigRaw = localStorage.getItem("printer_config");
+        if (!savedConfigRaw) {
+          if (updateStatus) {
+            setPrinterError({
+              code: "NOT_FOUND",
+              message: "No printer configured",
+              details: "Please connect a printer first using Printer Setup",
+            });
+            setPrintStatus("connection-failed");
+          }
+          return false;
+        }
+
+        let savedConfig: unknown;
+        try {
+          savedConfig = JSON.parse(savedConfigRaw);
+        } catch {
+          if (updateStatus) {
+            setPrinterError({
+              code: "UNKNOWN",
+              message: "Invalid printer configuration",
+            });
+            setPrintStatus("connection-failed");
+          }
+          return false;
+        }
+
+        const config = savedConfig as Partial<PrinterConfig>;
+        if (!config.interface || !config.type) {
+          if (updateStatus) {
+            setPrinterError({
+              code: "NOT_FOUND",
+              message: "Incomplete printer configuration",
+            });
+            setPrintStatus("connection-failed");
+          }
+          return false;
+        }
+
+        // Step 3: Attempt connection
+        if (updateStatus) {
+          setPrintStatus("connecting");
+        }
+
+        const connectResult = await window.printerAPI.connect({
+          type: config.type,
+          interface: config.interface,
+          width: config.width,
+          characterSet: config.characterSet,
+          baudRate: config.baudRate,
+          timeout: config.timeout,
+        });
+
+        if (!connectResult?.success) {
+          if (updateStatus) {
+            setPrinterError({
+              code: "DISCONNECTED",
+              message: connectResult?.error || "Failed to connect to printer",
+              details: `Port: ${config.interface}`,
+            });
+            setPrintStatus("connection-failed");
+          }
+          return false;
+        }
+
+        // Step 4: Verify connection
+        const statusAfter = await window.printerAPI.getStatus();
+        setPrinterInfo(statusAfter);
+        setIsConnected(statusAfter.connected);
+
+        if (statusAfter.connected) {
+          if (updateStatus) setPrintStatus("idle");
+          return true;
+        } else {
+          if (updateStatus) {
+            setPrinterError({
+              code: "DISCONNECTED",
+              message: "Printer connection unstable",
+            });
+            setPrintStatus("connection-failed");
+          }
+          return false;
+        }
+      } catch (error) {
+        logger.error("Failed to ensure printer connection:", error);
+        setIsConnected(false);
+        if (updateStatus) {
+          const message =
+            error instanceof Error ? error.message : "Connection error";
+          setPrinterError({ code: "UNKNOWN", message });
+          setPrintStatus("connection-failed");
+        }
+        return false;
+      }
+    },
+    [],
+  );
+
   // Initialize printer connection status
   useEffect(() => {
     checkPrinterStatus();
@@ -75,25 +203,34 @@ export const useThermalPrinter = () => {
         }
 
         const result = await window.printerAPI.connect(config);
-        if (result.success) {
-          await checkPrinterStatus();
-          toast.success("Printer connected successfully");
-          return true;
-        } else {
+        if (!result.success) {
           throw new Error(result.error || "Connection failed");
         }
+
+        // Verify the connection actually became active (connect can succeed while status remains disconnected).
+        const statusAfter = await window.printerAPI.getStatus();
+        setPrinterInfo(statusAfter);
+        setIsConnected(statusAfter.connected);
+
+        if (!statusAfter.connected) {
+          toast.error("Failed to connect printer: Printer not detected");
+          return false;
+        }
+
+        toast.success("Printer connected successfully");
+        return true;
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : "Unknown error";
         toast.error(`Failed to connect printer: ${errorMessage}`);
         setPrinterInfo((prev) =>
-          prev ? { ...prev, connected: false, error: errorMessage } : null
+          prev ? { ...prev, connected: false, error: errorMessage } : null,
         );
         setIsConnected(false);
         return false;
       }
     },
-    [checkPrinterStatus]
+    [checkPrinterStatus],
   );
 
   /**
@@ -115,18 +252,37 @@ export const useThermalPrinter = () => {
 
   /**
    * Print receipt with transaction data
+   * Updates status through: checking-connection → connecting (if needed) → printing → success/error
    */
   const printReceipt = useCallback(
     async (transactionData: TransactionData): Promise<boolean> => {
-      if (!isConnected || !window.printerAPI) {
-        toast.error("Printer not connected");
+      if (!window.printerAPI) {
+        setPrinterError({
+          code: "NOT_FOUND",
+          message: "Printer API not available",
+        });
+        setPrintStatus("error");
         return false;
       }
 
       // Validate transaction ID is present
       if (!transactionData.id) {
         logger.error("Transaction ID is required for receipt printing");
+        setPrinterError({
+          code: "UNKNOWN",
+          message: "Transaction ID is missing",
+        });
         toast.error("Cannot print receipt: Transaction ID is missing");
+        return false;
+      }
+
+      // Clear any previous error
+      setPrinterError(null);
+
+      // ensureConnected will update status to checking-connection → connecting if needed
+      const connected = await ensureConnected(true);
+      if (!connected) {
+        // printerError and printStatus already set by ensureConnected
         return false;
       }
 
@@ -137,7 +293,7 @@ export const useThermalPrinter = () => {
       // Add to print queue
       const printJob: PrintJob = {
         id: jobId,
-        transactionId: transactionData.id, // Use actual transaction ID (required, no fallback)
+        transactionId: transactionData.id,
         data: transactionData,
         timestamp: new Date(),
         status: "printing",
@@ -156,11 +312,11 @@ export const useThermalPrinter = () => {
             prev.map((job) =>
               job.id === jobId
                 ? { ...job, status: "success" as PrintStatus }
-                : job
-            )
+                : job,
+            ),
           );
           setPrintStatus("success");
-          toast.success("Receipt printed successfully!");
+          setPrinterError(null);
 
           // Auto-clear status after 3 seconds
           setTimeout(() => {
@@ -175,7 +331,7 @@ export const useThermalPrinter = () => {
         const errorMessage =
           error instanceof Error ? error.message : "Print failed";
 
-        // Update job status
+        // Update job status with error
         setPrintQueue((prev) =>
           prev.map((job) =>
             job.id === jobId
@@ -183,20 +339,22 @@ export const useThermalPrinter = () => {
                   ...job,
                   status: "error" as PrintStatus,
                   retryCount: job.retryCount + 1,
+                  error: { code: "PRINT_FAILED", message: errorMessage },
                 }
-              : job
-          )
+              : job,
+          ),
         );
 
         setPrintStatus("error");
+        setPrinterError({ code: "PRINT_FAILED", message: errorMessage });
         setPrinterInfo((prev) =>
-          prev ? { ...prev, error: errorMessage } : null
+          prev ? { ...prev, error: errorMessage } : null,
         );
         toast.error(`Print failed: ${errorMessage}`);
         return false;
       }
     },
-    [isConnected]
+    [ensureConnected],
   );
 
   /**
@@ -205,7 +363,7 @@ export const useThermalPrinter = () => {
   const retryPrint = useCallback(
     async (jobId?: string): Promise<boolean> => {
       const failedJob = printQueue.find((job) =>
-        jobId ? job.id === jobId : job.status === "error"
+        jobId ? job.id === jobId : job.status === "error",
       );
 
       if (!failedJob) {
@@ -220,7 +378,7 @@ export const useThermalPrinter = () => {
 
       return await printReceipt(failedJob.data);
     },
-    [printQueue, printReceipt]
+    [printQueue, printReceipt],
   );
 
   /**
@@ -268,6 +426,7 @@ export const useThermalPrinter = () => {
     printerInfo,
     printQueue,
     isConnected,
+    printerError,
 
     // Actions
     connectPrinter,
@@ -278,9 +437,11 @@ export const useThermalPrinter = () => {
     clearQueue,
     checkPrinterStatus,
     getAvailableInterfaces,
+    ensureConnected,
 
     // Utilities
     setPrintStatus,
+    setPrinterError,
   };
 };
 
@@ -341,7 +502,7 @@ export const usePrinterSetup = () => {
         setIsConnecting(false);
       }
     },
-    [connectPrinter, closeSetup]
+    [connectPrinter, closeSetup],
   );
 
   return {
@@ -356,6 +517,7 @@ export const usePrinterSetup = () => {
 
 /**
  * Hook for managing receipt printer status during transaction completion
+ * Provides granular status feedback during the print flow
  */
 export const useReceiptPrintingFlow = () => {
   const [isShowingStatus, setIsShowingStatus] = useState(false);
@@ -365,38 +527,54 @@ export const useReceiptPrintingFlow = () => {
   const {
     printStatus,
     printerInfo,
+    printerError,
     isConnected,
     printReceipt,
+    cancelPrint,
     setPrintStatus,
+    setPrinterError,
   } = useThermalPrinter();
 
   /**
    * Start receipt printing flow after transaction completion
+   * Flow: checking-connection → connecting (if needed) → printing → success/error
    */
   const startPrintingFlow = useCallback(
     async (transactionData: TransactionData) => {
       setCurrentTransaction(transactionData);
       setIsShowingStatus(true);
 
-      if (!isConnected) {
-        setPrintStatus("error");
-        return false;
-      }
-
+      // printReceipt handles the full flow with status updates
       return await printReceipt(transactionData);
     },
-    [isConnected, printReceipt, setPrintStatus]
+    [printReceipt],
   );
 
   /**
    * Handle retry print action
+   * Resets status first, then attempts print again
    */
   const handleRetryPrint = useCallback(async () => {
     if (currentTransaction) {
+      // Reset status to idle first so UI updates
+      setPrintStatus("idle");
+      setPrinterError(null);
+
+      // Small delay to allow state update
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Retry the print
       return await printReceipt(currentTransaction);
     }
     return false;
-  }, [currentTransaction, printReceipt]);
+  }, [currentTransaction, printReceipt, setPrinterError, setPrintStatus]);
+
+  /**
+   * Cancel the current print operation
+   */
+  const handleCancelPrint = useCallback(async () => {
+    await cancelPrint();
+  }, [cancelPrint]);
 
   /**
    * Skip receipt printing and continue
@@ -405,7 +583,8 @@ export const useReceiptPrintingFlow = () => {
     setIsShowingStatus(false);
     setCurrentTransaction(null);
     setPrintStatus("idle");
-  }, [setPrintStatus]);
+    setPrinterError(null);
+  }, [setPrintStatus, setPrinterError]);
 
   /**
    * Handle email receipt (if implemented)
@@ -434,9 +613,12 @@ export const useReceiptPrintingFlow = () => {
     isShowingStatus,
     printStatus,
     printerInfo,
+    printerError,
     isConnected,
+    currentTransaction,
     startPrintingFlow,
     handleRetryPrint,
+    handleCancelPrint,
     handleSkipReceipt,
     handleEmailReceipt,
     handleNewSale,

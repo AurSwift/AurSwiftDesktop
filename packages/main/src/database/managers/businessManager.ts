@@ -74,6 +74,12 @@ export class BusinessManager {
       businessType: "retail" | "restaurant" | "service" | "wholesale" | "other";
       currency: string;
       timezone: string;
+
+      // Receipt Email (Gmail)
+      receiptEmailGmailUser: string;
+      receiptEmailGmailAppPassword: string;
+      receiptEmailGmailAppPasswordEncrypted: boolean;
+      receiptEmailUpdatedAt: Date | null;
     }>
   ): boolean {
     const now = new Date();
@@ -104,6 +110,17 @@ export class BusinessManager {
       updateData.businessType = updates.businessType;
     if (updates.currency !== undefined) updateData.currency = updates.currency;
     if (updates.timezone !== undefined) updateData.timezone = updates.timezone;
+
+    // Receipt Email (Gmail)
+    if (updates.receiptEmailGmailUser !== undefined)
+      updateData.receiptEmailGmailUser = updates.receiptEmailGmailUser;
+    if (updates.receiptEmailGmailAppPassword !== undefined)
+      updateData.receiptEmailGmailAppPassword = updates.receiptEmailGmailAppPassword;
+    if (updates.receiptEmailGmailAppPasswordEncrypted !== undefined)
+      updateData.receiptEmailGmailAppPasswordEncrypted =
+        updates.receiptEmailGmailAppPasswordEncrypted;
+    if (updates.receiptEmailUpdatedAt !== undefined)
+      updateData.receiptEmailUpdatedAt = updates.receiptEmailUpdatedAt;
 
     // If only updatedAt is in the object, no actual updates were provided
     if (Object.keys(updateData).length === 1) {

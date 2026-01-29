@@ -63,7 +63,7 @@ export function PaymentMethodSelector({
         >
           <div className="flex flex-col items-center">
             <span>Cash</span>
-            <span className="text-[10px] sm:text-xs text-slate-500">
+            <span className="text-caption text-slate-500">
               Physical currency
             </span>
           </div>
@@ -85,7 +85,7 @@ export function PaymentMethodSelector({
               <CreditCard className="h-4 w-4" />
               <span>Card</span>
             </div>
-            <span className="text-[10px] sm:text-xs text-slate-500">
+            <span className="text-caption text-slate-500">
               {isVivaWalletReady
                 ? selectedTerminal?.name || "Ready"
                 : isDiscovering
@@ -97,7 +97,7 @@ export function PaymentMethodSelector({
                 {selectedTerminal.terminalType === "device-based" ? (
                   <Badge
                     variant="outline"
-                    className="bg-blue-50 text-blue-700 border-blue-200 text-[9px] px-1 py-0 flex items-center gap-0.5"
+                    className="bg-blue-50 text-blue-700 border-blue-200 text-xs px-1 py-0 flex items-center gap-0.5"
                   >
                     <Smartphone className="h-2.5 w-2.5" />
                     Device
@@ -105,7 +105,7 @@ export function PaymentMethodSelector({
                 ) : (
                   <Badge
                     variant="outline"
-                    className="bg-purple-50 text-purple-700 border-purple-200 text-[9px] px-1 py-0 flex items-center gap-0.5"
+                    className="bg-purple-50 text-purple-700 border-purple-200 text-xs px-1 py-0 flex items-center gap-0.5"
                   >
                     <Radio className="h-2.5 w-2.5" />
                     Dedicated
@@ -124,7 +124,7 @@ export function PaymentMethodSelector({
         >
           <div className="flex flex-col items-center">
             <span>Mobile Pay</span>
-            <span className="text-[10px] sm:text-xs text-slate-500">
+            <span className="text-caption text-slate-500">
               Coming Soon
             </span>
           </div>
@@ -137,7 +137,7 @@ export function PaymentMethodSelector({
         >
           <div className="flex flex-col items-center">
             <span>Voucher</span>
-            <span className="text-[10px] sm:text-xs text-slate-500">
+            <span className="text-caption text-slate-500">
               Gift card/Coupon
             </span>
           </div>

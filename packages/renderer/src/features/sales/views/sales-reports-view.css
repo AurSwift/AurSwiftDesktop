@@ -2,6 +2,8 @@
  * Sales Reports View Print Styles
  *
  * Print-optimized styles for sales reports view.
+ * font-size: 10pt for tables/lists is intentional for print layout;
+ * print styles are excluded from app-wide typography responsiveness.
  */
 
 @media print {

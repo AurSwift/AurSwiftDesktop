@@ -91,7 +91,7 @@ export function useCreateRole() {
   const createRole = useCallback(
     async (
       roleData: RoleCreateFormData,
-      callbacks?: { onSuccess?: () => void }
+      callbacks?: { onSuccess?: () => void; onError?: (error: unknown) => void }
     ) => {
       setIsPending(true);
 
@@ -115,6 +115,7 @@ export function useCreateRole() {
         callbacks?.onSuccess?.();
         return response.data;
       } catch (error: unknown) {
+        callbacks?.onError?.(error);
         const errorMessage =
           error instanceof Error ? error.message : "Unknown error";
         toast.error("Failed to create role", {

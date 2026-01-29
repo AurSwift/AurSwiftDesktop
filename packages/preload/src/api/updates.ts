@@ -12,7 +12,7 @@ type UpdateDownloadedCallback = (info: UpdateInfo) => void;
 type UpdateErrorCallback = (error: UpdateError) => void;
 type UpdateCheckCompleteCallback = (
   hasUpdate: boolean,
-  version?: string
+  version?: string,
 ) => void;
 
 export const updateAPI = {
@@ -33,7 +33,7 @@ export const updateAPI = {
       "update:download-progress",
       (_, progress: DownloadProgress) => {
         callback(progress);
-      }
+      },
     );
   },
 
@@ -63,7 +63,7 @@ export const updateAPI = {
       "update:check-complete",
       (_, hasUpdate: boolean, version?: string) => {
         callback(hasUpdate, version);
-      }
+      },
     );
   },
 
@@ -124,6 +124,36 @@ export const updateAPI = {
     error?: string;
   }> => {
     return await ipcRenderer.invoke("update:get-postpone-count");
+  },
+
+  /**
+   * Get pending update info (for renderer mount sync)
+   * Call this when the renderer mounts to check if there's a pending update
+   * that was detected before the renderer set up its listeners
+   */
+  getPendingUpdate: async (): Promise<{
+    success: boolean;
+    updateInfo: UpdateInfo | null;
+    isDownloaded?: boolean;
+  }> => {
+    return await ipcRenderer.invoke("update:get-pending-update");
+  },
+
+  /**
+   * Signal that the renderer is ready to receive update events
+   * This tells the main process to:
+   * 1. Start checking for updates (if not already started)
+   * 2. Re-broadcast any pending update info
+   *
+   * This is the Cursor-style approach to avoid race conditions
+   * between main process update checks and renderer IPC setup
+   */
+  signalRendererReady: async (): Promise<{
+    success: boolean;
+    pendingUpdate: UpdateInfo | null;
+    isDownloaded?: boolean;
+  }> => {
+    return await ipcRenderer.invoke("update:renderer-ready");
   },
 
   /**

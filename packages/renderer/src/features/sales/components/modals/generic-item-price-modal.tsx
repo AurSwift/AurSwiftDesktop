@@ -47,6 +47,13 @@ export const GenericItemPriceModal: React.FC<GenericItemPriceModalProps> = ({
       return;
     }
 
+    if (value === "Backspace" || value === "<-" || value === "←") {
+      const next = price.slice(0, -1);
+      setPrice(next);
+      setDisplayPrice(next ? (parseFloat(next) || 0).toFixed(2) : "0.00");
+      return;
+    }
+
     if (value === "Enter") {
       handleConfirm();
       return;
@@ -58,7 +65,7 @@ export const GenericItemPriceModal: React.FC<GenericItemPriceModalProps> = ({
       newPrice = price + "00";
     } else if (value === ".") {
       if (!price.includes(".")) {
-        newPrice = price + ".";
+        newPrice = price === "" ? "0." : price + ".";
       }
     } else {
       newPrice = price + value;
@@ -125,7 +132,7 @@ export const GenericItemPriceModal: React.FC<GenericItemPriceModalProps> = ({
                     variant="outline"
                     size="sm"
                     onClick={() => handleQuickPrice(amount)}
-                    className="text-[10px] sm:text-xs h-9 sm:h-10 touch-manipulation"
+                    className="text-caption h-9 sm:h-10 touch-manipulation"
                   >
                     £{amount.toFixed(2)}
                   </Button>
@@ -134,17 +141,14 @@ export const GenericItemPriceModal: React.FC<GenericItemPriceModalProps> = ({
             </div>
           )}
 
-          {/* Numeric Keypad */}
+          {/* Numeric Keypad (reusable numeric-field layout) */}
           <div className="space-y-2">
             <Label className="text-xs sm:text-sm">Enter Amount</Label>
             <NumericKeypad
+              layout="numericField"
+              includeClear
+              includeBackspace
               onInput={handleKeypadInput}
-              keysOverride={[
-                ["7", "8", "9", "Clear"],
-                ["4", "5", "6", "."],
-                ["1", "2", "3", "00"],
-                ["0", "", "", "Enter"],
-              ]}
             />
           </div>
         </div>

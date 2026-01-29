@@ -28,7 +28,7 @@ export function UserStatsCards({ staffUsers }: UserStatsCardsProps) {
           <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold">
             {staffUsers.length}
           </div>
-          <p className="text-[9px] sm:text-[10px] md:text-xs lg:text-sm text-muted-foreground">
+          <p className="text-caption md:text-sm lg:text-sm text-muted-foreground">
             Active staff members
           </p>
         </CardContent>
@@ -45,7 +45,7 @@ export function UserStatsCards({ staffUsers }: UserStatsCardsProps) {
           <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold">
             {cashierCount}
           </div>
-          <p className="text-[9px] sm:text-[10px] md:text-xs lg:text-sm text-muted-foreground">
+          <p className="text-caption md:text-sm lg:text-sm text-muted-foreground">
             Front desk staff
           </p>
         </CardContent>
@@ -62,7 +62,7 @@ export function UserStatsCards({ staffUsers }: UserStatsCardsProps) {
           <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold">
             {managerCount}
           </div>
-          <p className="text-[9px] sm:text-[10px] md:text-xs lg:text-sm text-muted-foreground">
+          <p className="text-caption md:text-sm lg:text-sm text-muted-foreground">
             Management staff
           </p>
         </CardContent>

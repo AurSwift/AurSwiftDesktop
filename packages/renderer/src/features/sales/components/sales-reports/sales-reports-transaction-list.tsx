@@ -94,7 +94,7 @@ export function SalesReportsTransactionList({
                 <ShoppingCart className="h-6 w-6 sm:h-8 sm:w-8 mx-auto opacity-50" />
               </div>
               <p className="text-xs sm:text-sm">{emptyStateMessage}</p>
-              <p className="text-[10px] sm:text-xs mt-1">
+              <p className="text-caption mt-1">
                 Transactions will appear here once processed
               </p>
             </div>
@@ -135,7 +135,7 @@ export function SalesReportsTransactionList({
                   <div className="font-medium text-xs sm:text-sm truncate">
                     #{transaction.receiptNumber}
                   </div>
-                  <div className="text-[10px] sm:text-xs text-slate-500 truncate">
+                  <div className="text-caption text-slate-500 truncate">
                     {new Date(transaction.timestamp).toLocaleString()} •{" "}
                     {transaction.items.length} items
                   </div>
@@ -156,7 +156,7 @@ export function SalesReportsTransactionList({
                     <Badge
                       variant="outline"
                       className={`
-                        text-[10px] sm:text-xs mt-1
+                        text-caption mt-1
                         ${
                           transaction.paymentMethod === "cash"
                             ? "bg-amber-50 text-amber-700"

@@ -1,19 +1,65 @@
 import { ipcRenderer } from "electron";
 
+// Database import progress types
+export interface DatabaseImportProgress {
+  stage:
+    | "validating"
+    | "backing-up"
+    | "copying"
+    | "reinitializing"
+    | "restoring-license"
+    | "complete"
+    | "error";
+  percent: number;
+  message: string;
+}
+
 export const databaseAPI = {
   getInfo: () => ipcRenderer.invoke("database:getInfo"),
   backup: () => ipcRenderer.invoke("database:backup"),
   empty: () => ipcRenderer.invoke("database:empty"),
   import: () => ipcRenderer.invoke("database:import"),
+
+  // Progress subscription for database import
+  onImportProgress: (callback: (progress: DatabaseImportProgress) => void) => {
+    const subscription = (
+      _: Electron.IpcRendererEvent,
+      progress: DatabaseImportProgress,
+    ) => callback(progress);
+    ipcRenderer.on("database:import:progress", subscription);
+    return () => {
+      ipcRenderer.removeListener("database:import:progress", subscription);
+    };
+  },
+
+  // Ready signal subscription for when database import is fully complete
+  onImportReady: (callback: () => void) => {
+    const subscription = () => callback();
+    ipcRenderer.on("database:import:ready", subscription);
+    return () => {
+      ipcRenderer.removeListener("database:import:ready", subscription);
+    };
+  },
 };
 
 export const printerAPI = {
   getStatus: () => ipcRenderer.invoke("printer:getStatus"),
-  connect: (config: { type: string; interface: string }) =>
+  connect: (config: {
+    type: string;
+    interface: string;
+    width?: number;
+    options?: {
+      timeout?: number;
+      characterSet?: string;
+      removeSpecialCharacters?: boolean;
+    };
+  }) =>
     ipcRenderer.invoke("printer:connect", config),
   disconnect: () => ipcRenderer.invoke("printer:disconnect"),
   printReceipt: (transactionData: any) =>
     ipcRenderer.invoke("printer:printReceipt", transactionData),
+  previewReceipt: (transactionData: any) =>
+    ipcRenderer.invoke("printer:previewReceipt", transactionData),
   cancelPrint: () => ipcRenderer.invoke("printer:cancelPrint"),
   getAvailableInterfaces: () =>
     ipcRenderer.invoke("printer:getAvailableInterfaces"),
@@ -127,7 +173,7 @@ export const scaleAPI = {
       unit: "g" | "kg" | "lb" | "oz";
       timestamp: string;
       rawReadings?: number[];
-    }) => void
+    }) => void,
   ) => {
     ipcRenderer.on("scale:reading", (_event, reading) => callback(reading));
     return () => ipcRenderer.removeAllListeners("scale:reading");
@@ -154,13 +200,13 @@ export const vivaWalletAPI = {
   initiateRefund: (
     originalTransactionId: string,
     amount: number,
-    currency: string
+    currency: string,
   ) =>
     ipcRenderer.invoke(
       "viva:initiate-refund",
       originalTransactionId,
       amount,
-      currency
+      currency,
     ),
   cancelTransaction: (transactionId: string) =>
     ipcRenderer.invoke("viva:cancel-transaction", transactionId),
@@ -187,11 +233,11 @@ export const systemNotificationsAPI = {
    * @returns Cleanup function to remove listener
    */
   onNotification: (
-    callback: (data: { type: string; message: string }) => void
+    callback: (data: { type: string; message: string }) => void,
   ): (() => void) => {
     const handler = (
       _event: Electron.IpcRendererEvent,
-      data: { type: string; message: string }
+      data: { type: string; message: string },
     ) => callback(data);
     ipcRenderer.on("system:notification", handler);
     return () => {

@@ -61,6 +61,13 @@ export interface RefundAPIPreload {
 
   getRecentTransactions: (businessId: string, limit?: number) => Promise<any>;
 
+  getTransactionsByDateRange: (
+    businessId: string,
+    startDate: string,
+    endDate: string,
+    limit?: number
+  ) => Promise<any>;
+
   getShiftTransactions: (shiftId: string, limit?: number) => Promise<any>;
 
   validateEligibility: (
@@ -101,24 +108,6 @@ export interface RefundAPIPreload {
       cashierId: string;
     }
   ) => Promise<any>;
-}
-
-export interface VoidAPIPreload {
-  validateEligibility: (transactionId: string) => Promise<any>;
-
-  voidTransaction: (
-    sessionToken: string,
-    voidData: {
-      transactionId: string;
-      cashierId: string;
-      reason: string;
-      managerApprovalId?: string;
-    }
-  ) => Promise<any>;
-
-  getTransactionById: (transactionId: string) => Promise<any>;
-
-  getTransactionByReceipt: (receiptNumber: string) => Promise<any>;
 }
 
 export interface CashDrawerAPIPreload {

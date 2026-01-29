@@ -7,24 +7,20 @@
  * NOTE: This file will be updated as views are migrated to the new structure.
  */
 
+import { lazy } from "react";
 import { Package } from "lucide-react";
 import { INVENTORY_PERMISSIONS } from "./permissions";
 import { INVENTORY_ROUTES } from "./navigation";
 import type { FeatureConfig } from "@/features/dashboard/types/feature-config";
 import type { ViewConfig } from "@/navigation/types";
 
-// Import views from new location
-import ProductManagementView from "../views/product-management-view";
-import ManageCategoriesView from "../views/category-management-view";
-import BatchManagementView from "../views/batch-management-view";
-import StockMovementHistoryView from "../views/stock-movement-history-view";
-import ProductDashboardView from "../views/inventory-dashboard-view";
-import ProductDetailsView from "../views/product-details-view";
-import { ExpiryDashboardView } from "../views/expiry-dashboard-view";
-
-// Import navigation wrappers
-import { ProductManagementWrapper } from "../wrappers/product-management-wrapper";
-import { BatchManagementWrapper } from "../wrappers/batch-management-wrapper";
+// Reuse single lazy refs when same component backs multiple view ids
+const LazyProductManagementView = lazy(() =>
+  import("../views/product-management-view"),
+);
+const LazyBatchManagementView = lazy(() =>
+  import("../views/batch-management-view"),
+);
 
 /**
  * Inventory Feature Configuration for Dashboard
@@ -82,7 +78,7 @@ export const inventoryViews: Record<string, ViewConfig> = {
   [INVENTORY_ROUTES.DASHBOARD]: {
     id: INVENTORY_ROUTES.DASHBOARD,
     level: "root",
-    component: ProductManagementView, // TODO: Replace with InventoryDashboardView after migration
+    component: LazyProductManagementView, // TODO: Replace with InventoryDashboardView after migration
     // Tracking: docs/TODO_TRACKING.md#3
     metadata: {
       title: "Inventory Dashboard",
@@ -96,7 +92,11 @@ export const inventoryViews: Record<string, ViewConfig> = {
   [INVENTORY_ROUTES.PRODUCT_MANAGEMENT]: {
     id: INVENTORY_ROUTES.PRODUCT_MANAGEMENT,
     level: "root",
-    component: ProductManagementWrapper,
+    component: lazy(() =>
+      import("../wrappers/product-management-wrapper").then((m) => ({
+        default: m.ProductManagementWrapper,
+      })),
+    ),
     metadata: {
       title: "Product Management",
       description: "Manage products and inventory",
@@ -110,7 +110,7 @@ export const inventoryViews: Record<string, ViewConfig> = {
     id: INVENTORY_ROUTES.PRODUCT_DASHBOARD,
     level: "nested",
     parentId: INVENTORY_ROUTES.PRODUCT_MANAGEMENT,
-    component: ProductDashboardView,
+    component: lazy(() => import("../views/inventory-dashboard-view")),
     metadata: {
       title: "Product Dashboard",
       breadcrumb: "Dashboard",
@@ -123,7 +123,7 @@ export const inventoryViews: Record<string, ViewConfig> = {
     id: INVENTORY_ROUTES.PRODUCT_LIST,
     level: "nested",
     parentId: INVENTORY_ROUTES.PRODUCT_MANAGEMENT,
-    component: ProductManagementView, // Rendered internally
+    component: LazyProductManagementView, // Rendered internally
     metadata: {
       title: "Product List",
       breadcrumb: "Products",
@@ -136,7 +136,7 @@ export const inventoryViews: Record<string, ViewConfig> = {
     id: INVENTORY_ROUTES.PRODUCT_DETAILS_NESTED,
     level: "nested",
     parentId: INVENTORY_ROUTES.PRODUCT_MANAGEMENT,
-    component: ProductDetailsView,
+    component: lazy(() => import("../views/product-details-view")),
     metadata: {
       title: "Product Details",
       breadcrumb: "Details",
@@ -151,7 +151,7 @@ export const inventoryViews: Record<string, ViewConfig> = {
     id: INVENTORY_ROUTES.CATEGORY_MANAGEMENT,
     level: "nested",
     parentId: INVENTORY_ROUTES.PRODUCT_MANAGEMENT,
-    component: ManageCategoriesView,
+    component: lazy(() => import("../views/category-management-view")),
     metadata: {
       title: "Category Management",
       breadcrumb: "Categories",
@@ -165,7 +165,11 @@ export const inventoryViews: Record<string, ViewConfig> = {
     id: INVENTORY_ROUTES.BATCH_MANAGEMENT,
     level: "nested",
     parentId: INVENTORY_ROUTES.PRODUCT_MANAGEMENT,
-    component: BatchManagementWrapper,
+    component: lazy(() =>
+      import("../wrappers/batch-management-wrapper").then((m) => ({
+        default: m.BatchManagementWrapper,
+      })),
+    ),
     metadata: {
       title: "Batch Management",
       breadcrumb: "Batches",
@@ -179,7 +183,7 @@ export const inventoryViews: Record<string, ViewConfig> = {
     id: INVENTORY_ROUTES.BATCH_DASHBOARD,
     level: "nested",
     parentId: INVENTORY_ROUTES.BATCH_MANAGEMENT,
-    component: BatchManagementView, // Rendered internally
+    component: LazyBatchManagementView, // Rendered internally
     metadata: {
       title: "Batch Dashboard",
       breadcrumb: "Dashboard",
@@ -192,7 +196,7 @@ export const inventoryViews: Record<string, ViewConfig> = {
     id: INVENTORY_ROUTES.BATCH_LIST,
     level: "nested",
     parentId: INVENTORY_ROUTES.BATCH_MANAGEMENT,
-    component: BatchManagementView, // Rendered internally
+    component: LazyBatchManagementView, // Rendered internally
     metadata: {
       title: "Batch List",
       breadcrumb: "All Batches",
@@ -205,7 +209,11 @@ export const inventoryViews: Record<string, ViewConfig> = {
     id: INVENTORY_ROUTES.EXPIRY_ALERTS,
     level: "nested",
     parentId: INVENTORY_ROUTES.BATCH_MANAGEMENT,
-    component: ExpiryDashboardView,
+    component: lazy(() =>
+      import("../views/expiry-dashboard-view").then((m) => ({
+        default: m.ExpiryDashboardView,
+      })),
+    ),
     metadata: {
       title: "Expiry Alerts",
       breadcrumb: "Alerts",
@@ -219,7 +227,7 @@ export const inventoryViews: Record<string, ViewConfig> = {
     id: INVENTORY_ROUTES.STOCK_MOVEMENT_HISTORY,
     level: "nested",
     parentId: INVENTORY_ROUTES.PRODUCT_MANAGEMENT,
-    component: StockMovementHistoryView,
+    component: lazy(() => import("../views/stock-movement-history-view")),
     metadata: {
       title: "Stock Movement History",
       breadcrumb: "History",

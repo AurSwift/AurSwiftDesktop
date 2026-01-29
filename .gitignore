@@ -4,11 +4,12 @@ dist
 data
 *.local
 thumbs.db
+package-lock.json
 
 .eslintcache
 
 # Documentation directories (at any level)
-**/docs/
+#**/docs/
 
 bookerdata
 test-results

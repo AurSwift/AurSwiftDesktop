@@ -97,7 +97,7 @@ export function FeatureCard({ feature }: FeatureCardProps) {
             </div>
             <CardDescription
               className={cn(
-                "text-xs sm:text-sm",
+                "text-caption",
                 !visibility.canAccess && "opacity-70"
               )}
             >
@@ -115,7 +115,7 @@ export function FeatureCard({ feature }: FeatureCardProps) {
             <Button
               key={action.id}
               className={cn(
-                "w-full justify-start text-sm h-9 touch-manipulation transition-all relative group",
+                "w-full justify-start text-sm sm:text-base h-9 touch-manipulation transition-all relative group",
                 isDisabled &&
                   "opacity-50 cursor-not-allowed hover:opacity-50 hover:bg-background hover:border-border/50"
               )}

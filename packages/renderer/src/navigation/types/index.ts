@@ -6,6 +6,7 @@
 export type {
   ViewLevel,
   ViewMetadata,
+  ViewChromeConfig,
   ViewConfig,
   NavigationState,
   NavigationContextValue,

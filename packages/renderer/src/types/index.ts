@@ -37,7 +37,6 @@ export * from './api/expiry-settings';
 export * from './api/stock-movement';
 export * from './api/schedule';
 export * from './api/refund';
-export * from './api/void';
 export * from './api/cash-drawer';
 export * from './api/time-tracking';
 export * from './api/age-verification';

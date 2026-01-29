@@ -19,7 +19,6 @@ export * from "./sales-unit-settings";
 export * from "./stock-movement";
 export * from "./schedule";
 export * from "./refund";
-export * from "./void";
 export * from "./cash-drawer";
 export * from "./time-tracking";
 export * from "./age-verification";

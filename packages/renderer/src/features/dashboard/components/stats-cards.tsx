@@ -145,20 +145,20 @@ export function StatsCards({ className = "", onActionClick }: StatsCardsProps) {
             className="shadow-sm hover:shadow-md transition-shadow"
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
                 {stat.title}
               </CardTitle>
               <Icon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-xl sm:text-2xl font-bold">
                 {stat.isLoading ? (
                   <span className="animate-pulse">...</span>
                 ) : (
                   stat.value
                 )}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-caption text-muted-foreground mt-1">
                 {stat.isLoading ? (
                   <span className="animate-pulse">Loading...</span>
                 ) : (
@@ -173,7 +173,7 @@ export function StatsCards({ className = "", onActionClick }: StatsCardsProps) {
       {canGoToSales && (
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
               Quick Action
             </CardTitle>
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
@@ -181,7 +181,7 @@ export function StatsCards({ className = "", onActionClick }: StatsCardsProps) {
           <CardContent>
             <Button
               onClick={handleGoToSales}
-              className="w-full h-auto py-3 text-base font-semibold"
+              className="w-full h-auto py-3 text-sm sm:text-base font-semibold"
               variant="default"
             >
               <ShoppingCart className="h-4 w-4" />
@@ -336,7 +336,7 @@ export const ManagerStatsCards = ({ className = "", onActionClick }: StatsCardsP
                   stat.value
                 )}
               </div>
-              <p className="text-[10px] sm:text-xs text-muted-foreground">
+              <p className="text-caption text-muted-foreground">
                 {stat.isLoading ? (
                   <span className="animate-pulse">Loading...</span>
                 ) : (

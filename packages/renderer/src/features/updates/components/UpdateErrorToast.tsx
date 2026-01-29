@@ -42,7 +42,7 @@ export function UpdateErrorToast({
   };
 
   return (
-    <div className="flex flex-col gap-3 w-full max-w-md bg-card border-2 border-border rounded-lg shadow-xl p-4 backdrop-blur-sm">
+    <div className="flex flex-col gap-3 w-full max-w-md bg-card  rounded-lg shadow-xl p-4">
       {/* Header */}
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0 mt-0.5">
@@ -121,7 +121,7 @@ export function UpdateErrorToast({
 export function showUpdateErrorToast(
   error: UpdateError,
   onRetry?: () => void,
-  onDismiss?: () => void
+  onDismiss?: () => void,
 ): string | number {
   return toast.custom(
     (t) => (
@@ -144,6 +144,6 @@ export function showUpdateErrorToast(
         border: "none", // Remove default border, component has its own
         background: "transparent", // Let component handle background
       },
-    }
+    },
   );
 }

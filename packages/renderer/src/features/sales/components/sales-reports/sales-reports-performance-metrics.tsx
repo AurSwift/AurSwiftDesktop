@@ -98,10 +98,10 @@ export function SalesReportsPerformanceMetrics({
           {/* Transactions Per Hour */}
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-blue-500" />
+              <Clock className="h-4 w-4 text-slate-700" />
               <span className="text-sm text-slate-600">Transactions per hour:</span>
             </div>
-            <span className="font-medium text-slate-900">
+            <span className="font-medium text-slate-800">
               {metrics.transactionsPerHour.toFixed(1)}
             </span>
           </div>
@@ -109,10 +109,10 @@ export function SalesReportsPerformanceMetrics({
           {/* Average Basket Size */}
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
-              <ShoppingCart className="h-4 w-4 text-green-500" />
+              <ShoppingCart className="h-4 w-4 text-slate-700" />
               <span className="text-sm text-slate-600">Average basket size:</span>
             </div>
-            <span className="font-medium text-slate-900">
+            <span className="font-medium text-slate-800">
               £{metrics.averageBasketSize.toFixed(2)}
             </span>
           </div>
@@ -121,7 +121,7 @@ export function SalesReportsPerformanceMetrics({
           {metrics.cashVsCardRatio && totalPayments > 0 && (
             <div className="pt-4 border-t border-slate-200">
               <div className="flex items-center gap-2 mb-3">
-                <TrendingUp className="h-4 w-4 text-purple-500" />
+                <TrendingUp className="h-4 w-4 text-slate-700" />
                 <span className="text-sm font-medium text-slate-700">
                   Payment Method Breakdown
                 </span>
@@ -129,19 +129,19 @@ export function SalesReportsPerformanceMetrics({
               <div className="space-y-2">
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-slate-600">Cash:</span>
-                  <span className="font-medium text-amber-700">
+                  <span className="font-medium text-slate-800">
                     {cashPercentage.toFixed(1)}%
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-slate-600">Card:</span>
-                  <span className="font-medium text-blue-700">
+                  <span className="font-medium text-slate-800">
                     {cardPercentage.toFixed(1)}%
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-slate-600">Mixed:</span>
-                  <span className="font-medium text-purple-700">
+                  <span className="font-medium text-slate-800">
                     {mixedPercentage.toFixed(1)}%
                   </span>
                 </div>

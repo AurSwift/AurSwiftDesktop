@@ -24,6 +24,7 @@ if (typeof window !== "undefined") {
     register: vi.fn(),
     logout: vi.fn(),
     validateSession: vi.fn(),
+    verifyPin: vi.fn().mockResolvedValue({ success: true }),
   };
 
   (window as any).productAPI = {

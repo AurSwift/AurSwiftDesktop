@@ -5,14 +5,12 @@
  * This is used by the navigation system and dashboard.
  */
 
+import { lazy } from "react";
 import { Users } from "lucide-react";
 import { USERS_PERMISSIONS } from "./permissions";
 import { USERS_ROUTES } from "./navigation";
 import type { FeatureConfig } from "@/features/dashboard/types/feature-config";
 import type { ViewConfig } from "@/navigation/types";
-
-// Import view from new location
-import UserManagementView from "../views/user-management-view";
 
 /**
  * Users Feature Configuration for Dashboard
@@ -46,7 +44,7 @@ export const usersViews: Record<string, ViewConfig> = {
   [USERS_ROUTES.MANAGEMENT]: {
     id: USERS_ROUTES.MANAGEMENT,
     level: "root",
-    component: UserManagementView,
+    component: lazy(() => import("../views/user-management-view")),
     metadata: {
       title: "User Management",
       description: "Manage staff users",

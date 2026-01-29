@@ -6,16 +6,26 @@ import {
   Navigate,
 } from "react-router-dom";
 
-import { ProtectedRoute, PublicRoute } from "@/components";
-import { AuthPage } from "@/features/auth";
-import { DashboardView } from "@/features/dashboard";
 import {
-  LicenseActivationScreen,
-  LicenseInfoPage,
-  useLicenseContext,
-} from "@/features/license";
+  LoadingScreen,
+  ProtectedRoute,
+  PublicRoute,
+  RetryableLazyRoute,
+  RouteErrorBoundary,
+} from "@/components";
+import { LicenseActivationScreen, useLicenseContext } from "@/features/license";
+import { ProtectedAppShell } from "@/navigation/components/protected-app-shell";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { sanitizeUserFacingMessage } from "@/shared/utils/user-facing-errors";
+
+const authLoader = () => import("@/features/auth/views/auth-page");
+const dashboardLoader = () =>
+  import("@/features/dashboard/views/dashboard-view");
+const licenseLoader = () =>
+  import("@/features/license/pages/license-info-page").then((m) => ({
+    default: m.LicenseInfoPage,
+  }));
 
 /**
  * System notification listener
@@ -30,23 +40,27 @@ function useSystemNotifications() {
 
     const cleanup = window.systemNotificationsAPI.onNotification(
       (data: { type: string; message: string }) => {
+        const message = sanitizeUserFacingMessage(
+          data.message,
+          "Something went wrong",
+        );
         switch (data.type) {
           case "warning":
-            toast.warning(data.message, { duration: 5000 });
+            toast.warning(message, { duration: 5000 });
             break;
           case "error":
-            toast.error(data.message, { duration: 5000 });
+            toast.error(message, { duration: 5000 });
             break;
           case "info":
-            toast.info(data.message, { duration: 5000 });
+            toast.info(message, { duration: 5000 });
             break;
           case "success":
-            toast.success(data.message, { duration: 5000 });
+            toast.success(message, { duration: 5000 });
             break;
           default:
-            toast(data.message, { duration: 5000 });
+            toast(message, { duration: 5000 });
         }
-      }
+      },
     );
 
     return cleanup;
@@ -56,12 +70,12 @@ function useSystemNotifications() {
 /**
  * Loading screen shown while checking license status
  */
-function LoadingScreen() {
+function LicenseLoadingScreen() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
       <div className="text-center space-y-4">
         <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
-        <p className="text-muted-foreground">Loading aurswift...</p>
+        <p className="text-body text-muted-foreground">Loading aurswift...</p>
       </div>
     </div>
   );
@@ -80,7 +94,13 @@ function AppContent() {
           path="/auth"
           element={
             <PublicRoute>
-              <AuthPage />
+              <RouteErrorBoundary>
+                <RetryableLazyRoute
+                  loader={authLoader}
+                  fallback={<LoadingScreen />}
+                  debug="none"
+                />
+              </RouteErrorBoundary>
             </PublicRoute>
           }
         />
@@ -88,7 +108,13 @@ function AppContent() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <DashboardView />
+              <RouteErrorBoundary>
+                <RetryableLazyRoute
+                  loader={dashboardLoader}
+                  fallback={<LoadingScreen />}
+                  debug="none"
+                />
+              </RouteErrorBoundary>
             </ProtectedRoute>
           }
         />
@@ -96,7 +122,15 @@ function AppContent() {
           path="/license"
           element={
             <ProtectedRoute>
-              <LicenseInfoPage />
+              <ProtectedAppShell subtitle="License">
+                <RouteErrorBoundary>
+                  <RetryableLazyRoute
+                    loader={licenseLoader}
+                    fallback={<LoadingScreen />}
+                    debug="none"
+                  />
+                </RouteErrorBoundary>
+              </ProtectedAppShell>
             </ProtectedRoute>
           }
         />
@@ -125,7 +159,7 @@ function AppWithLicenseCheck() {
 
   // Show loading screen while checking license
   if (isLoading) {
-    return <LoadingScreen />;
+    return <LicenseLoadingScreen />;
   }
 
   // Bypass license check in test mode

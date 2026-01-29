@@ -91,6 +91,10 @@ export class TransactionManager {
         (transactionData as any).vivaWalletTransactionId ?? null,
       vivaWalletTerminalId:
         (transactionData as any).vivaWalletTerminalId ?? null,
+      vivaWalletAuthCode: (transactionData as any).vivaWalletAuthCode ?? null,
+      vivaWalletCardBrand: (transactionData as any).vivaWalletCardBrand ?? null,
+      vivaWalletCardLast4: (transactionData as any).vivaWalletCardLast4 ?? null,
+      vivaWalletCardType: (transactionData as any).vivaWalletCardType ?? null,
       // Currency for multi-currency support
       currency: (transactionData as any).currency ?? "GBP",
     });
@@ -207,6 +211,65 @@ export class TransactionManager {
           eq(schema.transactions.status, "completed"),
           gte(schema.transactions.timestamp, startOfToday.toISOString()),
           lte(schema.transactions.timestamp, endOfToday.toISOString())
+        )
+      )
+      .orderBy(desc(schema.transactions.timestamp))
+      .limit(limit);
+
+    const transactionsWithItems = await Promise.all(
+      transactions.map(async ({ transaction, user }) => {
+        const items = await this.getTransactionItems(transaction.id);
+        return {
+          ...transaction,
+          isPartialRefund: Boolean(transaction.isPartialRefund),
+          items,
+          appliedDiscounts: transaction.appliedDiscounts
+            ? JSON.parse(transaction.appliedDiscounts)
+            : undefined,
+          cashierName: user
+            ? `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+              user.username
+            : undefined,
+        } as TransactionWithItems & { cashierName?: string };
+      })
+    );
+
+    return transactionsWithItems;
+  }
+
+  /**
+   * Get transactions by date range for reports.
+   * Returns completed transactions within [start, end] with items and cashier name.
+   */
+  async getTransactionsByDateRange(
+    businessId: string,
+    startDate: Date,
+    endDate: Date,
+    limit: number = 1000
+  ): Promise<TransactionWithItems[]> {
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+
+    const transactions = await this.db
+      .select({
+        transaction: schema.transactions,
+        shift: schema.shifts,
+        user: schema.users,
+      })
+      .from(schema.transactions)
+      .leftJoin(
+        schema.shifts,
+        eq(schema.transactions.shiftId, schema.shifts.id)
+      )
+      .leftJoin(schema.users, eq(schema.shifts.user_id, schema.users.id))
+      .where(
+        and(
+          eq(schema.transactions.businessId, businessId),
+          eq(schema.transactions.status, "completed"),
+          gte(schema.transactions.timestamp, start.toISOString()),
+          lte(schema.transactions.timestamp, end.toISOString())
         )
       )
       .orderBy(desc(schema.transactions.timestamp))
@@ -574,111 +637,6 @@ export class TransactionManager {
   }
 
   /**
-   * Void transaction
-   */
-  async voidTransaction(voidData: {
-    transactionId: string;
-    cashierId: string;
-    reason: string;
-    managerApprovalId?: string;
-  }): Promise<{
-    success: boolean;
-    message: string;
-  }> {
-    try {
-      // Get original transaction
-      const originalTransaction = await this.getTransactionById(
-        voidData.transactionId
-      );
-
-      if (!originalTransaction) {
-        throw new Error("Transaction not found");
-      }
-
-      // Check if transaction can be voided
-      if (originalTransaction.status !== "completed") {
-        throw new Error("Only completed transactions can be voided");
-      }
-
-      // Check time window (30 minutes for void)
-      const transactionTime = new Date(originalTransaction.timestamp);
-      const now = new Date();
-      const timeDifferenceMinutes =
-        (now.getTime() - transactionTime.getTime()) / (1000 * 60);
-
-      if (timeDifferenceMinutes > 30 && !voidData.managerApprovalId) {
-        throw new Error(
-          "Transaction is older than 30 minutes and requires manager approval"
-        );
-      }
-
-      // Use Drizzle transaction for atomicity
-      this.db.transaction((tx: any) => {
-        // 1. Update transaction status to voided
-        tx.update(schema.transactions)
-          .set({
-            status: "voided",
-            voidReason: voidData.reason,
-          })
-          .where(eq(schema.transactions.id, voidData.transactionId))
-          .run();
-
-        // 2. Restore inventory for all items in the transaction
-        // Only restore inventory for items with productId (skip category-only items)
-        for (const item of originalTransaction.items) {
-          if (!item.productId) {
-            // Skip category items - they don't have inventory to restore
-            continue;
-          }
-
-          const [currentProduct] = tx
-            .select({ stockLevel: schema.products.stockLevel })
-            .from(schema.products)
-            .where(eq(schema.products.id, item.productId))
-            .limit(1)
-            .all();
-
-          tx.update(schema.products)
-            .set({
-              stockLevel: (currentProduct?.stockLevel ?? 0) + item.quantity,
-            })
-            .where(eq(schema.products.id, item.productId))
-            .run();
-        }
-
-        // 3. Create audit log entry
-        const auditId = this.uuid.v4();
-        tx.insert(schema.auditLogs)
-          .values({
-            id: auditId,
-            userId: voidData.cashierId,
-            action: "void",
-            resource: "transactions",
-            resourceId: voidData.transactionId,
-            details: JSON.stringify({
-              reason: voidData.reason,
-              managerApproval: voidData.managerApprovalId,
-              originalAmount: originalTransaction.total,
-            }),
-            timestamp: new Date().toISOString(),
-          })
-          .run();
-      });
-
-      return {
-        success: true,
-        message: "Transaction voided successfully",
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message:
-          error instanceof Error ? error.message : "Failed to void transaction",
-      };
-    }
-  }
-
-  /**
    * Get transaction by receipt number
    */
   async getTransactionByReceiptNumber(
@@ -699,59 +657,6 @@ export class TransactionManager {
     if (!transaction) return null;
 
     const items = await this.getTransactionItems(transaction.id);
-
-    return {
-      ...transaction,
-      isPartialRefund: Boolean(transaction.isPartialRefund),
-      items,
-      appliedDiscounts: transaction.appliedDiscounts
-        ? JSON.parse(transaction.appliedDiscounts)
-        : undefined,
-    } as TransactionWithItems;
-  }
-
-  /**
-   * Get transaction by receipt number (any status)
-   */
-  async getTransactionByReceiptNumberAnyStatus(
-    receiptNumber: string
-  ): Promise<TransactionWithItems | null> {
-    const [transaction] = await this.db
-      .select()
-      .from(schema.transactions)
-      .where(eq(schema.transactions.receiptNumber, receiptNumber))
-      .orderBy(desc(schema.transactions.timestamp))
-      .limit(1);
-
-    if (!transaction) return null;
-
-    const items = await this.getTransactionItems(transaction.id);
-
-    return {
-      ...transaction,
-      isPartialRefund: Boolean(transaction.isPartialRefund),
-      items,
-      appliedDiscounts: transaction.appliedDiscounts
-        ? JSON.parse(transaction.appliedDiscounts)
-        : undefined,
-    } as TransactionWithItems;
-  }
-
-  /**
-   * Get transaction by ID (any status)
-   */
-  async getTransactionByIdAnyStatus(
-    id: string
-  ): Promise<TransactionWithItems | null> {
-    const [transaction] = await this.db
-      .select()
-      .from(schema.transactions)
-      .where(eq(schema.transactions.id, id))
-      .limit(1);
-
-    if (!transaction) return null;
-
-    const items = await this.getTransactionItems(id);
 
     return {
       ...transaction,
@@ -797,62 +702,6 @@ export class TransactionManager {
     );
 
     return transactionsWithItems;
-  }
-
-  /**
-   * Validate if a transaction can be voided
-   */
-  validateVoidEligibility(transactionId: string): {
-    isValid: boolean;
-    errors: string[];
-    requiresManagerApproval: boolean;
-  } {
-    const errors: string[] = [];
-    let requiresManagerApproval = false;
-
-    // Note: This is a sync wrapper - in practice you'd want to make this async
-    // For now, using a simple sync approach
-    const transactions = this.db
-      .select()
-      .from(schema.transactions)
-      .where(eq(schema.transactions.id, transactionId))
-      .limit(1)
-      .all();
-
-    const transaction = transactions[0];
-
-    if (!transaction) {
-      errors.push("Transaction not found");
-      return { isValid: false, errors, requiresManagerApproval: false };
-    }
-
-    // Check if already voided or refunded
-    if (transaction.status !== "completed") {
-      errors.push("Transaction is not in completed status");
-    }
-
-    // Check time window (30 minutes for normal void)
-    const transactionTime = new Date(transaction.timestamp);
-    const now = new Date();
-    const timeDifferenceMinutes =
-      (now.getTime() - transactionTime.getTime()) / (1000 * 60);
-
-    if (timeDifferenceMinutes > 30) {
-      requiresManagerApproval = true;
-    }
-
-    // Check if payment method allows void (card payments might be settled)
-    if (transaction.paymentMethod === "card" && timeDifferenceMinutes > 60) {
-      errors.push(
-        "Card payment may be settled - refund required instead of void"
-      );
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors,
-      requiresManagerApproval,
-    };
   }
 
   /**

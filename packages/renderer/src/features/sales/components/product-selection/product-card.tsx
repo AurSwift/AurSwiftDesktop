@@ -64,7 +64,7 @@ export function ProductCard({
           {product.usesScale && (
             <Badge
               variant="outline"
-              className="text-[10px] sm:text-xs bg-blue-50 border-blue-200 text-blue-700 whitespace-nowrap"
+              className="text-caption bg-blue-50 border-blue-200 text-blue-700 whitespace-nowrap"
             >
               <Scale className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1 shrink-0" />
               Weighed
@@ -73,7 +73,7 @@ export function ProductCard({
           {product.isGenericButton && (
             <Badge
               variant="outline"
-              className="text-[10px] sm:text-xs bg-purple-50 text-purple-700 border-purple-200 whitespace-nowrap"
+              className="text-caption bg-purple-50 text-purple-700 border-purple-200 whitespace-nowrap"
             >
               Generic
             </Badge>

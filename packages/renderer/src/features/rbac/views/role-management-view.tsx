@@ -1,15 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChevronLeft, Plus, Search, Shield } from "lucide-react";
 import { useAuth } from "@/shared/hooks/use-auth";
 import { getUserRoleName } from "@/shared/utils/rbac-helpers";
+import { AdaptiveKeyboard } from "@/features/adaptive-keyboard/adaptive-keyboard";
+import { cn } from "@/shared/utils/cn";
 
 import { getLogger } from "@/shared/utils/logger";
 const logger = getLogger("role-management-view");
 import {
   RoleCard,
-  CreateRoleDialog,
+  CreateRoleDrawer,
   EditRoleDialog,
   DeleteRoleDialog,
   ViewRoleUsersDialog,
@@ -55,6 +57,11 @@ export default function RoleManagementView({ onBack }: { onBack: () => void }) {
   );
   const { getUsersByRole } = useUsersByRole();
 
+  // Adaptive keyboard state
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const keyboardContainerRef = useRef<HTMLDivElement>(null);
+
   const filteredRoles = roles?.filter((role) => {
     const searchLower = searchTerm.toLowerCase();
     return (
@@ -64,12 +71,18 @@ export default function RoleManagementView({ onBack }: { onBack: () => void }) {
     );
   });
 
-  const handleCreateRole = (data: RoleCreateFormData) => {
-    createRole(data, {
-      onSuccess: () => {
-        setIsCreateDialogOpen(false);
-        refetch();
-      },
+  const handleCreateRole = async (data: RoleCreateFormData) => {
+    return new Promise<void>((resolve, reject) => {
+      createRole(data, {
+        onSuccess: () => {
+          setIsCreateDialogOpen(false);
+          refetch();
+          resolve();
+        },
+        onError: (error: unknown) => {
+          reject(error);
+        },
+      });
     });
   };
 
@@ -112,6 +125,54 @@ export default function RoleManagementView({ onBack }: { onBack: () => void }) {
     setIsViewUsersDialogOpen(true);
   };
 
+  // Add padding to body when keyboard is visible to allow content scrolling
+  useEffect(() => {
+    if (!keyboardVisible || !keyboardContainerRef.current) {
+      document.body.style.paddingBottom = "";
+      return;
+    }
+
+    const updatePadding = () => {
+      const keyboard = keyboardContainerRef.current;
+      if (keyboard) {
+        const height = keyboard.offsetHeight;
+        document.body.style.paddingBottom = `${height}px`;
+      }
+    };
+
+    // Small delay to ensure keyboard is rendered and measured
+    const timeoutId = setTimeout(updatePadding, 100);
+    updatePadding();
+
+    // Update on resize in case keyboard height changes
+    window.addEventListener("resize", updatePadding);
+
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener("resize", updatePadding);
+      document.body.style.paddingBottom = "";
+    };
+  }, [keyboardVisible]);
+
+  // Hide keyboard when user clicks/taps outside input + keyboard
+  useEffect(() => {
+    if (!keyboardVisible) return;
+
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as Node | null;
+      if (!target) return;
+
+      const clickedSearchInput = searchInputRef.current?.contains(target);
+      const clickedKeyboard = keyboardContainerRef.current?.contains(target);
+
+      if (clickedSearchInput || clickedKeyboard) return;
+      setKeyboardVisible(false);
+    };
+
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [keyboardVisible]);
+
   // Load user counts for all roles
   useEffect(() => {
     if (!roles || roles.length === 0) return;
@@ -133,6 +194,28 @@ export default function RoleManagementView({ onBack }: { onBack: () => void }) {
     loadUserCounts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roles]);
+
+  // Adaptive keyboard handlers
+  const handleKeyboardInput = (value: string) => {
+    setSearchTerm(searchTerm + value);
+  };
+
+  const handleKeyboardBackspace = () => {
+    setSearchTerm(searchTerm.slice(0, -1));
+  };
+
+  const handleKeyboardClear = () => {
+    setSearchTerm("");
+  };
+
+  const handleKeyboardEnter = () => {
+    setKeyboardVisible(false);
+    searchInputRef.current?.blur();
+  };
+
+  const handleSearchFocus = () => {
+    setKeyboardVisible(true);
+  };
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-[1600px] space-y-6">
@@ -163,9 +246,11 @@ export default function RoleManagementView({ onBack }: { onBack: () => void }) {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
+            ref={searchInputRef}
             placeholder="Search roles..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            onFocus={handleSearchFocus}
             className="pl-10"
           />
         </div>
@@ -229,12 +314,12 @@ export default function RoleManagementView({ onBack }: { onBack: () => void }) {
       )}
 
       {/* Dialogs */}
-      <CreateRoleDialog
+      <CreateRoleDrawer
         open={isCreateDialogOpen}
         onOpenChange={(open) => {
           setIsCreateDialogOpen(open);
           if (!open) {
-            // Reset state when dialog closes
+            // Reset state when drawer closes
             setSelectedRole(null);
           }
         }}
@@ -263,6 +348,37 @@ export default function RoleManagementView({ onBack }: { onBack: () => void }) {
         open={isViewUsersDialogOpen}
         onOpenChange={setIsViewUsersDialogOpen}
       />
+
+      {/* Adaptive Keyboard - Bottom attached, full width, no gap */}
+      {keyboardVisible && (
+        <div
+          ref={keyboardContainerRef}
+          className={cn(
+            "fixed bottom-0 left-0 right-0 z-50",
+            "overflow-hidden shadow-2xl",
+            "transform transition-all duration-300 ease-out",
+            keyboardVisible
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-full pointer-events-none",
+          )}
+          style={{
+            margin: 0,
+            padding: 0,
+          }}
+        >
+          <AdaptiveKeyboard
+            onInput={handleKeyboardInput}
+            onBackspace={handleKeyboardBackspace}
+            onClear={handleKeyboardClear}
+            onEnter={handleKeyboardEnter}
+            initialMode="qwerty"
+            inputType="text"
+            visible={keyboardVisible}
+            onClose={() => setKeyboardVisible(false)}
+            className="!rounded-none"
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -46,14 +46,10 @@ interface ViewTransitionContainerProps {
  * @example
  * ```tsx
  * const views = {
- *   dashboard: <DashboardView />,
- *   settings: <SettingsView />,
+ *   "sales:new-transaction": <NewTransactionView />,
+ *   "users:management": <UserManagementView />,
  * };
- * 
- * <ViewTransitionContainer
- *   currentView={currentView}
- *   views={views}
- * />
+ * <ViewTransitionContainer currentView={currentView} views={views} />
  * ```
  */
 export function ViewTransitionContainer({
@@ -77,11 +73,16 @@ export function ViewTransitionContainer({
   const enterAnimationClass = direction === "right" ? "animate-slide-right" : "animate-slide-left";
 
   return (
-    <div className="grid gap-6">
-      <AnimatePresence mode="wait" exitAnimation={exitAnimation} exitDuration={animationDuration * 1000}>
+    <div className="w-full flex-1 min-h-0 flex flex-col">
+      <AnimatePresence
+        mode="wait"
+        exitAnimation={exitAnimation}
+        exitDuration={animationDuration * 1000}
+        className="w-full flex-1 min-h-0 flex flex-col"
+      >
         <div
           key={currentView}
-          className={cn(className, enterAnimationClass)}
+          className={cn("w-full flex-1 min-h-0 flex flex-col", className, enterAnimationClass)}
         >
           {views[currentView] || null}
         </div>

@@ -102,16 +102,3 @@ export function useFeatureVisibility(
   ]);
 }
 
-/**
- * Simplified hook for backward compatibility
- * Returns just boolean visibility (shows feature even if requires upgrade)
- * 
- * @param feature - Feature configuration to check
- * @returns Whether the feature should be visible
- * @deprecated Use useFeatureVisibility() for comprehensive access info
- */
-export function useIsFeatureVisible(feature: FeatureConfig): boolean {
-  const result = useFeatureVisibility(feature);
-  return result.isVisible;
-}
-

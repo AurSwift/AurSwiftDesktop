@@ -3,23 +3,29 @@
  *
  * Wrapper component that renders the appropriate dashboard page
  * based on user role. Uses the new navigation system.
+ * Role-specific views are lazy-loaded so they can be code-split
+ * (e.g. sales:cashier-dashboard gets its own chunk).
  */
 
+import { lazy, Suspense } from "react";
 import { useAuth } from "@/shared/hooks";
 import { getUserRoleName } from "@/shared/utils/rbac-helpers";
-import { DashboardLayout } from "@/features/dashboard/components/dashboard-layout";
-import { getRoleDisplayName, getUserDisplayName } from "@/shared/utils/auth";
-import {
-  AdminDashboardView,
-  CashierDashboardView,
-  ManagerDashboardView,
-} from "@/features/dashboard";
 import { USERS_ROUTES } from "@/features/users/config/navigation";
 import { SALES_ROUTES } from "@/features/sales/config/navigation";
 
 import { useNavigation } from "../hooks/use-navigation";
 import { useDashboardNavigation } from "../hooks/use-dashboard-navigation";
-import { LoadingScreen } from "@/components/loading-screen";
+import { LoadingScreen, ViewLoadingFallback } from "@/components";
+
+const AdminDashboardView = lazy(() =>
+  import("@/features/dashboard/views/admin-dashboard-view"),
+);
+const ManagerDashboardView = lazy(() =>
+  import("@/features/dashboard/views/manager-dashboard-view"),
+);
+const CashierDashboardView = lazy(() =>
+  import("@/features/dashboard/views/cashier-dashboard-view"),
+);
 
 /**
  * Dashboard Page Wrapper
@@ -40,8 +46,6 @@ export function DashboardPageWrapper() {
   }
 
   const role = getUserRoleName(user);
-  const roleDisplayName = getRoleDisplayName(role);
-  const userDisplayName = getUserDisplayName(user);
 
   // Navigation helper
   const handleNavigate = (viewId: string) => {
@@ -51,47 +55,38 @@ export function DashboardPageWrapper() {
   switch (role) {
     case "admin":
       return (
-        <DashboardLayout
-          title={`${roleDisplayName} Dashboard`}
-          subtitle={`Welcome, ${userDisplayName}`}
-        >
+        <Suspense fallback={<ViewLoadingFallback />}>
           <AdminDashboardView
             onFront={() => navigateTo(USERS_ROUTES.MANAGEMENT)}
             onActionClick={handleActionClick}
           />
-        </DashboardLayout>
+        </Suspense>
       );
 
     case "manager":
       return (
-        <DashboardLayout
-          title={`${roleDisplayName} Dashboard`}
-          subtitle={`Welcome, ${userDisplayName}`}
-        >
+        <Suspense fallback={<ViewLoadingFallback />}>
           <ManagerDashboardView onActionClick={handleActionClick} />
-        </DashboardLayout>
+        </Suspense>
       );
 
     case "cashier":
       return (
-        <DashboardLayout
-          title={`${roleDisplayName} Dashboard`}
-          subtitle={`Welcome, ${userDisplayName}`}
-        >
+        <Suspense fallback={<ViewLoadingFallback />}>
           <CashierDashboardView
             onNewTransaction={() =>
               handleNavigate(SALES_ROUTES.NEW_TRANSACTION)
             }
           />
-        </DashboardLayout>
+        </Suspense>
       );
 
     default:
       return (
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
-            <h2 className="text-xl font-semibold mb-2">Unauthorized</h2>
-            <p className="text-muted-foreground">
+            <h2 className="text-heading-medium mb-2">Unauthorized</h2>
+            <p className="text-body text-muted-foreground">
               You don't have access to the dashboard.
             </p>
           </div>

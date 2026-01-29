@@ -42,7 +42,7 @@ export function UserTableRow({
             <div className="font-medium text-xs sm:text-sm md:text-base lg:text-base truncate">
               {displayName}
             </div>
-            <div className="text-[10px] sm:text-xs text-gray-500 sm:hidden truncate">
+            <div className="text-caption text-gray-500 sm:hidden truncate">
               {staffUser.email}
             </div>
           </div>
@@ -59,7 +59,7 @@ export function UserTableRow({
       <TableCell className="whitespace-nowrap">
         <Badge
           variant={roleBadgeVariant}
-          className="text-[10px] sm:text-xs md:text-sm lg:text-base"
+          className="text-xs sm:text-sm md:text-base lg:text-base"
           title={
             staffUser.primaryRole?.description ||
             `Role: ${roleDisplayName}${
@@ -81,7 +81,7 @@ export function UserTableRow({
       <TableCell className="whitespace-nowrap">
         <Badge
           variant={staffUser.isActive ? "default" : "destructive"}
-          className="text-[10px] sm:text-xs md:text-sm lg:text-base"
+          className="text-xs sm:text-sm md:text-base lg:text-base"
         >
           {staffUser.isActive ? "Active" : "Inactive"}
         </Badge>

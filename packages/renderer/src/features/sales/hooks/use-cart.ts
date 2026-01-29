@@ -502,8 +502,16 @@ export function useCart({
       }
 
       try {
+        // Refresh cart items to ensure we have the latest data with products
+        const itemsResponse = await window.cartAPI.getItems(cartSession.id);
+        if (!itemsResponse.success || !itemsResponse.data) {
+          toast.error("Failed to load cart items");
+          return;
+        }
+        const freshItems = itemsResponse.data as CartItemWithProduct[];
+        
         // Find the item to get product info
-        const item = cartItems.find((i) => i.id === itemId);
+        const item = freshItems.find((i) => i.id === itemId);
         if (!item) {
           toast.error("Item not found in cart");
           return;
@@ -551,10 +559,10 @@ export function useCart({
         });
 
         if (updateResponse.success) {
-          // Reload cart items
-          const itemsResponse = await window.cartAPI.getItems(cartSession.id);
-          if (itemsResponse.success && itemsResponse.data) {
-            setCartItems(itemsResponse.data as CartItemWithProduct[]);
+          // Reload cart items after update to get the updated item
+          const updatedItemsResponse = await window.cartAPI.getItems(cartSession.id);
+          if (updatedItemsResponse.success && updatedItemsResponse.data) {
+            setCartItems(updatedItemsResponse.data as CartItemWithProduct[]);
           }
 
           const salesUnit = item.unitOfMeasure || "each";

@@ -22,8 +22,10 @@ export const STAFF_PERMISSIONS = {
 
   /** Manage schedules for cashiers only */
   MANAGE_CASHIER_SCHEDULES: PERMISSIONS.SCHEDULES_MANAGE_CASHIERS, // "manage:schedules:cashiers"
+
+  /** Manage break policies (admin only) */
+  MANAGE_BREAK_POLICIES: PERMISSIONS.SETTINGS_MANAGE, // "manage:settings" - uses settings permission for admin-only
 } as const;
 
 export type StaffPermission =
   (typeof STAFF_PERMISSIONS)[keyof typeof STAFF_PERMISSIONS];
-

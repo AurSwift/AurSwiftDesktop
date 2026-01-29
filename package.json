@@ -1,7 +1,7 @@
 {
   "name": "aurswift",
   "description": "aurswift is the pos software for supermarket.",
-  "version": "1.31.0",
+  "version": "1.41.1",
   "private": true,
   "type": "module",
   "author": {
@@ -73,10 +73,13 @@
     "db:drop": "drizzle-kit drop",
     "db:check": "drizzle-kit check",
     "db:introspect": "drizzle-kit introspect",
-    "db:bridge": "node scripts/bridge-migration.mjs",
+    "db:studio": "drizzle-kit studio",
+    "db:studio:stop": "lsof -ti:4983 | xargs kill -9 2>/dev/null || echo 'No Drizzle Studio process found'",
+    "db:migrate": "drizzle-kit migrate --config=drizzle.config.ts",
     "migrate:rbac": "tsx packages/main/src/scripts/migrate-rbac.ts",
     "analyze:packages": "node scripts/analyze-package-sizes.mjs",
-    "analyze:bundle": "cd packages/renderer && ANALYZE=true npm run build"
+    "analyze:bundle": "cd packages/renderer && ANALYZE=true npm run build",
+    "lint:typography": "rg 'text-\\[\\d+px\\]' packages/renderer/src 2>/dev/null && (echo 'Typography: avoid text-[Npx] in UI; use scale tokens. See docs/Guides/Typography/TYPOGRAPHY.md'; exit 1) || true"
   },
   "devDependencies": {
     "@electron/rebuild": "^4.0.1",
@@ -93,6 +96,7 @@
     "@types/pdfkit": "^0.17.3",
     "@vitest/coverage-v8": "^2.1.0",
     "@vitest/ui": "^2.1.0",
+    "baseline-browser-mapping": "^2.9.15",
     "conventional-changelog-cli": "^5.0.0",
     "create-vite": "7.1.2",
     "electron": "^38.1.2",

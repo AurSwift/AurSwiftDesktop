@@ -3,11 +3,15 @@
  * Displays when a new update is available
  */
 
-import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Gift, Download, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import { Gift, Download, Clock, ExternalLink } from "lucide-react";
 import type { UpdateInfo } from "@app/shared";
+
+// Customer-facing release notes URL (web app)
+// Falls back to environment variable or production URL
+const WEB_APP_URL = import.meta.env.VITE_WEB_APP_URL || "https://aurswift.com";
+const WEB_RELEASES_URL = `${WEB_APP_URL}/releases`;
 
 interface UpdateAvailableToastProps {
   updateInfo: UpdateInfo;
@@ -22,17 +26,11 @@ export function UpdateAvailableToast({
   onDownload,
   onPostpone,
 }: UpdateAvailableToastProps) {
-  const [showNotes, setShowNotes] = useState(false);
-
-  // Release notes are now pre-formatted by the main process
-  const releaseNotes =
-    typeof updateInfo.releaseNotes === "string"
-      ? updateInfo.releaseNotes
-      : "Release notes available on GitHub";
-  const hasNotes = releaseNotes.length > 0;
+  // Strip 'v' prefix if present for clean URL parameter
+  const cleanVersion = updateInfo.version.replace(/^v/, "");
 
   return (
-    <div className="flex flex-col gap-3 w-full max-w-md bg-card border-2 border-border rounded-lg shadow-xl p-4 backdrop-blur-sm">
+    <div className="flex flex-col gap-3 w-full max-w-md bg-card rounded-xl p-4">
       {/* Header */}
       <div className="flex items-start gap-3">
         <div className="shrink-0 mt-0.5">
@@ -51,29 +49,17 @@ export function UpdateAvailableToast({
         </div>
       </div>
 
-      {/* Release Notes (Expandable) */}
-      {hasNotes && (
-        <div className="border-t pt-2">
-          <button
-            onClick={() => setShowNotes(!showNotes)}
-            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full"
-          >
-            {showNotes ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-            <span>{showNotes ? "Hide" : "View"} release notes</span>
-          </button>
-          {showNotes && (
-            <div className="mt-2 p-2 bg-muted/50 rounded-md text-xs text-muted-foreground max-h-32 overflow-y-auto">
-              <pre className="whitespace-pre-wrap font-sans">
-                {releaseNotes}
-              </pre>
-            </div>
-          )}
-        </div>
-      )}
+      {/* Changelog Link - Links to customer-facing web release notes */}
+      <a
+        href={`${WEB_RELEASES_URL}?version=${cleanVersion}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-2 text-xs text-primary hover:text-primary/80 transition-colors border-t pt-2"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <ExternalLink className="h-3.5 w-3.5" />
+        <span>View release notes</span>
+      </a>
 
       {/* Actions */}
       <div className="flex items-center gap-2 pt-1">
@@ -97,9 +83,9 @@ export function showUpdateAvailableToast(
   updateInfo: UpdateInfo,
   currentVersion: string,
   onDownload: () => void,
-  onPostpone: () => void
+  onPostpone: () => void,
 ): string | number {
-  return toast.custom(
+  const toastId = toast.custom(
     (t) => (
       <UpdateAvailableToast
         updateInfo={updateInfo}
@@ -118,6 +104,8 @@ export function showUpdateAvailableToast(
       duration: Infinity, // Don't auto-dismiss
       position: "top-right",
       id: "update-available", // Use fixed ID to replace any existing toast
-    }
+    },
   );
+
+  return toastId;
 }

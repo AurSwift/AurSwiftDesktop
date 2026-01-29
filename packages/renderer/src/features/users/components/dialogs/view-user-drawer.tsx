@@ -142,15 +142,6 @@ export function ViewUserDrawer({
                   {new Date(user.createdAt).toLocaleDateString()}
                 </p>
               </div>
-
-              <div>
-                <Label className="text-sm font-medium text-gray-500">
-                  Business ID
-                </Label>
-                <p className="text-sm md:text-base text-gray-600 mt-1">
-                  {user.businessId}
-                </p>
-              </div>
             </div>
           </div>
         </div>

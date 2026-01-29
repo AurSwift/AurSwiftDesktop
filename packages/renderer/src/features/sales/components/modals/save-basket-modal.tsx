@@ -564,7 +564,11 @@ export function SaveBasketModal({
 }
 
 /**
- * Generate receipt HTML for printing
+ * Generate receipt HTML for printing.
+ *
+ * Typography: Inline font-size (e.g. 10px, 12px, 14px, 16px) in this template
+ * are output-specific for physical receipt/QR print. They are intentionally
+ * not rem-based and are excluded from the app-wide font responsiveness rules.
  */
 function generateReceiptHTML(
   savedBasket: {

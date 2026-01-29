@@ -25,10 +25,10 @@ export { useScheduleForm } from "./hooks/use-schedule-form";
 // ============================================================================
 export { default as ManageCashierView } from "./views/manage-cashier-view";
 export { default as StaffSchedulesView } from "./views/staff-schedules-view";
+export { default as BreakPolicySettingsView } from "./views/break-policy-settings-view";
 
 // ============================================================================
 // Schemas
 // ============================================================================
 export * from "./schemas/cashier-schema";
 export * from "./schemas/schedule-schema";
-

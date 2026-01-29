@@ -143,7 +143,7 @@ export const licenseValidationLog = createTable(
   (table) => [
     index("idx_license_validation_log_action").on(table.action),
     index("idx_license_validation_log_timestamp").on(table.timestamp),
-  ]
+  ],
 );
 
 // Type exports for license tables
@@ -204,6 +204,19 @@ export const businesses = createTable("businesses", {
   city: text("city").notNull().default(""),
   postalCode: text("postalCode").default(""),
 
+  // Receipt Email (Gmail) - stored per business (encrypted when supported)
+  receiptEmailGmailUser: text("receipt_email_gmail_user").default(""),
+  receiptEmailGmailAppPassword: text(
+    "receipt_email_gmail_app_password",
+  ).default(""),
+  receiptEmailGmailAppPasswordEncrypted: integer(
+    "receipt_email_gmail_app_password_encrypted",
+    { mode: "boolean" },
+  ).default(false),
+  receiptEmailUpdatedAt: integer("receipt_email_updated_at", {
+    mode: "timestamp_ms",
+  }),
+
   // Business Identity
   vatNumber: text("vatNumber").unique().default(""),
   businessType: text("businessType", {
@@ -257,7 +270,7 @@ export const terminals = createTable(
     index("terminals_business_idx").on(table.business_id),
     index("terminals_status_idx").on(table.status),
     index("terminals_token_idx").on(table.device_token),
-  ]
+  ],
 );
 
 /**
@@ -286,7 +299,7 @@ export const roles = createTable(
     index("idx_roles_business").on(table.businessId),
     index("idx_roles_name").on(table.name),
     unique("unique_role_name_per_business").on(table.businessId, table.name),
-  ]
+  ],
 );
 
 /**
@@ -299,6 +312,9 @@ export const users = createTable("users", {
   passwordHash: text("password_hash"),
   pinHash: text("pin_hash").notNull(),
   salt: text("salt").notNull(),
+  requiresPinChange: integer("requires_pin_change", { mode: "boolean" })
+    .notNull()
+    .default(false),
   firstName: text("firstName").notNull(),
   lastName: text("lastName").notNull(),
   businessName: text("businessName").notNull(),
@@ -343,7 +359,7 @@ export const userRoles = createTable(
     unique("idx_user_roles_unique").on(table.userId, table.roleId),
     index("idx_user_roles_user").on(table.userId),
     index("idx_user_roles_role").on(table.roleId),
-  ]
+  ],
 );
 
 /**
@@ -370,7 +386,7 @@ export const userPermissions = createTable(
   (table) => [
     unique("idx_user_permissions_unique").on(table.userId, table.permission),
     index("idx_user_permissions_user").on(table.userId),
-  ]
+  ],
 );
 
 /**
@@ -413,7 +429,7 @@ export const vatCategories = createTable(
   (table) => [
     index("vat_business_idx").on(table.businessId),
     index("vat_code_idx").on(table.code),
-  ]
+  ],
 );
 
 /**
@@ -449,7 +465,7 @@ export const categories = createTable(
       enum: ["NONE", "AGE_16", "AGE_18", "AGE_21"],
     }).default("NONE"), // Default age restriction for products in this category
     requireIdScan: integer("require_id_scan", { mode: "boolean" }).default(
-      false
+      false,
     ),
 
     ...timestampColumns,
@@ -460,7 +476,7 @@ export const categories = createTable(
     index("categories_vat_idx").on(table.vatCategoryId),
     // Ensure category names are unique within a business
     unique("category_name_business_unique").on(table.name, table.businessId),
-  ]
+  ],
 );
 
 /**
@@ -510,13 +526,13 @@ export const products = createTable(
 
     // Generic item behavior
     isGenericButton: integer("is_generic_button", { mode: "boolean" }).default(
-      false
+      false,
     ),
     genericDefaultPrice: real("generic_default_price"), // Suggested price for generic items
 
     // Inventory
     trackInventory: integer("track_inventory", { mode: "boolean" }).default(
-      true
+      true,
     ),
     // ⚠️ IMPORTANT: When requiresBatchTracking is true, stockLevel should be calculated
     // as SUM(currentQuantity) of all ACTIVE batches for this product.
@@ -561,7 +577,7 @@ export const products = createTable(
       .notNull()
       .default("NONE"),
     requireIdScan: integer("require_id_scan", { mode: "boolean" }).default(
-      false
+      false,
     ),
     restrictionReason: text("restriction_reason"), // e.g., "Alcoholic beverage", "Tobacco product"
 
@@ -578,7 +594,7 @@ export const products = createTable(
     index("products_age_restriction_idx").on(table.ageRestrictionLevel),
     // Ensure SKU is unique per business
     unique("product_sku_business_unique").on(table.sku, table.businessId),
-  ]
+  ],
 );
 
 /**
@@ -657,7 +673,7 @@ export const suppliers = createTable(
   (table) => [
     index("suppliers_business_idx").on(table.businessId),
     index("suppliers_name_idx").on(table.name),
-  ]
+  ],
 );
 
 /**
@@ -718,27 +734,27 @@ export const productBatches = createTable(
     index("batches_product_status_expiry_idx").on(
       table.productId,
       table.status,
-      table.expiryDate
+      table.expiryDate,
     ),
     // Composite index for finding batches expiring soon (for notifications)
     index("batches_business_status_expiry_idx").on(
       table.businessId,
       table.status,
-      table.expiryDate
+      table.expiryDate,
     ),
     // Composite index for stock calculation queries (SUM currentQuantity by product)
     index("batches_product_status_quantity_idx").on(
       table.productId,
       table.status,
-      table.currentQuantity
+      table.currentQuantity,
     ),
     // Ensure batch number is unique per product and business
     unique("batch_number_product_business_unique").on(
       table.batchNumber,
       table.productId,
-      table.businessId
+      table.businessId,
     ),
-  ]
+  ],
 );
 
 /**
@@ -759,10 +775,10 @@ export const expirySettings = createTable(
 
     // Notification channels
     notifyViaEmail: integer("notify_via_email", { mode: "boolean" }).default(
-      true
+      true,
     ),
     notifyViaPush: integer("notify_via_push", { mode: "boolean" }).default(
-      true
+      true,
     ),
     notifyViaDashboard: integer("notify_via_dashboard", {
       mode: "boolean",
@@ -789,7 +805,7 @@ export const expirySettings = createTable(
     index("expiry_settings_business_idx").on(table.businessId),
     // Ensure one settings record per business
     unique("expiry_settings_business_unique").on(table.businessId),
-  ]
+  ],
 );
 
 /**
@@ -823,7 +839,7 @@ export const salesUnitSettings = createTable(
     index("sales_unit_settings_business_idx").on(table.businessId),
     // Ensure one settings record per business
     unique("sales_unit_settings_business_unique").on(table.businessId),
-  ]
+  ],
 );
 
 /**
@@ -875,7 +891,7 @@ export const expiryNotifications = createTable(
     index("notifications_scheduled_idx").on(table.scheduledFor),
     index("notifications_business_idx").on(table.businessId),
     index("notifications_type_idx").on(table.notificationType),
-  ]
+  ],
 );
 
 /**
@@ -934,11 +950,11 @@ export const stockMovements = createTable(
     // Composite index for product movement history queries
     index("movements_product_timestamp_idx").on(
       table.productId,
-      table.timestamp
+      table.timestamp,
     ),
     // Index for reference lookups (e.g., find movements for a specific sale)
     index("movements_reference_idx").on(table.reference),
-  ]
+  ],
 );
 
 /**
@@ -1016,7 +1032,7 @@ export const cartSessions = createTable(
     index("cart_sessions_created_idx").on(table.createdAt),
     index("cart_sessions_shift_idx").on(table.shiftId),
     index("cart_sessions_business_idx").on(table.businessId),
-  ]
+  ],
 );
 
 /**
@@ -1089,7 +1105,7 @@ export const cartItems = createTable(
     index("cart_items_category_idx").on(table.categoryId),
     index("cart_items_batch_idx").on(table.batchId),
     index("cart_items_type_idx").on(table.itemType),
-  ]
+  ],
 );
 
 /**
@@ -1141,7 +1157,7 @@ export const savedBaskets = createTable(
     index("saved_baskets_saved_by_idx").on(table.savedBy),
     index("saved_baskets_status_idx").on(table.status),
     index("saved_baskets_saved_at_idx").on(table.savedAt),
-  ]
+  ],
 );
 
 // ============================================================================
@@ -1183,7 +1199,7 @@ export const transactions = createTable("transactions", {
   // @ts-ignore - Self-reference: transactions.originalTransactionId -> transactions.id
   originalTransactionId: text("originalTransactionId").references(
     // @ts-ignore - Circular reference type inference
-    () => transactions.id
+    () => transactions.id,
   ),
   refundReason: text("refundReason"),
   refundMethod: text("refundMethod", {
@@ -1191,13 +1207,17 @@ export const transactions = createTable("transactions", {
   }),
   managerApprovalId: text("managerApprovalId").references(() => users.id),
   isPartialRefund: integer("isPartialRefund", { mode: "boolean" }).default(
-    false
+    false,
   ),
   discountAmount: real("discountAmount").default(0),
   appliedDiscounts: text("appliedDiscounts"),
   // Viva Wallet transaction tracking
   vivaWalletTransactionId: text("viva_wallet_transaction_id"),
   vivaWalletTerminalId: text("viva_wallet_terminal_id"),
+  vivaWalletAuthCode: text("viva_wallet_auth_code"),
+  vivaWalletCardBrand: text("viva_wallet_card_brand"),
+  vivaWalletCardLast4: text("viva_wallet_card_last4"),
+  vivaWalletCardType: text("viva_wallet_card_type"),
   // Currency for multi-currency support
   currency: text("currency").notNull().default("GBP"),
 });
@@ -1275,7 +1295,7 @@ export const ageVerificationRecords = createTable(
     }),
     transactionItemId: text("transaction_item_id").references(
       () => transactionItems.id,
-      { onDelete: "set null" }
+      { onDelete: "set null" },
     ),
     productId: text("product_id")
       .notNull()
@@ -1322,9 +1342,9 @@ export const ageVerificationRecords = createTable(
     // Composite index for compliance reporting
     index("age_verification_business_date_idx").on(
       table.businessId,
-      table.verifiedAt
+      table.verifiedAt,
     ),
-  ]
+  ],
 );
 /**
  * Cash drawer counts (mid-shift and end-shift)
@@ -1366,9 +1386,9 @@ export const cashDrawerCounts = createTable(
     // Ensure only one end-shift count per shift
     unique("cash_drawer_counts_shift_type_unique").on(
       table.shift_id,
-      table.count_type
+      table.count_type,
     ),
-  ]
+  ],
 );
 
 // ============================================================================
@@ -1471,7 +1491,7 @@ export const shifts = createTable(
     // Unique constraints - each clock event can only be used once
     unique("shifts_clock_in_unique").on(table.clock_in_id),
     unique("shifts_clock_out_unique").on(table.clock_out_id),
-  ]
+  ],
 );
 
 // ============================================================================
@@ -1554,15 +1574,15 @@ export const shiftValidationIssues = createTable(
     index("validation_issues_business_idx").on(table.businessId),
     index("validation_issues_related_entity_idx").on(
       table.relatedEntityType,
-      table.relatedEntityId
+      table.relatedEntityId,
     ),
 
     // Composite index for common query patterns
     index("validation_issues_status_severity_idx").on(
       table.resolved,
-      table.severity
+      table.severity,
     ),
-  ]
+  ],
 );
 
 /**
@@ -1608,12 +1628,12 @@ export const shiftValidations = createTable(
     index("shift_validations_requires_review_idx").on(table.requiresReview),
     index("shift_validations_resolution_idx").on(table.resolution),
     index("shift_validations_unresolved_count_idx").on(
-      table.unresolvedIssueCount
+      table.unresolvedIssueCount,
     ),
 
     // One validation record per shift
     unique("shift_validations_shift_unique").on(table.shiftId),
-  ]
+  ],
 );
 
 /**
@@ -1661,12 +1681,16 @@ export const shiftReports = sqliteTableCreator((name: string) => `pos_${name}`)(
     periodCovered: text("period_covered").notNull(), // e.g., '2024-01-day', '2024-01-week'
   },
   (table: any) => [
-    index("shift_report_view_shift_idx").on(table.shiftId),
-    index("shift_report_view_business_idx").on(table.businessId),
-    index("shift_report_view_user_idx").on(table.userId),
-    index("shift_report_view_period_idx").on(table.periodCovered),
-    index("shift_report_view_generated_at_idx").on(table.reportGeneratedAt),
-  ]
+    // Index names must be globally unique in SQLite (not just per-table).
+    // Prefix with table name to avoid collisions with legacy schemas.
+    index("pos_shift_reports_shift_id_idx").on(table.shiftId),
+    index("pos_shift_reports_business_id_idx").on(table.businessId),
+    index("pos_shift_reports_user_id_idx").on(table.userId),
+    index("pos_shift_reports_period_covered_idx").on(table.periodCovered),
+    index("pos_shift_reports_report_generated_at_idx").on(
+      table.reportGeneratedAt,
+    ),
+  ],
 );
 
 /**
@@ -1715,23 +1739,27 @@ export const attendanceReports = createTable(
     dataUpTo: text("data_up_to").notNull(), // Last data point included
   },
   (table) => [
-    index("attendance_report_user_period_idx").on(
+    // Index names must be globally unique in SQLite (not just per-table).
+    // Prefix with table name to avoid collisions with legacy schemas.
+    index("attendance_reports_user_period_idx").on(
       table.userId,
-      table.periodStartDate
+      table.periodStartDate,
     ),
-    index("attendance_report_business_period_idx").on(
+    index("attendance_reports_business_period_idx").on(
       table.businessId,
-      table.periodType
+      table.periodType,
     ),
-    index("attendance_report_generated_at_idx").on(table.reportGeneratedAt),
+    index("attendance_reports_report_generated_at_idx").on(
+      table.reportGeneratedAt,
+    ),
 
-    unique("attendance_report_unique").on(
+    unique("attendance_reports_unique").on(
       table.userId,
       table.periodStartDate,
       table.periodEndDate,
-      table.businessId
+      table.businessId,
     ),
-  ]
+  ],
 );
 
 // ============================================================================
@@ -1788,9 +1816,9 @@ export const clockEvents = createTable(
     index("clock_events_user_timestamp_idx").on(table.user_id, table.timestamp),
     index("clock_events_business_timestamp_idx").on(
       table.business_id,
-      table.timestamp
+      table.timestamp,
     ),
-  ]
+  ],
 );
 
 /**
@@ -1854,7 +1882,7 @@ export const breaks = createTable(
     // Compound indexes
     index("breaks_shift_status_idx").on(table.shift_id, table.status),
     index("breaks_user_start_idx").on(table.user_id, table.start_time),
-  ]
+  ],
 );
 
 /**
@@ -1906,7 +1934,182 @@ export const timeCorrections = createTable(
     index("time_corrections_user_idx").on(table.user_id),
     index("time_corrections_business_idx").on(table.business_id),
     index("time_corrections_status_idx").on(table.status),
-  ]
+  ],
+);
+
+// ============================================================================
+// BREAK POLICIES - Admin-configurable break rules
+// ============================================================================
+
+/**
+ * Break type definitions - reusable break types (tea, meal, rest, etc.)
+ * These define what types of breaks are available in the system
+ */
+export const breakTypeDefinitions = createTable(
+  "break_type_definitions",
+  {
+    id: integer("id", { mode: "number" })
+      .primaryKey({ autoIncrement: true })
+      .notNull(),
+    publicId: text("public_id")
+      .notNull()
+      .$defaultFn(() => crypto.randomUUID()),
+    business_id: text("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+
+    // Break type identity
+    name: text("name").notNull(), // e.g., "Tea Break", "Lunch Break", "Rest Break"
+    code: text("code").notNull(), // e.g., "tea", "meal", "rest" - for programmatic use
+    description: text("description"),
+
+    // Duration settings (in minutes)
+    default_duration_minutes: integer("default_duration_minutes")
+      .notNull()
+      .default(15),
+    min_duration_minutes: integer("min_duration_minutes").notNull().default(5),
+    max_duration_minutes: integer("max_duration_minutes").notNull().default(60),
+
+    // Payment and compliance
+    is_paid: integer("is_paid", { mode: "boolean" }).notNull().default(false),
+    is_required: integer("is_required", { mode: "boolean" })
+      .notNull()
+      .default(false), // Required by law/policy
+    counts_as_worked_time: integer("counts_as_worked_time", { mode: "boolean" })
+      .notNull()
+      .default(false),
+
+    // Time window restrictions (optional)
+    allowed_window_start: text("allowed_window_start"), // e.g., "12:00" for lunch window
+    allowed_window_end: text("allowed_window_end"), // e.g., "14:00"
+
+    // Display settings
+    icon: text("icon").default("coffee"), // Icon name for UI
+    color: text("color").default("#6B7280"), // Hex color for UI
+    sort_order: integer("sort_order").default(0),
+
+    // Status
+    is_active: integer("is_active", { mode: "boolean" })
+      .notNull()
+      .default(true),
+
+    ...timestampColumns,
+  },
+  (table) => [
+    index("break_type_defs_business_idx").on(table.business_id),
+    index("break_type_defs_code_idx").on(table.code),
+    index("break_type_defs_active_idx").on(table.is_active),
+    unique("break_type_defs_business_code_unique").on(
+      table.business_id,
+      table.code,
+    ),
+  ],
+);
+
+/**
+ * Break policies - rules for break entitlements based on shift length
+ * Defines how many breaks of each type an employee is entitled to
+ */
+export const breakPolicies = createTable(
+  "break_policies",
+  {
+    id: integer("id", { mode: "number" })
+      .primaryKey({ autoIncrement: true })
+      .notNull(),
+    publicId: text("public_id")
+      .notNull()
+      .$defaultFn(() => crypto.randomUUID()),
+    business_id: text("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+
+    // Policy identity
+    name: text("name").notNull(), // e.g., "Standard UK Policy", "Part-time Policy"
+    description: text("description"),
+
+    // Compliance settings
+    max_consecutive_hours: real("max_consecutive_hours").notNull().default(6), // Max hours before required break (UK: 6)
+    warn_before_required_minutes: integer("warn_before_required_minutes")
+      .notNull()
+      .default(30), // Show warning X mins before
+
+    // Enforcement settings
+    auto_enforce_breaks: integer("auto_enforce_breaks", { mode: "boolean" })
+      .notNull()
+      .default(true),
+    allow_skip_break: integer("allow_skip_break", { mode: "boolean" })
+      .notNull()
+      .default(false), // Can employee skip entitled break?
+    require_manager_override: integer("require_manager_override", {
+      mode: "boolean",
+    })
+      .notNull()
+      .default(false), // Need manager approval to skip
+
+    // Cover requirements (future feature)
+    min_staff_for_break: integer("min_staff_for_break").default(1), // Minimum staff on floor for break
+
+    // Status
+    is_active: integer("is_active", { mode: "boolean" })
+      .notNull()
+      .default(true),
+    is_default: integer("is_default", { mode: "boolean" })
+      .notNull()
+      .default(false), // Default policy for new employees
+
+    ...timestampColumns,
+  },
+  (table) => [
+    index("break_policies_business_idx").on(table.business_id),
+    index("break_policies_active_idx").on(table.is_active),
+    index("break_policies_default_idx").on(table.is_default),
+  ],
+);
+
+/**
+ * Break policy rules - defines break entitlements per shift length
+ * Links policies to break types with shift-length-based rules
+ */
+export const breakPolicyRules = createTable(
+  "break_policy_rules",
+  {
+    id: integer("id", { mode: "number" })
+      .primaryKey({ autoIncrement: true })
+      .notNull(),
+    publicId: text("public_id")
+      .notNull()
+      .$defaultFn(() => crypto.randomUUID()),
+    policy_id: integer("policy_id")
+      .notNull()
+      .references(() => breakPolicies.id, { onDelete: "cascade" }),
+    break_type_id: integer("break_type_id")
+      .notNull()
+      .references(() => breakTypeDefinitions.id, { onDelete: "cascade" }),
+
+    // Shift length threshold (when does this rule apply?)
+    min_shift_hours: real("min_shift_hours").notNull(), // e.g., 4.0 = shifts of 4+ hours
+    max_shift_hours: real("max_shift_hours"), // Optional upper bound (null = no limit)
+
+    // Entitlement
+    allowed_count: integer("allowed_count").notNull().default(1), // How many of this break type allowed
+    is_mandatory: integer("is_mandatory", { mode: "boolean" })
+      .notNull()
+      .default(false), // Must take this break (e.g., UK 20-min after 6h)
+
+    // Timing rules
+    earliest_after_hours: real("earliest_after_hours"), // Can't take before X hours into shift
+    latest_before_end_hours: real("latest_before_end_hours"), // Must take before last X hours of shift
+
+    // Priority for display ordering
+    priority: integer("priority").default(0),
+
+    ...timestampColumns,
+  },
+  (table) => [
+    index("break_policy_rules_policy_idx").on(table.policy_id),
+    index("break_policy_rules_type_idx").on(table.break_type_id),
+    index("break_policy_rules_shift_hours_idx").on(table.min_shift_hours),
+  ],
 );
 
 // ============================================================================
@@ -1999,6 +2202,7 @@ export const businessesRelations = relations(businesses, ({ one, many }) => ({
   breaks: many(breaks),
   timeCorrections: many(timeCorrections),
   terminals: many(terminals),
+  // tables: many(table),
 }));
 
 export const terminalsRelations = relations(terminals, ({ one, many }) => ({
@@ -2113,7 +2317,7 @@ export const userPermissionsRelations = relations(
       references: [users.id],
       relationName: "grantedBy",
     }),
-  })
+  }),
 );
 
 // ----------------------------------------------------------------------------
@@ -2129,7 +2333,7 @@ export const vatCategoriesRelations = relations(
     }),
     categories: many(categories),
     products: many(products),
-  })
+  }),
 );
 
 export const categoriesRelations = relations(categories, ({ one, many }) => ({
@@ -2219,7 +2423,7 @@ export const productBatchesRelations = relations(
     toMovements: many(stockMovements, {
       relationName: "toBatch",
     }),
-  })
+  }),
 );
 
 export const expirySettingsRelations = relations(expirySettings, ({ one }) => ({
@@ -2236,7 +2440,7 @@ export const salesUnitSettingsRelations = relations(
       fields: [salesUnitSettings.businessId],
       references: [businesses.id],
     }),
-  })
+  }),
 );
 
 export const expiryNotificationsRelations = relations(
@@ -2254,7 +2458,7 @@ export const expiryNotificationsRelations = relations(
       fields: [expiryNotifications.businessId],
       references: [businesses.id],
     }),
-  })
+  }),
 );
 
 export const stockMovementsRelations = relations(stockMovements, ({ one }) => ({
@@ -2301,7 +2505,7 @@ export const stockAdjustmentsRelations = relations(
       fields: [stockAdjustments.businessId],
       references: [businesses.id],
     }),
-  })
+  }),
 );
 
 // ----------------------------------------------------------------------------
@@ -2333,7 +2537,7 @@ export const transactionsRelations = relations(
     }),
     items: many(transactionItems),
     ageVerifications: many(ageVerificationRecords),
-  })
+  }),
 );
 
 export const transactionItemsRelations = relations(
@@ -2356,7 +2560,7 @@ export const transactionItemsRelations = relations(
       references: [cartItems.id],
     }),
     ageVerifications: many(ageVerificationRecords),
-  })
+  }),
 );
 
 // ----------------------------------------------------------------------------
@@ -2384,7 +2588,7 @@ export const cartSessionsRelations = relations(
       relationName: "cartVerifiedBy",
     }),
     items: many(cartItems),
-  })
+  }),
 );
 
 export const cartItemsRelations = relations(cartItems, ({ one }) => ({
@@ -2431,7 +2635,7 @@ export const ageVerificationRecordsRelations = relations(
       fields: [ageVerificationRecords.businessId],
       references: [businesses.id],
     }),
-  })
+  }),
 );
 
 // ----------------------------------------------------------------------------
@@ -2507,7 +2711,7 @@ export const cashDrawerCountsRelations = relations(
       fields: [cashDrawerCounts.terminal_id],
       references: [terminals.id],
     }),
-  })
+  }),
 );
 
 // ----------------------------------------------------------------------------
@@ -2517,12 +2721,16 @@ export const cashDrawerCountsRelations = relations(
 export const shiftValidationsRelations = relations(
   shiftValidations,
   ({ one, many }) => ({
+    business: one(businesses, {
+      fields: [shiftValidations.businessId],
+      references: [businesses.id],
+    }),
     issues: many(shiftValidationIssues),
     shiftReport: one(shiftReports, {
       fields: [shiftValidations.shiftId],
       references: [shiftReports.shiftId],
     }),
-  })
+  }),
 );
 
 export const shiftValidationIssuesRelations = relations(
@@ -2532,7 +2740,7 @@ export const shiftValidationIssuesRelations = relations(
       fields: [shiftValidationIssues.validationId],
       references: [shiftValidations.id],
     }),
-  })
+  }),
 );
 
 export const shiftReportsRelations = relations(shiftReports, ({ one }) => ({
@@ -2553,7 +2761,7 @@ export const attendanceReportsRelations = relations(
       fields: [attendanceReports.businessId],
       references: [businesses.id],
     }),
-  })
+  }),
 );
 
 // ----------------------------------------------------------------------------
@@ -2629,7 +2837,7 @@ export const timeCorrectionsRelations = relations(
       references: [users.id],
       relationName: "approvedBy",
     }),
-  })
+  }),
 );
 
 // ----------------------------------------------------------------------------
@@ -2659,8 +2867,15 @@ export const printJobRetriesRelations = relations(
       fields: [printJobRetries.jobId],
       references: [printJobs.jobId],
     }),
-  })
+  }),
 );
+
+// export const tableRelations = relations(table, ({ one }) => ({
+//   business: one(businesses, {
+//     fields: [table.businessId],
+//     references: [businesses.id],
+//   }),
+// }));
 
 // ============================================================================
 // TYPE EXPORTS
@@ -2757,6 +2972,16 @@ export type NewBreak = InferInsertModel<typeof breaks>;
 export type TimeCorrection = InferSelectModel<typeof timeCorrections>;
 export type NewTimeCorrection = InferInsertModel<typeof timeCorrections>;
 
+// Break Policy types
+export type BreakTypeDefinition = InferSelectModel<typeof breakTypeDefinitions>;
+export type NewBreakTypeDefinition = InferInsertModel<
+  typeof breakTypeDefinitions
+>;
+export type BreakPolicy = InferSelectModel<typeof breakPolicies>;
+export type NewBreakPolicy = InferInsertModel<typeof breakPolicies>;
+export type BreakPolicyRule = InferSelectModel<typeof breakPolicyRules>;
+export type NewBreakPolicyRule = InferInsertModel<typeof breakPolicyRules>;
+
 // Product Expiry Tracking Types
 export type ProductBatch = InferSelectModel<typeof productBatches>;
 export type NewProductBatch = InferInsertModel<typeof productBatches>;
@@ -2773,6 +2998,36 @@ export type NewExpiryNotification = InferInsertModel<
 >;
 export type StockMovement = InferSelectModel<typeof stockMovements>;
 export type NewStockMovement = InferInsertModel<typeof stockMovements>;
+
+// ============================================================================
+// TEST TABLE
+// ============================================================================
+
+/**
+ * Test table for development and testing purposes
+ */
+export const table1 = createTable(
+  "table",
+  {
+    ...commonColumns,
+    name: text("name").notNull(),
+    description: text("description"),
+    status: text("status").default("active"),
+    businessId: text("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    ...timestampColumns,
+  },
+  (table) => [
+    index("table_business_idx").on(table.businessId),
+    index("table_name_idx").on(table.name),
+    index("table_status_idx").on(table.status),
+  ],
+);
+
+// Type exports for test table
+export type Table = InferSelectModel<typeof table1>;
+export type NewTable = InferInsertModel<typeof table1>;
 
 // ============================================================================
 // APP VERSION TABLE (Preserve existing table)

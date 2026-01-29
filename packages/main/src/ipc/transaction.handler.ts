@@ -1,4 +1,4 @@
-import { ipcMain } from "electron";
+import { ipcMain, safeStorage } from "electron";
 import { getDatabase } from "../database/index.js";
 import { getLogger } from "../utils/logger.js";
 import {
@@ -10,6 +10,65 @@ import { transactionValidator } from "../utils/transactionValidator.js";
 import { vivaWalletService } from "../services/vivaWallet/index.js";
 import { emailService } from "../services/email-service.js";
 const logger = getLogger("transactionHandlers");
+
+function decryptBusinessAppPassword(
+  stored: string,
+  encryptedFlag: boolean
+): string | null {
+  if (!stored) return null;
+  if (encryptedFlag && safeStorage.isEncryptionAvailable()) {
+    try {
+      const buffer = Buffer.from(stored, "base64");
+      return safeStorage.decryptString(buffer);
+    } catch (error) {
+      logger.error("Failed to decrypt business Gmail app password:", error);
+      return null;
+    }
+  }
+  return stored;
+}
+
+async function configureEmailServiceForBusiness(business: any | null) {
+  try {
+    const gmailUser = (business?.receiptEmailGmailUser || "").trim();
+    const storedPass = business?.receiptEmailGmailAppPassword || "";
+    const encryptedFlag = business?.receiptEmailGmailAppPasswordEncrypted === true;
+
+    const appPassword = decryptBusinessAppPassword(storedPass, encryptedFlag);
+
+    if (!gmailUser || !appPassword) {
+      await emailService.initialize({
+        provider: "console",
+        fromEmail: "no-reply@aurswift.local",
+        fromName: "AurSwift POS",
+      });
+      return;
+    }
+
+    await emailService.initialize({
+      provider: "smtp",
+      smtp: {
+        host: "smtp.gmail.com",
+        port: 587,
+        secure: false,
+        auth: {
+          user: gmailUser,
+          pass: appPassword.replace(/\s+/g, "").trim(),
+        },
+      },
+      fromEmail: gmailUser,
+      fromName: "AurSwift POS",
+    });
+  } catch (error) {
+    logger.error("Failed to configure email service for business:", error);
+    // Fall back to console mode so the app remains usable
+    await emailService.initialize({
+      provider: "console",
+      fromEmail: "no-reply@aurswift.local",
+      fromName: "AurSwift POS",
+    });
+  }
+}
 
 export function registerTransactionHandlers() {
   // Transaction API endpoints
@@ -377,6 +436,10 @@ export function registerTransactionHandlers() {
         // Extract Viva Wallet transaction IDs if payment method is viva_wallet
         let vivaWalletTransactionId: string | undefined;
         let vivaWalletTerminalId: string | undefined;
+        let vivaWalletAuthCode: string | undefined;
+        let vivaWalletCardBrand: string | undefined;
+        let vivaWalletCardLast4: string | undefined;
+        let vivaWalletCardType: string | undefined;
 
         if (data.paymentMethod === "viva_wallet") {
           // Get Viva Wallet transaction ID from data if provided
@@ -399,6 +462,31 @@ export function registerTransactionHandlers() {
             transactionId: vivaWalletTransactionId,
             terminalId: vivaWalletTerminalId,
           });
+
+          // Best-effort: fetch final terminal status payload to persist card-slip metadata.
+          // This enables "Lidl-style" receipts with auth code + masked PAN details.
+          if (vivaWalletTransactionId) {
+            try {
+              const terminalResponse =
+                await vivaWalletService.fetchTerminalTransactionResponse(
+                  vivaWalletTransactionId
+                );
+
+              if (terminalResponse?.authCode) {
+                vivaWalletAuthCode = terminalResponse.authCode;
+              }
+              if (terminalResponse?.cardDetails) {
+                vivaWalletCardBrand = terminalResponse.cardDetails.brand;
+                vivaWalletCardLast4 = terminalResponse.cardDetails.last4;
+                vivaWalletCardType = terminalResponse.cardDetails.type;
+              }
+            } catch (error) {
+              logger.warn(
+                "Failed to fetch Viva Wallet card-slip metadata, continuing without it:",
+                error
+              );
+            }
+          }
         }
 
         // Create transaction using createTransactionWithItems
@@ -428,6 +516,10 @@ export function registerTransactionHandlers() {
           // Viva Wallet transaction tracking
           vivaWalletTransactionId: vivaWalletTransactionId || null,
           vivaWalletTerminalId: vivaWalletTerminalId || null,
+          vivaWalletAuthCode: vivaWalletAuthCode || null,
+          vivaWalletCardBrand: vivaWalletCardBrand || null,
+          vivaWalletCardLast4: vivaWalletCardLast4 || null,
+          vivaWalletCardType: vivaWalletCardType || null,
           // Currency for multi-currency support
           currency: currency,
         } as any);
@@ -734,6 +826,37 @@ export function registerTransactionHandlers() {
   );
 
   ipcMain.handle(
+    "refunds:getTransactionsByDateRange",
+    async (event, businessId, startDateIso, endDateIso, limit = 1000) => {
+      try {
+        const db = await getDatabase();
+        const startDate = new Date(startDateIso);
+        const endDate = new Date(endDateIso);
+        const transactions =
+          await db.transactions.getTransactionsByDateRange(
+            businessId,
+            startDate,
+            endDate,
+            limit
+          );
+
+        const serializedTransactions = JSON.parse(JSON.stringify(transactions));
+
+        return {
+          success: true,
+          transactions: serializedTransactions,
+        };
+      } catch (error) {
+        logger.error("Get transactions by date range IPC error:", error);
+        return {
+          success: false,
+          message: "Failed to get transactions by date range",
+        };
+      }
+    }
+  );
+
+  ipcMain.handle(
     "refunds:getShiftTransactions",
     async (event, shiftId, limit = 50) => {
       try {
@@ -953,159 +1076,6 @@ export function registerTransactionHandlers() {
     }
   });
 
-  // Void transaction handlers
-  ipcMain.handle("voids:validateEligibility", async (event, transactionId) => {
-    try {
-      const db = await getDatabase();
-      const validation = db.transactions.validateVoidEligibility(transactionId);
-
-      return {
-        success: true,
-        data: validation,
-      };
-    } catch (error) {
-      logger.error("Validate void eligibility IPC error:", error);
-      return {
-        success: false,
-        message: "Failed to validate void eligibility",
-      };
-    }
-  });
-
-  ipcMain.handle("voids:create", async (event, sessionToken, voidData) => {
-    try {
-      const db = await getDatabase();
-
-      // Validate session and check TRANSACTIONS_OVERRIDE permission
-      const auth = await validateSessionAndPermission(
-        db,
-        sessionToken,
-        PERMISSIONS.TRANSACTIONS_OVERRIDE
-      );
-
-      if (!auth.success) {
-        return { success: false, message: auth.message, code: auth.code };
-      }
-
-      const user = auth.user!;
-
-      // Validate void eligibility first
-      const validation = db.transactions.validateVoidEligibility(
-        voidData.transactionId
-      );
-
-      if (!validation.isValid) {
-        return {
-          success: false,
-          message: `Void not allowed: ${validation.errors.join(", ")}`,
-          errors: validation.errors,
-        };
-      }
-
-      // Check if manager approval is required but not provided
-      if (validation.requiresManagerApproval && !voidData.managerApprovalId) {
-        return {
-          success: false,
-          message: "Manager approval required for this void operation",
-          requiresManagerApproval: true,
-        };
-      }
-
-      // If manager approval ID provided, validate it's a real manager
-      if (voidData.managerApprovalId) {
-        const manager = db.users.getUserById(voidData.managerApprovalId);
-        if (!manager) {
-          return {
-            success: false,
-            message: "Invalid manager approval: User not found",
-            code: "INVALID_MANAGER_APPROVAL",
-          };
-        }
-        // Check if user has manager, admin, or owner role via RBAC
-        const userRoles = db.userRoles.getActiveRolesByUser(manager.id);
-        const rolesWithDetails = db.userRoles.getRolesWithDetailsForUser(
-          manager.id
-        );
-        const hasManagerRole = rolesWithDetails.some((ur) =>
-          ["manager", "admin", "owner"].includes(ur.role.name)
-        );
-        if (!hasManagerRole) {
-          return {
-            success: false,
-            message: "Invalid manager approval: User is not a manager",
-            code: "INVALID_MANAGER_APPROVAL",
-          };
-        }
-      }
-
-      const result = db.transactions.voidTransaction(voidData);
-
-      // Audit log the void
-      await logAction(
-        db,
-        user,
-        "void_transaction",
-        "transaction",
-        voidData.transactionId,
-        {
-          reason: voidData.reason,
-          managerApprovalId: voidData.managerApprovalId || "none",
-          requiresManagerApproval: validation.requiresManagerApproval,
-        }
-      );
-
-      return result;
-    } catch (error) {
-      logger.error("Create void IPC error:", error);
-      return {
-        success: false,
-        message: "Failed to void transaction",
-      };
-    }
-  });
-
-  // Additional void API handlers for transaction lookup
-  ipcMain.handle("voids:getTransactionById", async (event, transactionId) => {
-    try {
-      const db = await getDatabase();
-      const transaction =
-        db.transactions.getTransactionByIdAnyStatus(transactionId);
-
-      return {
-        success: true,
-        data: transaction,
-      };
-    } catch (error) {
-      logger.error("Get transaction by ID for void IPC error:", error);
-      return {
-        success: false,
-        message: "Failed to get transaction",
-      };
-    }
-  });
-
-  ipcMain.handle(
-    "voids:getTransactionByReceipt",
-    async (event, receiptNumber) => {
-      try {
-        const db = await getDatabase();
-        const transaction =
-          db.transactions.getTransactionByReceiptNumberAnyStatus(receiptNumber);
-
-        return {
-          success: true,
-          data: transaction,
-        };
-      } catch (error) {
-        logger.error("Get transaction by receipt for void IPC error:", error);
-        return {
-          success: false,
-          message: "Failed to get transaction",
-        };
-      }
-    }
-  );
-
   /**
    * Send transaction receipt via email
    */
@@ -1140,6 +1110,9 @@ export function registerTransactionHandlers() {
 
         // Get business info
         const business = db.businesses.getBusinessById(transaction.businessId);
+
+        // Configure email service for THIS business (per-business Gmail credentials)
+        await configureEmailServiceForBusiness(business);
 
         // Get cashier info
         const cashier = db.users.getUserById(transaction.cashierId);
@@ -1186,10 +1159,13 @@ export function registerTransactionHandlers() {
         const emailSent = await emailService.sendTransactionReceipt(emailData);
 
         if (!emailSent) {
+          const isConsoleMode = !emailService.isConfiguredForSending();
           return {
             success: false,
             message:
-              "Failed to send email. Please check email service configuration.",
+              isConsoleMode
+                ? "Email is not configured. Go to Settings → Receipt Email (Gmail) to enable receipt emailing."
+                : "Failed to send email. Please check your Gmail settings and internet connection.",
           };
         }
 

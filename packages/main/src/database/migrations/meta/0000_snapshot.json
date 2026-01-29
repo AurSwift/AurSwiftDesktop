@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "20ac8eae-4e7e-47ce-bbdb-7c1b7cbbcc84",
+  "id": "8f2c9965-6e50-4f1c-b5d3-63e4ac39f85d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "_app_version": {
@@ -468,31 +468,31 @@
         }
       },
       "indexes": {
-        "attendance_report_user_period_idx": {
-          "name": "attendance_report_user_period_idx",
+        "attendance_reports_user_period_idx": {
+          "name": "attendance_reports_user_period_idx",
           "columns": [
             "user_id",
             "period_start_date"
           ],
           "isUnique": false
         },
-        "attendance_report_business_period_idx": {
-          "name": "attendance_report_business_period_idx",
+        "attendance_reports_business_period_idx": {
+          "name": "attendance_reports_business_period_idx",
           "columns": [
             "business_id",
             "period_type"
           ],
           "isUnique": false
         },
-        "attendance_report_generated_at_idx": {
-          "name": "attendance_report_generated_at_idx",
+        "attendance_reports_report_generated_at_idx": {
+          "name": "attendance_reports_report_generated_at_idx",
           "columns": [
             "report_generated_at"
           ],
           "isUnique": false
         },
-        "attendance_report_unique": {
-          "name": "attendance_report_unique",
+        "attendance_reports_unique": {
+          "name": "attendance_reports_unique",
           "columns": [
             "user_id",
             "period_start_date",
@@ -628,6 +628,522 @@
             "id"
           ],
           "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "break_policies": {
+      "name": "break_policies",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "public_id": {
+          "name": "public_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "business_id": {
+          "name": "business_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "max_consecutive_hours": {
+          "name": "max_consecutive_hours",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 6
+        },
+        "warn_before_required_minutes": {
+          "name": "warn_before_required_minutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 30
+        },
+        "auto_enforce_breaks": {
+          "name": "auto_enforce_breaks",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "allow_skip_break": {
+          "name": "allow_skip_break",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "require_manager_override": {
+          "name": "require_manager_override",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "min_staff_for_break": {
+          "name": "min_staff_for_break",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 1
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "is_default": {
+          "name": "is_default",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "break_policies_business_idx": {
+          "name": "break_policies_business_idx",
+          "columns": [
+            "business_id"
+          ],
+          "isUnique": false
+        },
+        "break_policies_active_idx": {
+          "name": "break_policies_active_idx",
+          "columns": [
+            "is_active"
+          ],
+          "isUnique": false
+        },
+        "break_policies_default_idx": {
+          "name": "break_policies_default_idx",
+          "columns": [
+            "is_default"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "break_policies_business_id_businesses_id_fk": {
+          "name": "break_policies_business_id_businesses_id_fk",
+          "tableFrom": "break_policies",
+          "tableTo": "businesses",
+          "columnsFrom": [
+            "business_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "break_policy_rules": {
+      "name": "break_policy_rules",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "public_id": {
+          "name": "public_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "policy_id": {
+          "name": "policy_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "break_type_id": {
+          "name": "break_type_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "min_shift_hours": {
+          "name": "min_shift_hours",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "max_shift_hours": {
+          "name": "max_shift_hours",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "allowed_count": {
+          "name": "allowed_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "is_mandatory": {
+          "name": "is_mandatory",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "earliest_after_hours": {
+          "name": "earliest_after_hours",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "latest_before_end_hours": {
+          "name": "latest_before_end_hours",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "priority": {
+          "name": "priority",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "break_policy_rules_policy_idx": {
+          "name": "break_policy_rules_policy_idx",
+          "columns": [
+            "policy_id"
+          ],
+          "isUnique": false
+        },
+        "break_policy_rules_type_idx": {
+          "name": "break_policy_rules_type_idx",
+          "columns": [
+            "break_type_id"
+          ],
+          "isUnique": false
+        },
+        "break_policy_rules_shift_hours_idx": {
+          "name": "break_policy_rules_shift_hours_idx",
+          "columns": [
+            "min_shift_hours"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "break_policy_rules_policy_id_break_policies_id_fk": {
+          "name": "break_policy_rules_policy_id_break_policies_id_fk",
+          "tableFrom": "break_policy_rules",
+          "tableTo": "break_policies",
+          "columnsFrom": [
+            "policy_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "break_policy_rules_break_type_id_break_type_definitions_id_fk": {
+          "name": "break_policy_rules_break_type_id_break_type_definitions_id_fk",
+          "tableFrom": "break_policy_rules",
+          "tableTo": "break_type_definitions",
+          "columnsFrom": [
+            "break_type_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "break_type_definitions": {
+      "name": "break_type_definitions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "public_id": {
+          "name": "public_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "business_id": {
+          "name": "business_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "code": {
+          "name": "code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "default_duration_minutes": {
+          "name": "default_duration_minutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 15
+        },
+        "min_duration_minutes": {
+          "name": "min_duration_minutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 5
+        },
+        "max_duration_minutes": {
+          "name": "max_duration_minutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 60
+        },
+        "is_paid": {
+          "name": "is_paid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "is_required": {
+          "name": "is_required",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "counts_as_worked_time": {
+          "name": "counts_as_worked_time",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "allowed_window_start": {
+          "name": "allowed_window_start",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "allowed_window_end": {
+          "name": "allowed_window_end",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "icon": {
+          "name": "icon",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'coffee'"
+        },
+        "color": {
+          "name": "color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'#6B7280'"
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 0
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "break_type_defs_business_idx": {
+          "name": "break_type_defs_business_idx",
+          "columns": [
+            "business_id"
+          ],
+          "isUnique": false
+        },
+        "break_type_defs_code_idx": {
+          "name": "break_type_defs_code_idx",
+          "columns": [
+            "code"
+          ],
+          "isUnique": false
+        },
+        "break_type_defs_active_idx": {
+          "name": "break_type_defs_active_idx",
+          "columns": [
+            "is_active"
+          ],
+          "isUnique": false
+        },
+        "break_type_defs_business_code_unique": {
+          "name": "break_type_defs_business_code_unique",
+          "columns": [
+            "business_id",
+            "code"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "break_type_definitions_business_id_businesses_id_fk": {
+          "name": "break_type_definitions_business_id_businesses_id_fk",
+          "tableFrom": "break_type_definitions",
+          "tableTo": "businesses",
+          "columnsFrom": [
+            "business_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -983,6 +1499,37 @@
           "notNull": false,
           "autoincrement": false,
           "default": "''"
+        },
+        "receipt_email_gmail_user": {
+          "name": "receipt_email_gmail_user",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "receipt_email_gmail_app_password": {
+          "name": "receipt_email_gmail_app_password",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "receipt_email_gmail_app_password_encrypted": {
+          "name": "receipt_email_gmail_app_password_encrypted",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
+        },
+        "receipt_email_updated_at": {
+          "name": "receipt_email_updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         },
         "vatNumber": {
           "name": "vatNumber",
@@ -2817,6 +3364,13 @@
           "notNull": false,
           "autoincrement": false
         },
+        "trial_end": {
+          "name": "trial_end",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "activated_at": {
           "name": "activated_at",
           "type": "integer",
@@ -4587,36 +5141,36 @@
         }
       },
       "indexes": {
-        "shift_report_view_shift_idx": {
-          "name": "shift_report_view_shift_idx",
+        "pos_shift_reports_shift_id_idx": {
+          "name": "pos_shift_reports_shift_id_idx",
           "columns": [
             "shift_id"
           ],
           "isUnique": false
         },
-        "shift_report_view_business_idx": {
-          "name": "shift_report_view_business_idx",
+        "pos_shift_reports_business_id_idx": {
+          "name": "pos_shift_reports_business_id_idx",
           "columns": [
             "business_id"
           ],
           "isUnique": false
         },
-        "shift_report_view_user_idx": {
-          "name": "shift_report_view_user_idx",
+        "pos_shift_reports_user_id_idx": {
+          "name": "pos_shift_reports_user_id_idx",
           "columns": [
             "user_id"
           ],
           "isUnique": false
         },
-        "shift_report_view_period_idx": {
-          "name": "shift_report_view_period_idx",
+        "pos_shift_reports_period_covered_idx": {
+          "name": "pos_shift_reports_period_covered_idx",
           "columns": [
             "period_covered"
           ],
           "isUnique": false
         },
-        "shift_report_view_generated_at_idx": {
-          "name": "shift_report_view_generated_at_idx",
+        "pos_shift_reports_report_generated_at_idx": {
+          "name": "pos_shift_reports_report_generated_at_idx",
           "columns": [
             "report_generated_at"
           ],
@@ -5802,6 +6356,109 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
+    "table": {
+      "name": "table",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "public_id": {
+          "name": "public_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "business_id": {
+          "name": "business_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'active'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "table_business_idx": {
+          "name": "table_business_idx",
+          "columns": [
+            "business_id"
+          ],
+          "isUnique": false
+        },
+        "table_name_idx": {
+          "name": "table_name_idx",
+          "columns": [
+            "name"
+          ],
+          "isUnique": false
+        },
+        "table_status_idx": {
+          "name": "table_status_idx",
+          "columns": [
+            "status"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "table_business_id_businesses_id_fk": {
+          "name": "table_business_id_businesses_id_fk",
+          "tableFrom": "table",
+          "tableTo": "businesses",
+          "columnsFrom": [
+            "business_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "terminals": {
       "name": "terminals",
       "columns": {
@@ -6627,6 +7284,34 @@
           "notNull": false,
           "autoincrement": false
         },
+        "viva_wallet_auth_code": {
+          "name": "viva_wallet_auth_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "viva_wallet_card_brand": {
+          "name": "viva_wallet_card_brand",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "viva_wallet_card_last4": {
+          "name": "viva_wallet_card_last4",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "viva_wallet_card_type": {
+          "name": "viva_wallet_card_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "currency": {
           "name": "currency",
           "type": "text",
@@ -6985,6 +7670,14 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "requires_pin_change": {
+          "name": "requires_pin_change",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
         },
         "firstName": {
           "name": "firstName",

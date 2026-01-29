@@ -330,8 +330,8 @@ export function AddUserForm({
           control={form.control}
           name="role"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-xs sm:text-sm md:text-base lg:text-base">
+            <FormItem className="space-y-2">
+              <FormLabel className="text-sm font-medium text-foreground">
                 Role *
               </FormLabel>
               <Select
@@ -340,12 +340,44 @@ export function AddUserForm({
                 disabled={isLoadingRoles || availableRoles.length === 0}
               >
                 <FormControl>
-                  <SelectTrigger className="text-xs sm:text-sm md:text-base lg:text-base h-8 sm:h-9 md:h-10">
-                    <SelectValue
-                      placeholder={
-                        isLoadingRoles ? "Loading roles..." : "Select a role"
+                  <SelectTrigger
+                    className={cn(
+                      "min-h-12 h-auto rounded-lg border-2 bg-input px-4 py-3",
+                      "text-xs sm:text-sm md:text-base lg:text-base font-medium",
+                      "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    )}
+                  >
+                    {(() => {
+                      const selectedRole = availableRoles.find(
+                        (r: Role) => r.name === field.value
+                      );
+
+                      if (!selectedRole) {
+                        return (
+                          <span className="text-muted-foreground">
+                            {isLoadingRoles ? "Loading roles..." : "Select a role"}
+                          </span>
+                        );
                       }
-                    />
+
+                      return (
+                        <div className="flex flex-col items-start gap-0.5 leading-tight">
+                          <span className="text-xs sm:text-sm md:text-base lg:text-base">
+                            {selectedRole.displayName}
+                          </span>
+                          {selectedRole.description && (
+                            <span className="text-xs sm:text-sm md:text-sm text-muted-foreground font-normal">
+                              {selectedRole.description}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Keep Radix value for a11y/typeahead; hide visually */}
+                    <span className="sr-only">
+                      <SelectValue />
+                    </span>
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -359,13 +391,17 @@ export function AddUserForm({
                     </SelectItem>
                   ) : (
                     availableRoles.map((role: Role) => (
-                      <SelectItem key={role.id} value={role.name}>
-                        <div className="flex flex-col items-start">
+                      <SelectItem
+                        key={role.id}
+                        value={role.name}
+                        className="px-4 py-3"
+                      >
+                        <div className="flex flex-col items-start gap-0.5">
                           <span className="text-xs sm:text-sm md:text-base lg:text-base">
                             {role.displayName}
                           </span>
                           {role.description && (
-                            <span className="text-[10px] sm:text-xs md:text-sm lg:text-base text-gray-500">
+                            <span className="text-xs sm:text-sm md:text-base lg:text-base text-gray-500">
                               {role.description}
                             </span>
                           )}

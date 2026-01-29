@@ -45,7 +45,7 @@ export function DownloadProgressToast({
   };
 
   return (
-    <div className="flex flex-col gap-3 w-full max-w-md bg-card border-2 border-border rounded-lg shadow-xl p-4 backdrop-blur-sm">
+    <div className="flex flex-col gap-3 w-full max-w-md bg-card rounded-lg shadow-xl p-4 ">
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="shrink-0">
@@ -93,7 +93,7 @@ export function DownloadProgressToast({
  */
 export function showDownloadProgressToast(
   progress: DownloadProgress,
-  onCancel?: () => void
+  onCancel?: () => void,
 ): string | number {
   return toast.custom(
     (t) => (
@@ -113,6 +113,6 @@ export function showDownloadProgressToast(
         border: "none", // Remove default border, component has its own
         background: "transparent", // Let component handle background
       },
-    }
+    },
   );
 }

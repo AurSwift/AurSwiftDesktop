@@ -3,8 +3,6 @@ import { useState, useEffect, useCallback, memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-import { Badge } from "@/components/ui/badge";
-
 import {
   DollarSign,
   ShoppingCart,
@@ -12,9 +10,9 @@ import {
   RefreshCw,
   AlertTriangle,
   CheckCircle,
-  XCircle,
 } from "lucide-react";
 
+import { SalesReportsTransactionTable } from "@/features/sales/components/sales-reports";
 import { useAuth } from "@/shared/hooks";
 import { useNavigate } from "react-router-dom";
 
@@ -147,7 +145,7 @@ const CashierDashboardView = ({
 
           // Load hourly stats if shift is active
           const hourlyStatsResponse = await window.shiftAPI.getHourlyStats(
-            shiftData.id
+            shiftData.id,
           );
           if (hourlyStatsResponse.success && hourlyStatsResponse.data) {
             const newHourlyStats = hourlyStatsResponse.data as {
@@ -222,13 +220,13 @@ const CashierDashboardView = ({
             const shiftData = activeShiftResponse.data as Shift;
             transactionsResponse = await window.refundAPI.getShiftTransactions(
               shiftData.id,
-              10
+              10,
             );
           } else if (user.businessId) {
             // If no active shift, get recent transactions from business
             transactionsResponse = await window.refundAPI.getRecentTransactions(
               user.businessId,
-              10
+              10,
             );
           }
 
@@ -265,7 +263,7 @@ const CashierDashboardView = ({
         }
       }
     },
-    [user?.id, user?.businessId]
+    [user?.id, user?.businessId],
   );
 
   // Load shift data on component mount
@@ -289,21 +287,9 @@ const CashierDashboardView = ({
     return null;
   }
 
-  if (isLoading) {
-    return (
-      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 max-w-7xl mx-auto">
-        <div className="flex items-center justify-center h-48 sm:h-64">
-          <div className="text-gray-600 text-sm sm:text-base">
-            Loading shift data...
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-4 sm:mb-6">
+    <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 flex flex-1 min-h-0 flex-col gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {/* Transaction Count */}
         <Card className="bg-white border-slate-200 shadow-sm h-full">
           <CardHeader className="pb-2 sm:pb-3">
@@ -320,7 +306,7 @@ const CashierDashboardView = ({
               <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1 text-blue-500 shrink-0" />
               <span>This shift</span>
             </div>
-            <div className="text-[10px] sm:text-xs text-slate-500 mt-1">
+            <div className="text-caption text-slate-500 mt-1">
               Last hour: {hourlyStats.lastHour} transactions
             </div>
           </CardContent>
@@ -338,9 +324,7 @@ const CashierDashboardView = ({
             <div className="text-xl sm:text-2xl font-bold text-black">
               £{cashDrawerBalance.amount.toFixed(2)}
               {cashDrawerBalance.isEstimated && (
-                <span className="text-[10px] sm:text-xs text-amber-600 ml-1">
-                  (est.)
-                </span>
+                <span className="text-caption text-amber-600 ml-1">(est.)</span>
               )}
             </div>
             <div className="flex items-center mt-2 text-xs sm:text-sm text-black">
@@ -355,7 +339,7 @@ const CashierDashboardView = ({
                 {cashDrawerBalance.isEstimated && " (est.)"}
               </span>
             </div>
-            <div className="text-[10px] sm:text-xs text-slate-500 mt-1">
+            <div className="text-caption text-slate-500 mt-1">
               {cashDrawerBalance.lastCountTime ? (
                 <>
                   Last count:{" "}
@@ -365,7 +349,7 @@ const CashierDashboardView = ({
                       hour: "2-digit",
                       minute: "2-digit",
                       hour12: true,
-                    }
+                    },
                   )}
                 </>
               ) : (
@@ -396,7 +380,7 @@ const CashierDashboardView = ({
                 {shiftStats.totalVoids || 0}
               </span>
             </div>
-            <div className="text-[10px] sm:text-xs text-slate-500 mt-2">
+            <div className="text-caption text-slate-500 mt-2">
               Total adjustments:{" "}
               {(shiftStats.totalVoids || 0) +
                 ((shiftStats.totalRefunds || 0) > 0 ? 1 : 0)}
@@ -405,7 +389,7 @@ const CashierDashboardView = ({
         </Card>
 
         {/* Quick Actions */}
-        <Card className="bg-white border-slate-200 shadow-sm h-full flex flex-col shadow-sm hover:shadow-md transition-shadow">
+        <Card className="bg-white border-slate-200 shadow-sm h-full flex flex-col hover:shadow-md transition-shadow">
           <CardHeader>
             <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
               <ShoppingCart className="w-5 h-5 shrink-0" />
@@ -436,108 +420,14 @@ const CashierDashboardView = ({
         </Card>
       </div>
 
-      <div className="space-y-4 sm:space-y-6">
-        {/* Recent Transactions */}
-        <Card className="bg-white border-slate-200 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-base sm:text-lg font-semibold text-slate-700">
-              Recent Transactions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {transactions.length === 0 ? (
-                <div className="text-center py-6 sm:py-8 text-slate-500">
-                  <div className="mb-2">
-                    <ShoppingCart className="h-6 w-6 sm:h-8 sm:w-8 mx-auto opacity-50" />
-                  </div>
-                  <p className="text-xs sm:text-sm">No recent transactions</p>
-                  <p className="text-[10px] sm:text-xs mt-1">
-                    Transactions will appear here once processed
-                  </p>
-                </div>
-              ) : (
-                transactions.map((transaction: Transaction) => (
-                  <div key={transaction.id}>
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`
-                      p-2 rounded-full
-                      ${
-                        transaction.type === "sale"
-                          ? "bg-green-100 text-green-600"
-                          : ""
-                      }
-                      ${
-                        transaction.type === "refund"
-                          ? "bg-red-100 text-red-600"
-                          : ""
-                      }
-                      ${
-                        transaction.type === "void"
-                          ? "bg-amber-100 text-amber-600"
-                          : ""
-                      }
-                    `}
-                      >
-                        {transaction.type === "sale" && (
-                          <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
-                        )}
-                        {transaction.type === "refund" && (
-                          <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4" />
-                        )}
-                        {transaction.type === "void" && (
-                          <XCircle className="h-3 w-3 sm:h-4 sm:w-4" />
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium text-xs sm:text-sm truncate">
-                          #{transaction.receiptNumber}
-                        </div>
-                        <div className="text-[10px] sm:text-xs text-slate-500 truncate">
-                          {new Date(transaction.timestamp).toLocaleString()} •{" "}
-                          {transaction.items.length} items
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <div className="font-semibold text-xs sm:text-sm text-black">
-                        {transaction.type === "sale"
-                          ? `+£${Math.abs(transaction.total).toFixed(2)}`
-                          : `-£${Math.abs(transaction.total).toFixed(2)}`}
-                      </div>
-                      <Badge
-                        variant="outline"
-                        className={`
-                      text-[10px] sm:text-xs mt-1
-                      ${
-                        transaction.paymentMethod === "cash"
-                          ? "bg-amber-50 text-amber-700"
-                          : ""
-                      }
-                      ${
-                        transaction.paymentMethod === "card"
-                          ? "bg-blue-50 text-blue-700"
-                          : ""
-                      }
-                      ${
-                        transaction.paymentMethod === "mixed"
-                          ? "bg-purple-50 text-purple-700"
-                          : ""
-                      }
-                    `}
-                      >
-                        {transaction.paymentMethod}
-                      </Badge>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </>
+      {/* Recent Transactions - same implementation as Sales Report page */}
+      <SalesReportsTransactionTable
+        transactions={transactions}
+        isLoading={isLoading}
+        emptyStateMessage="No recent transactions. Transactions will appear here once processed."
+        className="flex min-h-0 flex-1 flex-col"
+      />
+    </div>
   );
 };
 

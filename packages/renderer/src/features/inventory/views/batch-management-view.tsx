@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -17,6 +16,8 @@ import {
   Info,
   Package,
 } from "lucide-react";
+import { AdaptiveKeyboard } from "@/features/adaptive-keyboard/adaptive-keyboard";
+import { cn } from "@/shared/utils/cn";
 import { useAuth } from "@/shared/hooks/use-auth";
 import { Pagination } from "@/components/ui/pagination";
 import { useExpiryAlerts } from "@/features/inventory/hooks/use-expiry-alerts";
@@ -100,6 +101,44 @@ const BatchManagementView: React.FC<BatchManagementViewProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [expiryFilter, setExpiryFilter] = useState<string>("all");
+  
+  // Keyboard state for search field
+  const [showSearchKeyboard, setShowSearchKeyboard] = useState(false);
+  const [searchValue, setSearchValue] = useState(searchTerm);
+
+  // Sync searchValue with searchTerm
+  useEffect(() => {
+    setSearchValue(searchTerm);
+  }, [searchTerm]);
+
+  const handleSearchInput = useCallback((char: string) => {
+    setSearchValue((prev) => {
+      const newValue = prev + char;
+      setSearchTerm(newValue);
+      return newValue;
+    });
+  }, []);
+
+  const handleSearchBackspace = useCallback(() => {
+    setSearchValue((prev) => {
+      const newValue = prev.slice(0, -1);
+      setSearchTerm(newValue);
+      return newValue;
+    });
+  }, []);
+
+  const handleSearchClear = useCallback(() => {
+    setSearchValue("");
+    setSearchTerm("");
+  }, []);
+
+  const handleSearchFocus = useCallback(() => {
+    setShowSearchKeyboard(true);
+  }, []);
+
+  const handleCloseSearchKeyboard = useCallback(() => {
+    setShowSearchKeyboard(false);
+  }, []);
 
   // Batch adjustment modal state
   const [adjustingBatch, setAdjustingBatch] = useState<ProductBatch | null>(
@@ -703,13 +742,25 @@ const BatchManagementView: React.FC<BatchManagementViewProps> = ({
             <div className="flex flex-col space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <div className="relative sm:col-span-2 lg:col-span-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    placeholder="Search batches, products, SKU..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search batches, products, SKU..."
+                      value={searchValue}
+                      readOnly
+                      onFocus={handleSearchFocus}
+                      className={cn(
+                        "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
+                        "pl-10",
+                        "ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium",
+                        "placeholder:text-muted-foreground",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                        "disabled:cursor-not-allowed disabled:opacity-50",
+                        showSearchKeyboard && "ring-2 ring-primary border-primary"
+                      )}
+                    />
+                  </div>
                 </div>
 
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -894,6 +945,21 @@ const BatchManagementView: React.FC<BatchManagementViewProps> = ({
         onReasonChange={setAdjustmentReason}
         onConfirm={handleBatchAdjustment}
       />
+
+      {/* Adaptive Keyboard - Fixed at bottommost */}
+      {showSearchKeyboard && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background shadow-lg">
+          <AdaptiveKeyboard
+            visible={showSearchKeyboard}
+            initialMode="qwerty"
+            onInput={handleSearchInput}
+            onBackspace={handleSearchBackspace}
+            onClear={handleSearchClear}
+            onEnter={handleCloseSearchKeyboard}
+            onClose={handleCloseSearchKeyboard}
+          />
+        </div>
+      )}
     </>
   );
 };

@@ -30,8 +30,8 @@ export function CartPanel({
   onItemSelect,
 }: CartPanelProps) {
   return (
-    <div className="bg-white border-b-slate-200 shadow-sm flex-1 flex flex-col min-h-0">
-      <CardContent className="p-2 sm:p-3 flex-1 flex flex-col min-h-0">
+    <div className="flex-1 flex flex-col min-h-0">
+      <CardContent className="px-0 flex-1 flex flex-col min-h-0">
         <CartItemsTable
           items={cartItems}
           loading={loadingCart}

@@ -221,7 +221,7 @@ export function RegisterForm({
                     )}
                   </Button>
                 </div>
-                <FormDescription className="text-[10px] sm:text-xs">
+                <FormDescription className="text-caption">
                   Enter a 6-digit PIN for login.
                 </FormDescription>
                 <FormMessage />

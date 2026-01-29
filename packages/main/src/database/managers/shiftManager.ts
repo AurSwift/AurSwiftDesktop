@@ -144,14 +144,31 @@ export class ShiftManager {
       .where(
         and(
           eq(schema.shifts.user_id, cashierId),
-          eq(schema.shifts.status, "active")
-        )
+          eq(schema.shifts.status, "active"),
+        ),
       )
       .orderBy(desc(schema.shifts.createdAt))
       .limit(1)
       .all();
 
     return shifts.length > 0 ? (shifts[0] as Shift) : null;
+  }
+
+  /**
+   * Get all shifts for a specific schedule
+   * Used to track how many shift segments have been created for one scheduled day
+   */
+  getShiftsByScheduleId(scheduleId: string): Shift[] {
+    if (!scheduleId) {
+      return [];
+    }
+
+    return this.db
+      .select()
+      .from(schema.shifts)
+      .where(eq(schema.shifts.schedule_id, scheduleId))
+      .orderBy(desc(schema.shifts.createdAt))
+      .all() as Shift[];
   }
 
   /**
@@ -168,8 +185,8 @@ export class ShiftManager {
       .where(
         and(
           eq(schema.shifts.id, timeShiftId),
-          eq(schema.shifts.status, "active")
-        )
+          eq(schema.shifts.status, "active"),
+        ),
       )
       .orderBy(desc(schema.shifts.createdAt))
       .all() as Shift[];
@@ -188,7 +205,7 @@ export class ShiftManager {
       total_refunds?: number;
       total_voids?: number;
       notes?: string;
-    }
+    },
   ): void {
     const now = new Date();
 
@@ -226,13 +243,13 @@ export class ShiftManager {
       .from(schema.shifts)
       .leftJoin(
         schema.clockEvents,
-        eq(schema.shifts.clock_in_id, schema.clockEvents.id)
+        eq(schema.shifts.clock_in_id, schema.clockEvents.id),
       )
       .where(
         and(
           eq(schema.shifts.user_id, cashierId),
-          eq(schema.shifts.status, "active")
-        )
+          eq(schema.shifts.status, "active"),
+        ),
       )
       .orderBy(desc(schema.shifts.createdAt))
       .all()
@@ -242,8 +259,8 @@ export class ShiftManager {
           typeof item.clockInTimestamp === "number"
             ? item.clockInTimestamp
             : item.clockInTimestamp instanceof Date
-            ? item.clockInTimestamp.getTime()
-            : new Date(item.clockInTimestamp as string).getTime();
+              ? item.clockInTimestamp.getTime()
+              : new Date(item.clockInTimestamp as string).getTime();
         return new Date(clockInMs) >= yesterday;
       });
 
@@ -276,11 +293,11 @@ export class ShiftManager {
       .from(schema.shifts)
       .leftJoin(
         schema.schedules,
-        eq(schema.shifts.schedule_id, schema.schedules.id)
+        eq(schema.shifts.schedule_id, schema.schedules.id),
       )
       .leftJoin(
         schema.clockEvents,
-        eq(schema.shifts.clock_in_id, schema.clockEvents.id)
+        eq(schema.shifts.clock_in_id, schema.clockEvents.id),
       )
       .where(eq(schema.shifts.status, "active"))
       .all();
@@ -301,14 +318,14 @@ export class ShiftManager {
         clockInTimestamp && typeof clockInTimestamp === "number"
           ? clockInTimestamp
           : clockInTimestamp instanceof Date
-          ? clockInTimestamp.getTime()
-          : clockInTimestamp
-          ? new Date(clockInTimestamp as string).getTime()
-          : shift.createdAt instanceof Date
-          ? shift.createdAt.getTime()
-          : typeof shift.createdAt === "number"
-          ? shift.createdAt
-          : new Date(shift.createdAt as string).getTime();
+            ? clockInTimestamp.getTime()
+            : clockInTimestamp
+              ? new Date(clockInTimestamp as string).getTime()
+              : shift.createdAt instanceof Date
+                ? shift.createdAt.getTime()
+                : typeof shift.createdAt === "number"
+                  ? shift.createdAt
+                  : new Date(shift.createdAt as string).getTime();
       const shiftStart = new Date(shiftStartMs);
 
       // Rule 1: Close shifts older than 24 hours
@@ -324,8 +341,8 @@ export class ShiftManager {
           typeof scheduledEndTime === "number"
             ? scheduledEndTime
             : scheduledEndTime instanceof Date
-            ? scheduledEndTime.getTime()
-            : new Date(scheduledEndTime as string).getTime();
+              ? scheduledEndTime.getTime()
+              : new Date(scheduledEndTime as string).getTime();
         const scheduledEnd = new Date(scheduledEndMs);
         const hoursOverdue =
           (now.getTime() - scheduledEnd.getTime()) / (1000 * 60 * 60);
@@ -333,7 +350,7 @@ export class ShiftManager {
         if (hoursOverdue > 4) {
           shouldClose = true;
           closeReason = `Auto-closed - shift was ${Math.round(
-            hoursOverdue
+            hoursOverdue,
           )} hours past scheduled end time`;
         }
       }
@@ -344,7 +361,7 @@ export class ShiftManager {
         if (hoursActive > 16) {
           shouldClose = true;
           closeReason = `Auto-closed - shift was active for ${Math.round(
-            hoursActive
+            hoursActive,
           )} hours without schedule`;
         }
       }
@@ -401,11 +418,11 @@ export class ShiftManager {
       .from(schema.shifts)
       .leftJoin(
         schema.schedules,
-        eq(schema.shifts.schedule_id, schema.schedules.id)
+        eq(schema.shifts.schedule_id, schema.schedules.id),
       )
       .leftJoin(
         schema.clockEvents,
-        eq(schema.shifts.clock_in_id, schema.clockEvents.id)
+        eq(schema.shifts.clock_in_id, schema.clockEvents.id),
       )
       .where(eq(schema.shifts.status, "active"))
       .all()
@@ -416,14 +433,14 @@ export class ShiftManager {
           item.clockInTimestamp && typeof item.clockInTimestamp === "number"
             ? item.clockInTimestamp
             : item.clockInTimestamp instanceof Date
-            ? item.clockInTimestamp.getTime()
-            : item.clockInTimestamp
-            ? new Date(item.clockInTimestamp as string).getTime()
-            : item.shift.createdAt instanceof Date
-            ? item.shift.createdAt.getTime()
-            : typeof item.shift.createdAt === "number"
-            ? item.shift.createdAt
-            : new Date(item.shift.createdAt as string).getTime();
+              ? item.clockInTimestamp.getTime()
+              : item.clockInTimestamp
+                ? new Date(item.clockInTimestamp as string).getTime()
+                : item.shift.createdAt instanceof Date
+                  ? item.shift.createdAt.getTime()
+                  : typeof item.shift.createdAt === "number"
+                    ? item.shift.createdAt
+                    : new Date(item.shift.createdAt as string).getTime();
         const shiftDate = new Date(clockInMs);
         const today = new Date();
         return (
@@ -448,14 +465,14 @@ export class ShiftManager {
         clockInTimestamp && typeof clockInTimestamp === "number"
           ? clockInTimestamp
           : clockInTimestamp instanceof Date
-          ? clockInTimestamp.getTime()
-          : clockInTimestamp
-          ? new Date(clockInTimestamp as string).getTime()
-          : shift.createdAt instanceof Date
-          ? shift.createdAt.getTime()
-          : typeof shift.createdAt === "number"
-          ? shift.createdAt
-          : new Date(shift.createdAt as string).getTime();
+            ? clockInTimestamp.getTime()
+            : clockInTimestamp
+              ? new Date(clockInTimestamp as string).getTime()
+              : shift.createdAt instanceof Date
+                ? shift.createdAt.getTime()
+                : typeof shift.createdAt === "number"
+                  ? shift.createdAt
+                  : new Date(shift.createdAt as string).getTime();
       const shiftStart = new Date(shiftStartMs);
 
       if (scheduledEndTime) {
@@ -464,8 +481,8 @@ export class ShiftManager {
           typeof scheduledEndTime === "number"
             ? scheduledEndTime
             : scheduledEndTime instanceof Date
-            ? scheduledEndTime.getTime()
-            : new Date(scheduledEndTime as string).getTime();
+              ? scheduledEndTime.getTime()
+              : new Date(scheduledEndTime as string).getTime();
         const scheduledEnd = new Date(scheduledEndMs);
         const hoursOverdue =
           (now.getTime() - scheduledEnd.getTime()) / (1000 * 60 * 60);
@@ -474,7 +491,7 @@ export class ShiftManager {
         if (hoursOverdue > 2) {
           shouldClose = true;
           closeReason = `Auto-closed - shift was ${Math.round(
-            hoursOverdue
+            hoursOverdue,
           )} hours past scheduled end time`;
         }
       } else {
@@ -484,7 +501,7 @@ export class ShiftManager {
         if (hoursActive > 12) {
           shouldClose = true;
           closeReason = `Auto-closed - shift was active for ${Math.round(
-            hoursActive
+            hoursActive,
           )} hours without schedule`;
         }
       }
@@ -534,7 +551,7 @@ export class ShiftManager {
       now.getDate(),
       now.getHours(),
       0,
-      0
+      0,
     );
 
     // Get transactions from the last hour
@@ -548,8 +565,8 @@ export class ShiftManager {
             schema.transactions.timestamp
           } >= ${oneHourAgo.toISOString()}`,
           drizzleSql`${schema.transactions.timestamp} <= ${now.toISOString()}`,
-          eq(schema.transactions.status, "completed")
-        )
+          eq(schema.transactions.status, "completed"),
+        ),
       )
       .get();
 
@@ -563,8 +580,8 @@ export class ShiftManager {
           drizzleSql`${
             schema.transactions.timestamp
           } >= ${currentHourStart.toISOString()}`,
-          eq(schema.transactions.status, "completed")
-        )
+          eq(schema.transactions.status, "completed"),
+        ),
       )
       .get();
 
@@ -576,7 +593,7 @@ export class ShiftManager {
       .from(schema.shifts)
       .leftJoin(
         schema.clockEvents,
-        eq(schema.shifts.clock_in_id, schema.clockEvents.id)
+        eq(schema.shifts.clock_in_id, schema.clockEvents.id),
       )
       .where(eq(schema.shifts.id, shiftId))
       .get();
@@ -587,12 +604,12 @@ export class ShiftManager {
         typeof shiftWithClockIn.clockInTimestamp === "number"
           ? shiftWithClockIn.clockInTimestamp
           : shiftWithClockIn.clockInTimestamp instanceof Date
-          ? shiftWithClockIn.clockInTimestamp.getTime()
-          : new Date(shiftWithClockIn.clockInTimestamp as string).getTime();
+            ? shiftWithClockIn.clockInTimestamp.getTime()
+            : new Date(shiftWithClockIn.clockInTimestamp as string).getTime();
       const shiftStart = new Date(clockInMs);
       const hoursWorked = Math.max(
         (now.getTime() - shiftStart.getTime()) / (1000 * 60 * 60),
-        0.1
+        0.1,
       );
 
       const totalResult = this.db
@@ -601,8 +618,8 @@ export class ShiftManager {
         .where(
           and(
             eq(schema.transactions.shiftId, shiftId),
-            eq(schema.transactions.status, "completed")
-          )
+            eq(schema.transactions.status, "completed"),
+          ),
         )
         .get();
 
@@ -625,12 +642,12 @@ export class ShiftManager {
       actualCashDrawer: number;
       managerNotes: string;
       managerId: string;
-    }
+    },
   ): void {
     const shift = this.getShiftById(shiftId);
 
     const reconciliationNote = `Reconciled by manager. Actual cash: £${reconciliationData.actualCashDrawer.toFixed(
-      2
+      2,
     )}. ${reconciliationData.managerNotes}`;
 
     const updatedNotes = shift.notes
@@ -660,8 +677,8 @@ export class ShiftManager {
         and(
           eq(schema.shifts.business_id, businessId),
           eq(schema.shifts.status, "ended"),
-          drizzleSql`${schema.shifts.notes} LIKE '%Auto-ended%' OR ${schema.shifts.notes} LIKE '%Auto-closed%'`
-        )
+          drizzleSql`${schema.shifts.notes} LIKE '%Auto-ended%' OR ${schema.shifts.notes} LIKE '%Auto-closed%'`,
+        ),
       )
       .orderBy(desc(schema.shifts.updatedAt))
       .all() as Shift[];

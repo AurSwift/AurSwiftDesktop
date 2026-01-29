@@ -35,10 +35,10 @@ export class ScheduleValidator {
   async validateClockIn(
     userId: string,
     businessId: string,
-    db: DatabaseManagers
+    db: DatabaseManagers,
   ): Promise<ScheduleValidationResult> {
     logger.info(
-      `[validateClockIn] Validating clock-in for user ${userId}, business ${businessId}`
+      `[validateClockIn] Validating clock-in for user ${userId}, business ${businessId}`,
     );
 
     try {
@@ -47,7 +47,7 @@ export class ScheduleValidator {
 
       if (!schedule) {
         logger.warn(
-          `[validateClockIn] No schedule found for user ${userId} today`
+          `[validateClockIn] No schedule found for user ${userId} today`,
         );
         return {
           valid: false,
@@ -59,7 +59,7 @@ export class ScheduleValidator {
       }
 
       logger.info(
-        `[validateClockIn] Found schedule: ${schedule.id} (${schedule.startTime} - ${schedule.endTime})`
+        `[validateClockIn] Found schedule: ${schedule.id} (${schedule.startTime} - ${schedule.endTime})`,
       );
 
       // 2. Allow multiple shifts per schedule (e.g., split shifts, mid-day breaks)
@@ -67,13 +67,14 @@ export class ScheduleValidator {
       const activeShift = db.shifts.getActiveShift(userId);
       if (activeShift) {
         logger.warn(
-          `[validateClockIn] User ${userId} already has active shift ${activeShift.id} - blocking duplicate clock-in`
+          `[validateClockIn] User ${userId} already has active shift ${activeShift.id} - blocking duplicate clock-in`,
         );
         return {
           valid: false,
           canClockIn: false,
           requiresApproval: false,
-          warnings: ["Already clocked in - please clock out first"],
+          // Keep messages stable for tests/UX.
+          warnings: ["Already clocked in", "Please clock out first"],
           schedule,
           reason: "User already has an active shift",
         };
@@ -88,15 +89,15 @@ export class ScheduleValidator {
         typeof schedule.startTime === "number"
           ? schedule.startTime
           : schedule.startTime instanceof Date
-          ? schedule.startTime.getTime()
-          : new Date(schedule.startTime as string).getTime();
+            ? schedule.startTime.getTime()
+            : new Date(schedule.startTime as string).getTime();
 
       const endTimeMs = schedule.endTime
         ? typeof schedule.endTime === "number"
           ? schedule.endTime
           : schedule.endTime instanceof Date
-          ? schedule.endTime.getTime()
-          : new Date(schedule.endTime as string).getTime()
+            ? schedule.endTime.getTime()
+            : new Date(schedule.endTime as string).getTime()
         : startTimeMs;
 
       const scheduleStart = new Date(startTimeMs);
@@ -105,28 +106,28 @@ export class ScheduleValidator {
       // Calculate grace period boundaries
       const scheduleStartWithGrace = new Date(scheduleStart);
       scheduleStartWithGrace.setMinutes(
-        scheduleStartWithGrace.getMinutes() - this.GRACE_PERIOD_MINUTES
+        scheduleStartWithGrace.getMinutes() - this.GRACE_PERIOD_MINUTES,
       );
 
       const scheduleEndWithGrace = new Date(scheduleEnd);
       scheduleEndWithGrace.setMinutes(
-        scheduleEndWithGrace.getMinutes() + this.GRACE_PERIOD_MINUTES
+        scheduleEndWithGrace.getMinutes() + this.GRACE_PERIOD_MINUTES,
       );
 
       logger.info(
-        `[validateClockIn] Time check: now=${now.toISOString()}, start=${scheduleStart.toISOString()}, end=${scheduleEnd.toISOString()}`
+        `[validateClockIn] Time check: now=${now.toISOString()}, start=${scheduleStart.toISOString()}, end=${scheduleEnd.toISOString()}`,
       );
       logger.info(
-        `[validateClockIn] Grace period: start=${scheduleStartWithGrace.toISOString()}, end=${scheduleEndWithGrace.toISOString()}`
+        `[validateClockIn] Grace period: start=${scheduleStartWithGrace.toISOString()}, end=${scheduleEndWithGrace.toISOString()}`,
       );
 
       // Check if before schedule (with grace period)
       if (now < scheduleStartWithGrace) {
         const minutesEarly = Math.floor(
-          (scheduleStartWithGrace.getTime() - now.getTime()) / (1000 * 60)
+          (scheduleStartWithGrace.getTime() - now.getTime()) / (1000 * 60),
         );
         logger.warn(
-          `[validateClockIn] Clock-in is ${minutesEarly} minutes before scheduled time`
+          `[validateClockIn] Clock-in is ${minutesEarly} minutes before scheduled time`,
         );
         return {
           valid: false,
@@ -143,18 +144,34 @@ export class ScheduleValidator {
       // Check if after schedule (with grace period)
       if (now > scheduleEndWithGrace) {
         const minutesLate = Math.floor(
-          (now.getTime() - scheduleEndWithGrace.getTime()) / (1000 * 60)
+          (now.getTime() - scheduleEndWithGrace.getTime()) / (1000 * 60),
         );
         logger.warn(
-          `[validateClockIn] Clock-in is ${minutesLate} minutes after scheduled time`
+          `[validateClockIn] Clock-in is ${minutesLate} minutes after scheduled time`,
         );
+
+        // Count how many shifts have been created for this schedule today.
+        // In unit tests we sometimes provide a partial DB mock, so guard this call.
+        const getShiftsByScheduleId = (db.shifts as any)?.getShiftsByScheduleId;
+        const shiftsForSchedule: Array<{ status?: string }> =
+          typeof getShiftsByScheduleId === "function"
+            ? getShiftsByScheduleId.call(db.shifts, schedule.id) ?? []
+            : [];
+        const completedShifts = shiftsForSchedule.filter(
+          (s) => s.status === "ended",
+        ).length;
+
         return {
           valid: false,
           canClockIn: false,
           requiresApproval: true, // Can clock in with manager approval
           warnings: [
-            `Clock-in is ${minutesLate} minutes after scheduled time (${scheduleEnd.toLocaleTimeString()})`,
-          ],
+            `Your shift ended at ${scheduleEnd.toLocaleTimeString()}. You are ${minutesLate} minutes past your scheduled end time.`,
+            completedShifts > 0
+              ? `You have already completed ${completedShifts} shift segment(s) today.`
+              : "",
+            "If you need to work additional hours, please get manager approval.",
+          ].filter(Boolean),
           schedule,
           reason: "Clock-in is after scheduled time",
         };
@@ -162,7 +179,7 @@ export class ScheduleValidator {
 
       // 4. Within schedule window (with grace period)
       logger.info(
-        `[validateClockIn] ✅ Clock-in is within schedule window (with grace period)`
+        `[validateClockIn] ✅ Clock-in is within schedule window (with grace period)`,
       );
       return {
         valid: true,
@@ -174,7 +191,7 @@ export class ScheduleValidator {
     } catch (error) {
       logger.error(
         `[validateClockIn] Error validating schedule for user ${userId}:`,
-        error
+        error,
       );
       return {
         valid: false,
@@ -201,7 +218,7 @@ export class ScheduleValidator {
   private async getTodaySchedule(
     userId: string,
     businessId: string,
-    db: DatabaseManagers
+    db: DatabaseManagers,
   ): Promise<Schedule | null> {
     const now = new Date();
     const dateString = now.toISOString().split("T")[0]; // YYYY-MM-DD
@@ -217,8 +234,8 @@ export class ScheduleValidator {
         typeof schedule.startTime === "number"
           ? schedule.startTime
           : schedule.startTime instanceof Date
-          ? schedule.startTime.getTime()
-          : new Date(schedule.startTime as string).getTime();
+            ? schedule.startTime.getTime()
+            : new Date(schedule.startTime as string).getTime();
 
       const scheduleDate = new Date(startTime);
       const scheduleDateString = scheduleDate.toISOString().split("T")[0];
@@ -243,13 +260,13 @@ export class ScheduleValidator {
         ? typeof schedule.endTime === "number"
           ? schedule.endTime
           : schedule.endTime instanceof Date
-          ? schedule.endTime.getTime()
-          : new Date(schedule.endTime as string).getTime()
+            ? schedule.endTime.getTime()
+            : new Date(schedule.endTime as string).getTime()
         : typeof schedule.startTime === "number"
-        ? schedule.startTime
-        : schedule.startTime instanceof Date
-        ? schedule.startTime.getTime()
-        : new Date(schedule.startTime as string).getTime();
+          ? schedule.startTime
+          : schedule.startTime instanceof Date
+            ? schedule.startTime.getTime()
+            : new Date(schedule.startTime as string).getTime();
       return new Date(endTimeMs) > now;
     });
 
@@ -260,14 +277,14 @@ export class ScheduleValidator {
           typeof latest.startTime === "number"
             ? latest.startTime
             : latest.startTime instanceof Date
-            ? latest.startTime.getTime()
-            : new Date(latest.startTime as string).getTime();
+              ? latest.startTime.getTime()
+              : new Date(latest.startTime as string).getTime();
         const currentStart =
           typeof current.startTime === "number"
             ? current.startTime
             : current.startTime instanceof Date
-            ? current.startTime.getTime()
-            : new Date(current.startTime as string).getTime();
+              ? current.startTime.getTime()
+              : new Date(current.startTime as string).getTime();
         return currentStart > latestStart ? current : latest;
       });
     }
@@ -278,14 +295,14 @@ export class ScheduleValidator {
         typeof latest.startTime === "number"
           ? latest.startTime
           : latest.startTime instanceof Date
-          ? latest.startTime.getTime()
-          : new Date(latest.startTime as string).getTime();
+            ? latest.startTime.getTime()
+            : new Date(latest.startTime as string).getTime();
       const currentStart =
         typeof current.startTime === "number"
           ? current.startTime
           : current.startTime instanceof Date
-          ? current.startTime.getTime()
-          : new Date(current.startTime as string).getTime();
+            ? current.startTime.getTime()
+            : new Date(current.startTime as string).getTime();
       return currentStart > latestStart ? current : latest;
     });
   }

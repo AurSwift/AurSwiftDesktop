@@ -2,6 +2,244 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.41.1](https://github.com/AurSwift/AurSwift/compare/v1.41.0...v1.41.1) (2026-01-29)
+
+
+### docs
+
+* update performance optimizations documentation and implement lazy initialization for database managers ([](https://github.com/AurSwift/AurSwift/commit/6fdd27b815b5533f149784cf412163362b36a645))
+
+
+### fix
+
+* **cashier-dashboard:** add missing trailing commas and clean up loading state rendering ([](https://github.com/AurSwift/AurSwift/commit/2c3f1bea869a22759a2accdd2429551aa762e14d))
+* **auto-updater:** simplify download state management and remove unused features ([](https://github.com/AurSwift/AurSwift/commit/d7a7875d2e9fe9c386cd942a158b1a1bcc1acb9a))
+
+# [1.41.0](https://github.com/AurSwift/AurSwift/compare/v1.40.0...v1.41.0) (2026-01-28)
+
+
+### docs
+
+* add performance optimizations documentation for AuraSwift application ([](https://github.com/AurSwift/AurSwift/commit/5a0bc85766d500bcc27517289524edbeb9917702))
+
+
+### feat
+
+* **app:** implement lazy loading and error boundaries for improved performance and user experience ([](https://github.com/AurSwift/AurSwift/commit/4ef6713ebf54bfbb90f36110d2ba6bdd392e7fcf))
+
+
+### fix
+
+* **entry-point:** prevent default Electron menu from displaying ([](https://github.com/AurSwift/AurSwift/commit/266ac33a6e60992bddd973cc61df4ebaf340176d))
+
+
+### refactor
+
+* **vite:** enhance configuration for production mode and clean up console logs ([](https://github.com/AurSwift/AurSwift/commit/6d650f8824401453929afa294748eaeca3a7b83a))
+* **cart:** improve code readability and formatting in cart components ([](https://github.com/AurSwift/AurSwift/commit/89350ba5ffff78020aa4dead076087721ffd9c79))
+* **init:** load hardware services in parallel for improved performance ([](https://github.com/AurSwift/AurSwift/commit/b3b5f029b648acda4bf0aadd22709624382a4372))
+* **auto-updater:** optimize performance metrics and logging ([](https://github.com/AurSwift/AurSwift/commit/53860eaafa553622fc0813e2317186868a4fd203))
+
+# [1.40.0](https://github.com/AurSwift/AurSwift/compare/v1.39.1...v1.40.0) (2026-01-28)
+
+
+### chore
+
+* **dashboard:** ensure consistent export of useShiftExpiryLogout hook ([](https://github.com/AurSwift/AurSwift/commit/953a8f0f792d1df8611c6864988f8f540e95e6e9))
+
+
+### feat
+
+* **auto-updater:** add customer-facing release notes URL and update links ([](https://github.com/AurSwift/AurSwift/commit/11b25ef25b8d92ea9162c590ed4d70b515ba253b))
+* **license-activation:** add test update notification handlers and improve logo handling ([](https://github.com/AurSwift/AurSwift/commit/88936b824671cabe93b672e03e752a685604099e))
+* **quantity-modal:** integrate numeric keypad and enhance input handling ([](https://github.com/AurSwift/AurSwift/commit/84e2381904d04e7048de824fdcda6f6dad694eea))
+
+
+### fix
+
+* **transactions:** add getTransactionsByDateRange API for report generation ([](https://github.com/AurSwift/AurSwift/commit/1c8d93102394207b9406c74e122a7bf84a278f97))
+* **sales:** add time change banner and dismiss functionality ([](https://github.com/AurSwift/AurSwift/commit/475bb02e8a96a4626cfdbbe5b9f777398df85d4d))
+* **shifts:** add useShiftExpiryLogout hook for automatic user logout ([](https://github.com/AurSwift/AurSwift/commit/1220c7489fb0484fdaaab760e3309cf919bc3e7a))
+* **numeric-keypad:** enhance keypad functionality and layout for better user experience ([](https://github.com/AurSwift/AurSwift/commit/9137dd056166591985ef7ef261295438911edeb9))
+* **refund-modal:** enhance refund transaction modal with logging and UI improvements ([](https://github.com/AurSwift/AurSwift/commit/5206758ab52c58d63b5bc3f3c97c08631dde4e0d))
+* **adaptive-keyboard:** integrate adaptive keyboard across various components ([](https://github.com/AurSwift/AurSwift/commit/1c3a7dad1cfa25527c77c9584d21e07f4b41472f))
+* **cart:** streamline cart item row and table component props ([](https://github.com/AurSwift/AurSwift/commit/6cb1a1ff4d2a0587fc18f8fbc308110e3d056230))
+
+
+### refactor
+
+* **license-activation:** comment out test update notification handlers and improve code organization ([](https://github.com/AurSwift/AurSwift/commit/1b7ef9f3f05ebb98e03329240614cd856419ffde))
+* **payment:** enhance payment panel integration with animated transitions ([](https://github.com/AurSwift/AurSwift/commit/b427e5dee49a9741ec5e9cf85284c3c9016fba73))
+* **card:** improve code consistency and formatting ([](https://github.com/AurSwift/AurSwift/commit/7ce73e9f38fb66bae1c78f8d0e5d5c9cd694ab0f))
+* **feature-registry:** remove unused action for new sale from feature registry ([](https://github.com/AurSwift/AurSwift/commit/cf33322c1b0ac6a3e671827bdfdccb638c44bfe2))
+* remove unused components and types for improved code clarity ([](https://github.com/AurSwift/AurSwift/commit/c5fe1d985bb71c4ae2c15ed42a486e2d950ff320))
+* **transactions:** remove void transaction functionality and related IPC handlers ([](https://github.com/AurSwift/AurSwift/commit/d0e7a11a87899cdc4d0aebf97eec539c96d6d3ff))
+* **toasts:** simplify toast component styles and improve code consistency ([](https://github.com/AurSwift/AurSwift/commit/d8e712e04cad7082da436247d171a233b149cafe))
+* **cart:** update cart item row and table styles for improved UI ([](https://github.com/AurSwift/AurSwift/commit/970f9247bd9489a8f00188937b748c2229293fd9))
+* **dashboard:** update user type in shift expiry check and clean up unused code ([](https://github.com/AurSwift/AurSwift/commit/e1096ded6267080d0c09adff2bed670ae8bf216b))
+
+## [1.39.1](https://github.com/AurSwift/AurSwift/compare/v1.39.0...v1.39.1) (2026-01-25)
+
+
+### fix
+
+* **logo:** enhance logo display and adjust key icon sizing on activation screen ([](https://github.com/AurSwift/AurSwift/commit/87526b4fe0ca70b4928aeb7d1d82c5a73e940b91))
+
+# [1.39.0](https://github.com/AurSwift/AurSwift/compare/v1.38.0...v1.39.0) (2026-01-25)
+
+
+### feat
+
+* **autoupdate:** implement cursor-style update handling and enhance logging ([](https://github.com/AurSwift/AurSwift/commit/5a7d608523f1e859b83059209570507c94ac975a))
+
+# [1.38.0](https://github.com/AurSwift/AurSwift/compare/v1.37.0...v1.38.0) (2026-01-25)
+
+
+### feat
+
+* **typography:** enhance typography consistency across components ([](https://github.com/AurSwift/AurSwift/commit/8cdd40f498a9ee920f5c7d8a22c3891663bbbc64))
+
+# [1.37.0](https://github.com/AurSwift/AurSwift/compare/v1.36.2...v1.37.0) (2026-01-25)
+
+
+### feat
+
+* **autoupdate:** implement pending update check on renderer mount and enhance update handling ([](https://github.com/AurSwift/AurSwift/commit/d0c1f7cb876a866a202ba9089aff951c63b2305e))
+
+## [1.36.2](https://github.com/AurSwift/AurSwift/compare/v1.36.1...v1.36.2) (2026-01-24)
+
+
+### fix
+
+* **test:** increase performance threshold for VirtualizedProductTable ([](https://github.com/AurSwift/AurSwift/commit/aafa7494feb822edb4d5db37c3353487782e2e52))
+* remove AuthHeroSection component from authentication flow ([](https://github.com/AurSwift/AurSwift/commit/879ab49b5a33b905a242536f74f8c4a87f8f6979))
+
+## [1.36.1](https://github.com/AurSwift/AurSwift/compare/v1.36.0...v1.36.1) (2026-01-24)
+
+
+### docs
+
+* enhance database migration documentation with additional safety features and user experience details ([](https://github.com/AurSwift/AurSwift/commit/f2b13964e9b277d0b9b8a1c7623ee5831c92ae02))
+
+
+### refactor
+
+* standardize code formatting and improve update handling ([](https://github.com/AurSwift/AurSwift/commit/9bae5055700f0f231783eb7320855e607a78ec82))
+
+# [1.36.0](https://github.com/AurSwift/AurSwift/compare/v1.35.1...v1.36.0) (2026-01-24)
+
+
+### chore
+
+* remove obsolete database bridge migration script from package.json ([](https://github.com/AurSwift/AurSwift/commit/95c812338bc3e25641523ba06ef6c2656fff01f1))
+
+
+### docs
+
+* Add comprehensive backup cleanup system documentation and retention policy analysis ([](https://github.com/AurSwift/AurSwift/commit/3b1b39b560f2c38f3bfa016c0f6cc9db673e0059))
+* add comprehensive documentation for database migration and auto-update system ([](https://github.com/AurSwift/AurSwift/commit/cf89d0b33a420d4eb3e5e3eaa60474207da0328a))
+* Add unified system documentation and refactor old system references ([](https://github.com/AurSwift/AurSwift/commit/1927d27469ed9c9eca474b0afaf2ab532dbda510))
+
+
+### feat
+
+* add new database management scripts to package.json ([](https://github.com/AurSwift/AurSwift/commit/f579f75917308ba6d1d1ab403b715d8771c38d04))
+* implement disk space check for database migrations ([](https://github.com/AurSwift/AurSwift/commit/63c18c036b8d0831640dbed14ace53031218e81a))
+* introduce comprehensive backup cleanup system ([](https://github.com/AurSwift/AurSwift/commit/c2257c3d6740fab34783b90eafdd71c01dc33277))
+
+
+### fix
+
+* enhance import database error handling and improve user feedback ([](https://github.com/AurSwift/AurSwift/commit/2a2d11bfaa70fb7dcc301378f6329ffb4210d6bf))
+
+## [1.35.1](https://github.com/AurSwift/AurSwift/compare/v1.35.0...v1.35.1) (2026-01-21)
+
+
+### fix
+
+* simplify update toast handling and improve state management ([](https://github.com/AurSwift/AurSwift/commit/88715fbf3d536be2741ff95038592958658e7cb8))
+
+
+### refactor
+
+* remove obsolete database migration and logging files ([](https://github.com/AurSwift/AurSwift/commit/c47819ab8e9c83e31eb36591faf642d6e1457916))
+* streamline license activation screen layout and styling ([](https://github.com/AurSwift/AurSwift/commit/7a95926e4d16ff4345390e3ced8992a7b63f82d4))
+
+# [1.35.0](https://github.com/AurSwift/AurSwift/compare/v1.34.0...v1.35.0) (2026-01-20)
+
+
+### feat
+
+* enhance payment panel with cash payment modal and state management ([](https://github.com/AurSwift/AurSwift/commit/737f2d4dffb7e603c1a457d5287187ea67b5ed8d))
+* enhance thermal printer service and receipt options with improved status handling ([](https://github.com/AurSwift/AurSwift/commit/439b537a0906b3ce73b4690c0d1796a47cee231a))
+* improve printer connection handling and status verification ([](https://github.com/AurSwift/AurSwift/commit/3007e360a1c5df9ca732ea2b0f11ac41d5e1c511))
+
+
+### fix
+
+* clean up and standardize code formatting in thermal printer service and related components ([](https://github.com/AurSwift/AurSwift/commit/53bd76b2c42bab38208899de5468359a89407ee9))
+
+# [1.34.0](https://github.com/AurSwift/AurSwift/compare/v1.33.0...v1.34.0) (2026-01-20)
+
+
+### feat
+
+* enhance database import process with progress tracking and UI updates ([](https://github.com/AurSwift/AurSwift/commit/a0d0a34d3b51129391afc6f1fe80f4e2699f94d0))
+* enhance time tracking IPC handlers with reporting and manager overrides ([](https://github.com/AurSwift/AurSwift/commit/37369946726994065d877f063eca019ee596d466))
+* implement receipt email settings and enhance email service integration ([](https://github.com/AurSwift/AurSwift/commit/d019b228ed6bf1ddb49520f60ec73912004e76ed))
+* update logo source handling in AuthHeader, DashboardHeader, and LicenseActivationScreen ([](https://github.com/AurSwift/AurSwift/commit/4b27d53fcf2a574f549f725e9520829bb83c1459))
+
+# [1.33.0](https://github.com/AurSwift/AurSwift/compare/v1.32.0...v1.33.0) (2026-01-19)
+
+
+### chore
+
+* update baseline-browser-mapping dependency to version 2.9.15 ([](https://github.com/AurSwift/AurSwift/commit/40fca85f567e064174b4e4676e5ee361a9e72c0c))
+* update repository references in configuration and UI details ([](https://github.com/AurSwift/AurSwift/commit/a9dfaeb935b7196449531efbf5bab9b1aa3c5631))
+
+
+### feat
+
+* implement PIN management features for user accounts ([](https://github.com/AurSwift/AurSwift/commit/309c798feb5b7de3b071d018dce22146dbb53200))
+
+
+### refactor
+
+* update break policy descriptions for clarity ([](https://github.com/AurSwift/AurSwift/commit/680027d1cca37f2ce57aa5ecbfdfcb8ca9581352))
+
+# [1.32.0](https://github.com/AurSwift/AurSwift/compare/v1.31.0...v1.32.0) (2026-01-18)
+
+
+### feat
+
+* add mock implementation for verifyPin in productAPI for testing ([](https://github.com/AurSwift/AurSwift/commit/93cdd91f62ffc81e80aa02efd86256454f9c6a4a))
+* add test mode functionality to license activation flow ([](https://github.com/AurSwift/AurSwift/commit/5736a6b3a81bb36dd3c4f420c976319b6d40652b))
+* enhance License Activation Screen with keyboard handling and layout improvements ([](https://github.com/AurSwift/AurSwift/commit/05ed1e1671bc8f30468fa2c08f52913e8eec33c8))
+* enhance LockScreen component with improved PIN entry and layout adjustments ([](https://github.com/AurSwift/AurSwift/commit/437aa679e780b7b037df55c3d006f5c32df965a9))
+* enhance time tracking and reporting features ([](https://github.com/AurSwift/AurSwift/commit/85ffa6606664015d5a3b3b0bef8e1d29e8bd85f8))
+* implement auto-completion of expired schedules and enhance shift cleanup logging ([](https://github.com/AurSwift/AurSwift/commit/2bbbdab89c127c11a16cb4b49052b816113889e9))
+* implement break policy management features ([](https://github.com/AurSwift/AurSwift/commit/f9fb64b341e1cdb88cd5ff718395eec03c5069f2))
+* introduce DashboardHeader component for improved layout and user experience ([](https://github.com/AurSwift/AurSwift/commit/433c2a21bf76a9a717b1e9a3df89fc79cc6b4c4a))
+
+
+### fix
+
+* define types for user management and scheduling features ([](https://github.com/AurSwift/AurSwift/commit/2ae76a4dbf8fdcf539c9af5315b8eeda58ad098a))
+* remove obsolete unit tests for ScheduleValidator, ShiftRequirementResolver, and TransactionValidator ([](https://github.com/AurSwift/AurSwift/commit/9c87a0a8946547852f11455d9e9c0b8754c647bf))
+* update adaptive keyboard styles for improved responsiveness and layout consistency ([](https://github.com/AurSwift/AurSwift/commit/7f0a0197e347256003716628003c63e525715f8d))
+* update license key placeholder format in License Activation Screen ([](https://github.com/AurSwift/AurSwift/commit/8c99cbdfc00e71e5673a71acd97301ac9350abac))
+* update userManager and scheduleValidator for improved type handling and stability ([](https://github.com/AurSwift/AurSwift/commit/83dfba41223900d6fd1c1327e21f688a4672a5eb))
+* update vitest configuration for improved coverage reporting ([](https://github.com/AurSwift/AurSwift/commit/38f1d601224f42c094dca9955811cc8d469283ad))
+
+
+### refactor
+
+* clean up PinEntryScreen by removing unused schedule information components ([](https://github.com/AurSwift/AurSwift/commit/fd479ee3c01137e2ca6a32752cfa77a037295218))
+* enhance DashboardLayout and CashierDashboardView for improved functionality and styling ([](https://github.com/AurSwift/AurSwift/commit/5e72e6902f1ce36f28f73618bbd20b4fe8d3ea7f))
+* improve AddUserDrawer and AddUserForm layout and styling ([](https://github.com/AurSwift/AurSwift/commit/e6576eb03aa5bd8568dd4aafdcf24650f66ec772))
+* remove Business ID display from user dialogs and improve role selection UI ([](https://github.com/AurSwift/AurSwift/commit/e620c1fe1673f1a1d149b6cda7f1603fe6cf3117))
+* simplify PinEntryScreen by removing unused state and effect hooks ([](https://github.com/AurSwift/AurSwift/commit/fb08723dd8befc0e06c964a32b0306543162a71d))
+
 # [1.31.0](https://github.com/AurSwift/AurSwift/compare/v1.30.2...v1.31.0) (2026-01-16)
 
 

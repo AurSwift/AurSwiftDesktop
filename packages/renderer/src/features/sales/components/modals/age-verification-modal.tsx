@@ -168,7 +168,7 @@ export const AgeVerificationModal: React.FC<AgeVerificationModalProps> = ({
             </p>
             <Badge
               variant="outline"
-              className="mt-1 text-[10px] sm:text-xs bg-orange-50 text-orange-700 border-orange-200"
+              className="mt-1 text-caption bg-orange-50 text-orange-700 border-orange-200"
             >
               {product.ageRestrictionLevel}
             </Badge>
@@ -256,7 +256,7 @@ export const AgeVerificationModal: React.FC<AgeVerificationModalProps> = ({
                     </div>
                     <Badge
                       variant={isEligible ? "default" : "destructive"}
-                      className={`text-[10px] sm:text-xs ${
+                      className={`text-caption ${
                         isEligible ? "bg-green-600" : "bg-red-600"
                       }`}
                     >
@@ -312,7 +312,7 @@ export const AgeVerificationModal: React.FC<AgeVerificationModalProps> = ({
                 placeholder="e.g., Parent present, Valid ID shown, etc."
                 className="w-full h-10 sm:h-11 text-sm sm:text-base"
               />
-              <p className="text-[10px] sm:text-xs text-slate-500">
+              <p className="text-caption text-slate-500">
                 Manager override will be logged for audit purposes.
               </p>
             </div>

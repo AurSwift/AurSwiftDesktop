@@ -16,7 +16,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
         style: {
           background: "var(--card)",
           color: "var(--card-foreground)",
-          border: "2px solid var(--border)",
+          border: "1px solid var(--border)",
         },
       }}
       style={

@@ -93,7 +93,7 @@ export function ViewUserDialog({
                       ? "default"
                       : "secondary"
                   }
-                  className="text-[10px] sm:text-xs md:text-sm lg:text-base"
+                  className="text-xs sm:text-sm md:text-base lg:text-base"
                 >
                   {getUserRoleDisplayName(user)}
                 </Badge>
@@ -107,7 +107,7 @@ export function ViewUserDialog({
               <div className="mt-1">
                 <Badge
                   variant={user.isActive ? "default" : "destructive"}
-                  className="text-[10px] sm:text-xs md:text-sm lg:text-base"
+                  className="text-xs sm:text-sm md:text-base lg:text-base"
                 >
                   {user.isActive ? "Active" : "Inactive"}
                 </Badge>
@@ -120,15 +120,6 @@ export function ViewUserDialog({
               </Label>
               <p className="text-xs sm:text-sm md:text-base lg:text-base">
                 {new Date(user.createdAt).toLocaleDateString()}
-              </p>
-            </div>
-
-            <div>
-              <Label className="text-xs sm:text-sm md:text-base lg:text-base font-medium text-gray-500">
-                Business ID
-              </Label>
-              <p className="text-xs sm:text-sm md:text-base lg:text-base text-gray-600">
-                {user.businessId}
               </p>
             </div>
           </div>

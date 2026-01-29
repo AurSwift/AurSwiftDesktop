@@ -310,7 +310,7 @@ export const BatchSelectionModal: React.FC<BatchSelectionModalProps> = ({
             <div className="flex items-center gap-2 mt-1">
               <Badge
                 variant="outline"
-                className="text-[10px] sm:text-xs bg-blue-50 text-blue-700 border-blue-200"
+                className="text-caption bg-blue-50 text-blue-700 border-blue-200"
               >
                 {product.sku}
               </Badge>
@@ -396,7 +396,7 @@ export const BatchSelectionModal: React.FC<BatchSelectionModalProps> = ({
                             {batch.batchNumber}
                           </span>
                           {batches.indexOf(batch) === 0 && (
-                            <Badge className="bg-green-600 text-[10px]">
+                            <Badge className="bg-green-600 text-xs">
                               FEFO Recommended
                             </Badge>
                           )}
@@ -438,7 +438,7 @@ export const BatchSelectionModal: React.FC<BatchSelectionModalProps> = ({
                         <div className="mt-2">
                           <Badge
                             variant="outline"
-                            className={`text-[10px] ${getExpiryStatusColor(
+                            className={`text-xs ${getExpiryStatusColor(
                               daysUntil
                             )}`}
                           >
@@ -468,7 +468,7 @@ export const BatchSelectionModal: React.FC<BatchSelectionModalProps> = ({
 
                         {/* Supplier if available */}
                         {batch.supplier && (
-                          <p className="text-[10px] text-slate-400 mt-1">
+                          <p className="text-caption text-slate-400 mt-1">
                             Supplier: {batch.supplier.name}
                           </p>
                         )}

@@ -17,9 +17,27 @@ export function LicenseHeaderBadge() {
   const { licenseStatus, isActivated, isLoading, planName } =
     useLicenseContext();
 
-  // Don't show badge while loading or not activated
-  if (isLoading || !isActivated || !licenseStatus) {
+  // Don't show badge while loading
+  if (isLoading) {
     return null;
+  }
+
+  // If not activated (or status hasn't hydrated yet), still show a clickable badge
+  // so the user can always access the license screen.
+  if (!isActivated || !licenseStatus) {
+    return (
+      <Badge
+        variant="outline"
+        onClick={() => navigate("/license")}
+        className={cn(
+          "text-xs flex items-center gap-1 px-2 py-1 font-medium cursor-pointer hover:opacity-80 transition-opacity",
+          "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800"
+        )}
+      >
+        <AlertCircle className="h-3 w-3" />
+        <span>{planName || "License"} - Not Activated</span>
+      </Badge>
+    );
   }
 
   const getPlanBadgeConfig = () => {

@@ -15,6 +15,86 @@ const logger = getLogger("update-handlers");
  */
 export function registerUpdateHandlers(): void {
   /**
+   * Signal that the renderer is ready to receive update events
+   * This is the Cursor-style approach to avoid race conditions:
+   * 1. Renderer mounts and sets up IPC listeners
+   * 2. Renderer calls signalRendererReady
+   * 3. Main process re-broadcasts any pending update OR starts checking
+   */
+  ipcMain.handle("update:renderer-ready", async () => {
+    try {
+      const updaterInstance = getAutoUpdaterInstance();
+      if (!updaterInstance) {
+        logger.warn("[renderer-ready] Auto-updater not available");
+        return { success: false, pendingUpdate: null };
+      }
+
+      logger.info("[renderer-ready] Renderer signaled ready for update events");
+
+      const pendingUpdate = updaterInstance.getPendingUpdateInfo();
+      const isDownloaded = updaterInstance.isUpdateDownloaded();
+
+      if (pendingUpdate) {
+        logger.info(
+          `[renderer-ready] Re-broadcasting pending update: v${pendingUpdate.version}`,
+        );
+        // Re-broadcast the pending update to all windows
+        const allWindows = BrowserWindow.getAllWindows();
+        allWindows.forEach((window) => {
+          if (window && !window.isDestroyed()) {
+            if (isDownloaded) {
+              window.webContents.send("update:downloaded", pendingUpdate);
+            } else {
+              window.webContents.send("update:available", pendingUpdate);
+            }
+          }
+        });
+      } else {
+        logger.info("[renderer-ready] No pending update, triggering check");
+        // No pending update - trigger a check now that renderer is ready
+        updaterInstance.runAutoUpdater().catch((err: Error) => {
+          logger.error("[renderer-ready] Error running auto-updater:", err);
+        });
+      }
+
+      return {
+        success: true,
+        pendingUpdate,
+        isDownloaded,
+      };
+    } catch (error) {
+      logger.error("[renderer-ready] Error:", error);
+      return { success: false, pendingUpdate: null };
+    }
+  });
+
+  /**
+   * Get pending update info (for renderer mount sync)
+   * This allows the renderer to check if there's a pending update
+   * when it mounts (in case the update:available event was missed)
+   */
+  ipcMain.handle("update:get-pending-update", async () => {
+    try {
+      const updaterInstance = getAutoUpdaterInstance();
+      if (!updaterInstance) {
+        return { success: false, updateInfo: null };
+      }
+
+      const pendingUpdate = updaterInstance.getPendingUpdateInfo();
+      const isDownloaded = updaterInstance.isUpdateDownloaded();
+
+      return {
+        success: true,
+        updateInfo: pendingUpdate,
+        isDownloaded,
+      };
+    } catch (error) {
+      logger.error("Error getting pending update:", error);
+      return { success: false, updateInfo: null };
+    }
+  });
+
+  /**
    * Handle manual update check request
    */
   ipcMain.handle("update:check", async () => {
@@ -35,7 +115,7 @@ export function registerUpdateHandlers(): void {
             window.webContents.send(
               "update:check-complete",
               true,
-              result.updateInfo.version
+              result.updateInfo.version,
             );
           }
         });

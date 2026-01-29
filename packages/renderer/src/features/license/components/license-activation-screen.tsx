@@ -6,13 +6,7 @@
  */
 
 import { useState, useEffect, useRef } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,6 +24,13 @@ import {
 import { AdaptiveKeyboard } from "@/features/adaptive-keyboard/adaptive-keyboard";
 import { getLogger } from "@/shared/utils/logger";
 import { getAppVersion } from "@/shared/utils/version";
+// import {
+//   showUpdateAvailableToast,
+//   showUpdateReadyToast,
+//   showUpdateErrorToast,
+//   showDownloadProgressToast,
+// } from "@/features/updates/components";
+// import type { UpdateInfo, UpdateError, DownloadProgress } from "@app/shared";
 
 const logger = getLogger("license-activation");
 
@@ -42,6 +43,12 @@ export function LicenseActivationScreen({
   onActivationSuccess,
   onTestMode,
 }: LicenseActivationScreenProps) {
+  const logoSrc = `${import.meta.env.BASE_URL}licenselogo.png`;
+
+  // Debug: Log the logo source
+  useEffect(() => {
+    logger.info("Logo source:", logoSrc);
+  }, [logoSrc]);
   const { activate, getMachineInfo, isLoading, error, clearError } =
     useLicense();
 
@@ -52,11 +59,38 @@ export function LicenseActivationScreen({
   const [isSuccess, setIsSuccess] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const licenseInputRef = useRef<HTMLInputElement>(null);
+  const terminalNameInputRef = useRef<HTMLInputElement>(null);
+  const keyboardBottomContainerRef = useRef<HTMLDivElement>(null);
+  const keyboardSideContainerRef = useRef<HTMLDivElement>(null);
 
   // Load machine info on mount
   useEffect(() => {
     getMachineInfo().then(setMachineInfo);
   }, [getMachineInfo]);
+
+  // Hide keyboard when user clicks/taps outside inputs + keyboard
+  useEffect(() => {
+    if (!keyboardVisible) return;
+
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as Node | null;
+      if (!target) return;
+
+      const clickedLicenseInput = licenseInputRef.current?.contains(target);
+      const clickedTerminalInput =
+        terminalNameInputRef.current?.contains(target);
+      const clickedKeyboard =
+        keyboardBottomContainerRef.current?.contains(target) ||
+        keyboardSideContainerRef.current?.contains(target);
+
+      if (clickedLicenseInput || clickedTerminalInput || clickedKeyboard)
+        return;
+      setKeyboardVisible(false);
+    };
+
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [keyboardVisible]);
 
   // Format license key as user types (auto-uppercase, add dashes)
   const handleLicenseKeyChange = (value: string) => {
@@ -127,7 +161,7 @@ export function LicenseActivationScreen({
       }, 1500);
     } else {
       setActivationError(
-        result.message || "Activation failed. Please check your license key."
+        result.message || "Activation failed. Please check your license key.",
       );
     }
   };
@@ -147,209 +181,416 @@ export function LicenseActivationScreen({
     }
   };
 
+  const showKeyboard = () => {
+    if (!isSuccess) setKeyboardVisible(true);
+  };
+
+  // TEST: Auto-update notification handlers (for testing only - remove later)
+  // const handleTestUpdateAvailable = () => {
+  //   const mockUpdateInfo: UpdateInfo = {
+  //     version: "2.0.0",
+  //     releaseDate: new Date().toISOString(),
+  //     releaseNotes: "Test update with new features and bug fixes",
+  //   };
+  //   const currentVersion = getAppVersion();
+  //   showUpdateAvailableToast(
+  //     mockUpdateInfo,
+  //     currentVersion,
+  //     () => {
+  //       // Mock download handler
+  //       logger.info("Test: Download clicked");
+  //     },
+  //     () => {
+  //       // Mock postpone handler
+  //       logger.info("Test: Postpone clicked");
+  //     },
+  //   );
+  // };
+
+  // const handleTestUpdateReady = () => {
+  //   const mockUpdateInfo: UpdateInfo = {
+  //     version: "2.0.0",
+  //     releaseDate: new Date().toISOString(),
+  //     releaseNotes: "Test update ready to install",
+  //   };
+  //   showUpdateReadyToast(
+  //     mockUpdateInfo,
+  //     () => {
+  //       // Mock install handler
+  //       logger.info("Test: Install clicked");
+  //     },
+  //     () => {
+  //       // Mock postpone handler
+  //       logger.info("Test: Postpone clicked");
+  //     },
+  //   );
+  // };
+
+  // const handleTestUpdateError = () => {
+  //   const mockError: UpdateError = {
+  //     message:
+  //       "Test error: Failed to download update. Please check your internet connection.",
+  //     type: "download",
+  //     timestamp: new Date(),
+  //   };
+  //   showUpdateErrorToast(
+  //     mockError,
+  //     () => {
+  //       // Mock retry handler
+  //       logger.info("Test: Retry clicked");
+  //     },
+  //     () => {
+  //       // Mock dismiss handler
+  //       logger.info("Test: Dismiss clicked");
+  //     },
+  //   );
+  // };
+
+  // const handleTestDownloadProgress = () => {
+  //   const mockProgress: DownloadProgress = {
+  //     percent: 45,
+  //     transferred: 45000000,
+  //     total: 100000000,
+  //     bytesPerSecond: 5000000,
+  //   };
+  //   showDownloadProgressToast(mockProgress, () => {
+  //     // Mock cancel handler
+  //     logger.info("Test: Cancel clicked");
+  //   });
+  // };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col">
+    <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col">
       {/* Power Button Header */}
-      <div className="w-full flex justify-end p-4 sm:p-6">
+      <div className="w-full flex justify-end p-4 sm:p-6 [@media(max-height:560px)]:p-3">
         <Button
           onClick={handleCloseApp}
           variant="ghost"
           size="lg"
-          className="hover:bg-destructive/10 hover:text-destructive h-12 w-12 sm:h-14 sm:w-14 lg:h-16 lg:w-16"
+          className="hover:bg-destructive/10 hover:text-destructive h-12 w-12 sm:h-14 sm:w-14 lg:h-16 lg:w-16 [@media(max-height:560px)]:h-10 [@media(max-height:560px)]:w-10"
           title="Close Application"
         >
-          <Power className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />
+          <Power className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 [@media(max-height:560px)]:w-5 [@media(max-height:560px)]:h-5" />
         </Button>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-lg space-y-8">
-          {/* Branded Logo/Header Section */}
-          <div className="text-center space-y-4">
-            {/* Logo Container with Black Background */}
-            <div className="flex justify-center mb-4 sm:mb-6">
-              <div className="relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 rounded-2xl bg-black flex items-center justify-center shadow-2xl ring-4 ring-primary/20 overflow-hidden">
-                <img
-                  src="/logo.png"
-                  alt="Aurswift Logo"
-                  className="w-full h-full object-contain p-3 sm:p-4 md:p-5 lg:p-6"
-                  onError={(e) => {
-                    // Fallback to key icon if logo fails to load
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = "none";
-                    const fallback = target.nextElementSibling as HTMLElement;
-                    if (fallback) fallback.style.display = "flex";
-                  }}
-                />
-                <div className="hidden w-full h-full items-center justify-center">
-                  <KeyRound className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 text-white" />
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full flex p-4 justify-center items-center transition-all duration-300 ease-out">
+          <div
+            className={[
+              "w-full transition-all duration-300 ease-out",
+              keyboardVisible && !isSuccess
+                ? "max-w-[95vw] [@media(min-width:900px)]:max-w-[90vw]"
+                : "max-w-lg",
+            ].join(" ")}
+          >
+            <div
+              className={[
+                "flex flex-col gap-4 [@media(min-width:900px)]:flex-row [@media(min-width:900px)]:gap-6 transition-all duration-300 ease-out [@media(min-width:900px)]:items-center [@media(min-width:900px)]:justify-center",
+              ].join(" ")}
+            >
+              {/* Left column: Brand + Form */}
+              <div
+                className={[
+                  "w-full space-y-[clamp(1rem,2.2vw,1.75rem)] [@media(max-height:560px)]:space-y-3 transition-all duration-300 ease-out",
+                  keyboardVisible && !isSuccess
+                    ? "max-w-md [@media(min-width:900px)]:max-w-[400px]"
+                    : "max-w-lg",
+                ].join(" ")}
+              >
+                {/* Branded Logo/Header Section */}
+                <div className="text-center">
+                  {/* Logo Container */}
+                  <div className="flex justify-center relative">
+                    <img
+                      src={logoSrc}
+                      alt="Aurswift Logo"
+                      width="64"
+                      height="64"
+                      className="h-14 w-14 sm:h-16 sm:w-16"
+                      style={{
+                        display: "block",
+                        objectFit: "contain",
+                      }}
+                      onLoad={() => {
+                        logger.info("Logo loaded successfully");
+                      }}
+                      onError={(e) => {
+                        logger.error("Logo failed to load:", logoSrc);
+                        // Fallback to key icon if logo fails to load
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = "none";
+                        const fallback =
+                          target.nextElementSibling as HTMLElement;
+                        if (fallback) fallback.style.display = "flex";
+                      }}
+                    />
+                    {/* Fallback icon when image fails to load */}
+                    <div
+                      className="absolute inset-0 flex items-center justify-center text-white hidden"
+                      aria-hidden="true"
+                    >
+                      <KeyRound className="w-7 h-7 sm:w-8 sm:h-8" />
+                    </div>
+                  </div>
+                  {/* Brand Name and Version */}
+                  <div className="space-y-1 [@media(max-height:560px)]:space-y-0.5">
+                    <h1 className="text-[clamp(1.35rem,3.2vw,2.7rem)] font-bold tracking-tight bg-gradient-to-r from-primary via-primary/90 to-primary/70 bg-clip-text text-transparent [@media(min-width:1400px)]:text-[clamp(1.25rem,2.2vw,2.35rem)] [@media(max-height:560px)]:text-[clamp(1.15rem,2.8vw,2rem)]">
+                      Aurswift EPOS
+                    </h1>
+                    <p className="text-[clamp(0.65rem,1vw,0.82rem)] text-muted-foreground font-medium [@media(min-width:1400px)]:text-[clamp(0.62rem,0.7vw,0.78rem)] [@media(max-height:560px)]:text-[0.68rem]">
+                      Version {getAppVersion()}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Activation Card */}
+                <Card className="shadow-xl border-2">
+                  <CardHeader className="space-y-1 pb-1 [@media(max-height:560px)]:pb-1">
+                    <CardTitle className="flex items-center gap-2 text-[clamp(0.95rem,1.6vw,1.1rem)]">
+                      <KeyRound className="w-5 h-5 text-primary [@media(max-height:560px)]:w-4 [@media(max-height:560px)]:h-4" />
+                      License Activation
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-1">
+                    {/* Success State */}
+                    {isSuccess && (
+                      <Alert className="border-green-200 bg-green-50 dark:bg-green-900/20">
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                        <AlertDescription className="text-sm sm:text-base text-green-700 dark:text-green-400">
+                          License activated successfully! Redirecting...
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    {/* Error State */}
+                    {(activationError || error) && !isSuccess && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+                        <AlertDescription className="text-sm sm:text-base">
+                          {activationError || error}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    {/* License Key Input */}
+                    <div className="space-y-1">
+                      <Label
+                        htmlFor="license-key"
+                        className="text-[clamp(0.75rem,1.1vw,0.9rem)]"
+                      >
+                        License Key
+                      </Label>
+                      <Input
+                        ref={licenseInputRef}
+                        id="license-key"
+                        type="text"
+                        placeholder="AUR-XXX-V2-XXXXXXXX-XXXXXXXX"
+                        value={licenseKey}
+                        onChange={(e) => handleLicenseKeyChange(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        onFocus={showKeyboard}
+                        onPointerDown={showKeyboard}
+                        className="font-mono text-[clamp(0.85rem,1.2vw,1rem)] tracking-wider h-11 sm:h-12 [@media(max-height:560px)]:h-10"
+                        disabled={isLoading || isSuccess}
+                      />
+                    </div>
+
+                    {/* Terminal Name Input */}
+                    <div className="space-y-1">
+                      <Label
+                        htmlFor="terminal-name"
+                        className="text-[clamp(0.75rem,1.1vw,0.9rem)]"
+                      >
+                        Terminal Name{" "}
+                        <span className="text-muted-foreground font-normal text-xs sm:text-sm">
+                          (optional)
+                        </span>
+                      </Label>
+                      <div className="relative">
+                        <Monitor className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+                        <Input
+                          ref={terminalNameInputRef}
+                          id="terminal-name"
+                          type="text"
+                          placeholder={machineInfo?.hostname || "Main Counter"}
+                          value={terminalName}
+                          onChange={(e) => setTerminalName(e.target.value)}
+                          onKeyDown={handleKeyDown}
+                          onFocus={showKeyboard}
+                          onPointerDown={showKeyboard}
+                          className="pl-10 sm:pl-11 text-[clamp(0.8rem,1.05vw,0.95rem)] h-11 sm:h-12 [@media(max-height:560px)]:h-10"
+                          disabled={isLoading || isSuccess}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Activate Button */}
+                    <Button
+                      onClick={handleActivate}
+                      disabled={
+                        isLoading || isSuccess || licenseKey.length < 28
+                      }
+                      className="w-full  text-[clamp(0.8rem,1.05vw,0.95rem)] h-11 sm:h-12 [@media(max-height:560px)]:h-10"
+                      size="lg"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin" />
+                          Activating...
+                        </>
+                      ) : isSuccess ? (
+                        <>
+                          <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                          Activated!
+                        </>
+                      ) : (
+                        <>
+                          <KeyRound className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                          Activate License
+                        </>
+                      )}
+                    </Button>
+
+                    {/* Test Mode Button */}
+                    {onTestMode && (
+                      <Button
+                        onClick={onTestMode}
+                        disabled={isLoading || isSuccess}
+                        variant="outline"
+                        className="w-full text-[clamp(0.8rem,1.05vw,0.95rem)] h-11 sm:h-12 [@media(max-height:560px)]:h-10"
+                        size="lg"
+                      >
+                        <TestTube className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                        Test Mode
+                      </Button>
+                    )}
+
+                    {/* TEST: Auto-update notification test buttons (only shown in development) */}
+                    {/* {import.meta.env.DEV && (
+                      <div className="pt-2 border-t space-y-2">
+                        <p className="text-xs text-muted-foreground font-medium">
+                          TEST: Update Notifications
+                        </p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            onClick={handleTestUpdateAvailable}
+                            disabled={isLoading || isSuccess}
+                            variant="outline"
+                            size="sm"
+                            className="text-xs h-9"
+                          >
+                            Update Available
+                          </Button>
+                          <Button
+                            onClick={handleTestUpdateReady}
+                            disabled={isLoading || isSuccess}
+                            variant="outline"
+                            size="sm"
+                            className="text-xs h-9"
+                          >
+                            Update Ready
+                          </Button>
+                          <Button
+                            onClick={handleTestUpdateError}
+                            disabled={isLoading || isSuccess}
+                            variant="outline"
+                            size="sm"
+                            className="text-xs h-9"
+                          >
+                            Update Error
+                          </Button>
+                          <Button
+                            onClick={handleTestDownloadProgress}
+                            disabled={isLoading || isSuccess}
+                            variant="outline"
+                            size="sm"
+                            className="text-xs h-9"
+                          >
+                            Download Progress
+                          </Button>
+                        </div>
+                      </div>
+                    )} */}
+                  </CardContent>
+                </Card>
+
+                {/* Help Link */}
+                <p className="text-center text-[clamp(0.7rem,1vw,0.9rem)] text-muted-foreground [@media(max-height:560px)]:text-[0.7rem]">
+                  Need help?{" "}
+                  <a
+                    href="https://aurswift.com/support"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline font-medium"
+                  >
+                    Contact Support
+                  </a>
+                </p>
+              </div>
+
+              {/* Right column: Keyboard side panel (wide screens) */}
+              <div
+                className={[
+                  "shrink-0 flex items-center transition-all duration-300 ease-out",
+                  keyboardVisible && !isSuccess
+                    ? "[@media(min-width:900px)]:flex-1 [@media(min-width:900px)]:max-w-[55vw]"
+                    : "",
+                ].join(" ")}
+              >
+                {/* Small screens: keyboard takes bottom area, form scrolls above */}
+                <div className="[@media(min-width:900px)]:hidden flex flex-col">
+                  {keyboardVisible && !isSuccess && (
+                    <div
+                      ref={keyboardBottomContainerRef}
+                      className="rounded-lg overflow-hidden shadow-lg shrink-0 mt-4"
+                    >
+                      <AdaptiveKeyboard
+                        onInput={handleKeyboardInput}
+                        onBackspace={handleKeyboardBackspace}
+                        onClear={handleKeyboardClear}
+                        onEnter={handleKeyboardEnter}
+                        initialMode="qwerty"
+                        inputType="text"
+                        visible={keyboardVisible}
+                        onClose={() => setKeyboardVisible(false)}
+                        className="license-keyboard"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Wide screens: side panel slides in */}
+                <div
+                  className={[
+                    "hidden [@media(min-width:900px)]:block overflow-visible transition-all duration-300 ease-out",
+                    keyboardVisible && !isSuccess
+                      ? "w-full opacity-100 translate-x-0"
+                      : "w-0 opacity-0 translate-x-8 pointer-events-none",
+                  ].join(" ")}
+                  aria-hidden={!keyboardVisible || isSuccess}
+                >
+                  <div
+                    ref={keyboardSideContainerRef}
+                    className="rounded-lg overflow-hidden shadow-lg w-full"
+                  >
+                    <AdaptiveKeyboard
+                      onInput={handleKeyboardInput}
+                      onBackspace={handleKeyboardBackspace}
+                      onClear={handleKeyboardClear}
+                      onEnter={handleKeyboardEnter}
+                      initialMode="qwerty"
+                      inputType="text"
+                      visible={keyboardVisible && !isSuccess}
+                      onClose={() => setKeyboardVisible(false)}
+                      className="license-keyboard"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-            {/* Brand Name and Version */}
-            <div className="space-y-2">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold tracking-tight bg-gradient-to-r from-primary via-primary/90 to-primary/70 bg-clip-text text-transparent">
-                Aurswift EPOS
-              </h1>
-              <p className="text-sm sm:text-base md:text-base text-muted-foreground font-medium">
-                Version {getAppVersion()}
-              </p>
             </div>
           </div>
-
-          {/* Activation Card */}
-          <Card className="shadow-xl border-2">
-            <CardHeader className="space-y-1 pb-2">
-              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl md:text-xl">
-                <KeyRound className="w-5 h-5 text-primary" />
-                License Activation
-              </CardTitle>
-              <CardDescription className="text-sm pb-0">
-                Find your license key in your aurswift dashboard at{" "}
-                <a
-                  href="https://aurswift.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-semibold text-primary hover:underline"
-                >
-                  aurswift.com
-                </a>
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-1">
-              {/* Success State */}
-              {isSuccess && (
-                <Alert className="border-green-200 bg-green-50 dark:bg-green-900/20">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
-                  <AlertDescription className="text-sm sm:text-base text-green-700 dark:text-green-400">
-                    License activated successfully! Redirecting...
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {/* Error State */}
-              {(activationError || error) && !isSuccess && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5" />
-                  <AlertDescription className="text-sm sm:text-base">
-                    {activationError || error}
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {/* License Key Input */}
-              <div className="space-y-1">
-                <Label htmlFor="license-key" className="text-sm sm:text-base">
-                  License Key
-                </Label>
-                <Input
-                  ref={licenseInputRef}
-                  id="license-key"
-                  type="text"
-                  placeholder="AUR-XXX-V2-XXXXXXXX-XXXXXXXX"
-                  value={licenseKey}
-                  onChange={(e) => handleLicenseKeyChange(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  onFocus={() => setKeyboardVisible(true)}
-                  className="font-mono text-base sm:text-lg md:text-lg tracking-wider h-11 sm:h-12"
-                  disabled={isLoading || isSuccess}
-                  autoFocus
-                />
-              </div>
-
-              {/* Terminal Name Input */}
-              <div className="space-y-1">
-                <Label htmlFor="terminal-name" className="text-sm sm:text-base">
-                  Terminal Name{" "}
-                  <span className="text-muted-foreground font-normal text-xs sm:text-sm">
-                    (optional)
-                  </span>
-                </Label>
-                <div className="relative">
-                  <Monitor className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
-                  <Input
-                    id="terminal-name"
-                    type="text"
-                    placeholder={machineInfo?.hostname || "Main Counter"}
-                    value={terminalName}
-                    onChange={(e) => setTerminalName(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    className="pl-10 sm:pl-11 text-sm sm:text-base h-11 sm:h-12"
-                    disabled={isLoading || isSuccess}
-                  />
-                </div>
-              </div>
-
-              {/* Activate Button */}
-              <Button
-                onClick={handleActivate}
-                disabled={isLoading || isSuccess || licenseKey.length < 28}
-                className="w-full text-sm sm:text-base h-11 sm:h-12"
-                size="lg"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin" />
-                    Activating...
-                  </>
-                ) : isSuccess ? (
-                  <>
-                    <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                    Activated!
-                  </>
-                ) : (
-                  <>
-                    <KeyRound className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                    Activate License
-                  </>
-                )}
-              </Button>
-
-              {/* Test Mode Button */}
-              {onTestMode && (
-                <Button
-                  onClick={onTestMode}
-                  disabled={isLoading || isSuccess}
-                  variant="outline"
-                  className="w-full text-sm sm:text-base h-11 sm:h-12"
-                  size="lg"
-                >
-                  <TestTube className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                  Test Mode
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Adaptive Keyboard */}
-          {keyboardVisible && !isSuccess && (
-            <div className="rounded-lg overflow-hidden shadow-lg">
-              <AdaptiveKeyboard
-                onInput={handleKeyboardInput}
-                onBackspace={handleKeyboardBackspace}
-                onClear={handleKeyboardClear}
-                onEnter={handleKeyboardEnter}
-                initialMode="qwerty"
-                inputType="text"
-                visible={keyboardVisible}
-                onClose={() => setKeyboardVisible(false)}
-              />
-            </div>
-          )}
-
-          {/* Help Link */}
-          <p className="text-center text-xs sm:text-sm md:text-base text-muted-foreground">
-            Need help?{" "}
-            <a
-              href="https://aurswift.com/support"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline font-medium"
-            >
-              Contact Support
-            </a>
-          </p>
         </div>
       </div>
     </div>

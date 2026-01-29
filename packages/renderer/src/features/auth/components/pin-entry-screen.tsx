@@ -1,20 +1,14 @@
-import { useEffect, useState } from "react";
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   User,
   ArrowLeft,
   Delete,
-  Calendar,
-  Clock,
-  CheckCircle,
-  AlertCircle,
+
+
 } from "lucide-react";
 import type { UserForLogin } from "@/types/domain";
-import type { Schedule, Shift } from "@/types/domain/shift";
-import { getLogger } from "@/shared/utils/logger";
-
-const logger = getLogger("pin-entry-screen");
 
 interface PinEntryScreenProps {
   user: UserForLogin;
@@ -35,54 +29,8 @@ export function PinEntryScreen({
   onDeletePin,
   onBack,
 }: PinEntryScreenProps) {
-  const [schedule, setSchedule] = useState<Schedule | null>(null);
-  const [activeShift, setActiveShift] = useState<Shift | null>(null);
-  const [isLoadingShiftInfo, setIsLoadingShiftInfo] = useState(false);
-  const isCashierOrManager =
-    user.roleName === "cashier" || user.roleName === "manager";
 
-  // Fetch schedule and shift info for cashiers/managers
-  useEffect(() => {
-    if (!isCashierOrManager) return;
 
-    const fetchShiftInfo = async () => {
-      setIsLoadingShiftInfo(true);
-      try {
-        // Fetch today's schedule
-        const scheduleResponse = await window.shiftAPI.getTodaySchedule(
-          user.id
-        );
-        if (scheduleResponse.success && scheduleResponse.data) {
-          setSchedule(scheduleResponse.data);
-        }
-
-        // Fetch active shift
-        const shiftResponse = await window.shiftAPI.getActive(user.id);
-        if (shiftResponse.success && shiftResponse.data) {
-          setActiveShift(shiftResponse.data);
-        }
-      } catch (error) {
-        logger.error("Failed to fetch shift info:", error);
-      } finally {
-        setIsLoadingShiftInfo(false);
-      }
-    };
-
-    fetchShiftInfo();
-  }, [user.id, isCashierOrManager]);
-
-  const formatTime = (timeString: string) => {
-    try {
-      const date = new Date(timeString);
-      return date.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      });
-    } catch {
-      return timeString;
-    }
-  };
 
   return (
     <Card className="border-0 shadow-none bg-transparent rounded-3xl overflow-hidden">
@@ -98,65 +46,13 @@ export function PinEntryScreen({
           </h2>
         </div>
 
-        {/* Shift/Schedule Information (for cashiers/managers) */}
-        {isCashierOrManager && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
-            {isLoadingShiftInfo ? (
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-blue-600 animate-spin" />
-                <span className="text-xs sm:text-sm text-blue-800">
-                  Loading schedule...
-                </span>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {/* Schedule Information */}
-                {schedule ? (
-                  <div className="flex items-start gap-2">
-                    <Calendar className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs sm:text-sm font-semibold text-blue-900">
-                        Today's Schedule
-                      </div>
-                      <div className="text-xs text-blue-700">
-                        {formatTime(schedule.startTime)} -{" "}
-                        {formatTime(schedule.endTime)}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 text-yellow-600" />
-                    <span className="text-xs sm:text-sm text-yellow-800">
-                      No schedule for today
-                    </span>
-                  </div>
-                )}
-
-                {/* Active Shift Information */}
-                {activeShift && (
-                  <div className="flex items-start gap-2 pt-2 border-t border-blue-200">
-                    <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs sm:text-sm font-semibold text-green-900">
-                        Active Shift
-                      </div>
-                      <div className="text-xs text-green-700">
-                        Started at {formatTime(activeShift.startTime)}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+        
 
         {/* PIN Input Display */}
         <div className="bg-gray-100 rounded-xl p-3 sm:p-4 mb-3 sm:mb-4">
           <div className="flex items-center justify-center gap-1 mb-2">
             <User className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600" />
-            <span className="text-gray-600 text-[10px] sm:text-xs uppercase tracking-wider font-medium">
+            <span className="text-gray-600 text-caption uppercase tracking-wider font-medium">
               Enter PIN
             </span>
           </div>
@@ -175,7 +71,7 @@ export function PinEntryScreen({
             ))}
           </div>
           {loginError && (
-            <p className="text-red-500 text-[10px] sm:text-xs text-center mt-2">
+            <p className="text-red-500 text-caption text-center mt-2">
               {loginError}
             </p>
           )}

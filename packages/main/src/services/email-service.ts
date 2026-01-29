@@ -10,8 +10,87 @@ import bwipjs from "bwip-js";
 
 const logger = getLogger("email-service");
 
+function formatSmtpVerifyFailure(
+  error: unknown,
+  smtp: { host: string; port: number; authUser?: string }
+): string {
+  const err = error as any;
+  const code: string | undefined = typeof err?.code === "string" ? err.code : undefined;
+  const responseCode: number | undefined =
+    typeof err?.responseCode === "number" ? err.responseCode : undefined;
+  const command: string | undefined =
+    typeof err?.command === "string" ? err.command : undefined;
+  const message: string =
+    err instanceof Error
+      ? err.message
+      : typeof err?.message === "string"
+        ? err.message
+        : String(error);
+
+  const hostPort = `${smtp.host}:${smtp.port}`;
+  const authUser = smtp.authUser ? ` (${smtp.authUser})` : "";
+
+  // Auth failures (common with Gmail app password issues)
+  if (
+    code === "EAUTH" ||
+    responseCode === 535 ||
+    responseCode === 534 ||
+    message.toLowerCase().includes("invalid login") ||
+    message.toLowerCase().includes("authentication")
+  ) {
+    return (
+      `SMTP authentication failed for Gmail${authUser}. ` +
+      `Make sure 2‑Step Verification is enabled and you used a Gmail App Password (not your normal password). ` +
+      (responseCode ? `(${responseCode}) ` : "") +
+      (message ? `Details: ${message}` : "")
+    );
+  }
+
+  // Network / DNS / timeout failures (Wi‑Fi can be "on" but SMTP may be blocked)
+  const networkCodes = new Set([
+    "ENOTFOUND",
+    "EAI_AGAIN",
+    "ECONNREFUSED",
+    "ECONNRESET",
+    "ETIMEDOUT",
+    "ENETUNREACH",
+    "EHOSTUNREACH",
+  ]);
+  if (code && networkCodes.has(code)) {
+    return (
+      `Unable to reach Gmail SMTP server (${hostPort}). ` +
+      `Your network may be blocking SMTP ports even if Wi‑Fi is connected. ` +
+      `Try another network or allow outbound port ${smtp.port}. ` +
+      `(${code}) ` +
+      (message ? `Details: ${message}` : "")
+    );
+  }
+
+  // TLS issues / clock skew / proxies
+  if (
+    code === "ESOCKET" ||
+    message.toLowerCase().includes("tls") ||
+    message.toLowerCase().includes("certificate") ||
+    message.toLowerCase().includes("self signed")
+  ) {
+    return (
+      `TLS/SSL negotiation failed while connecting to Gmail SMTP (${hostPort}). ` +
+      `Check system date/time and any network security/proxy settings. ` +
+      (code ? `(${code}) ` : "") +
+      (message ? `Details: ${message}` : "")
+    );
+  }
+
+  return (
+    `Unable to verify SMTP connection to ${hostPort}. ` +
+    (code ? `(${code}) ` : "") +
+    (command ? `[${command}] ` : "") +
+    (message ? `Details: ${message}` : "")
+  );
+}
+
 interface EmailConfig {
-  provider: "smtp" | "resend" | "sendgrid" | "console";
+  provider: "smtp" | "console";
   smtp?: {
     host: string;
     port: number;
@@ -21,8 +100,6 @@ interface EmailConfig {
       pass: string;
     };
   };
-  resendApiKey?: string;
-  sendgridApiKey?: string;
   fromEmail: string;
   fromName: string;
 }
@@ -134,8 +211,13 @@ class EmailService {
         logger.info("Email service initialized successfully (SMTP)");
         return { success: true, degraded: false };
       } catch (error) {
+        const pretty = formatSmtpVerifyFailure(error, {
+          host: config.smtp.host,
+          port: config.smtp.port,
+          authUser: config.smtp.auth?.user,
+        });
         logger.warn(
-          "Failed to verify SMTP connection (possibly offline), email sending will be attempted when needed:",
+          "Failed to verify SMTP connection; email sending will be attempted when needed:",
           error
         );
         // Don't throw - allow the service to continue in degraded mode
@@ -146,8 +228,7 @@ class EmailService {
         return {
           success: true,
           degraded: true,
-          message:
-            "Email service offline - emails will not be sent until network is restored",
+          message: pretty,
         };
       }
     } else if (config.provider === "console") {
@@ -156,14 +237,10 @@ class EmailService {
       );
       return { success: true, degraded: false };
     } else {
-      logger.warn(
-        `Email provider ${config.provider} not yet implemented, using console mode`
-      );
-      return {
-        success: true,
-        degraded: true,
-        message: `Email provider ${config.provider} not implemented`,
-      };
+      // Should not happen due to narrowed provider union, but keep a safe fallback.
+      logger.warn("Unknown email provider, using console mode");
+      this.config = { ...config, provider: "console" };
+      return { success: true, degraded: true, message: "Email provider invalid" };
     }
   }
 
@@ -306,7 +383,7 @@ class EmailService {
           cid: string;
         }>;
       } = {
-        from: `"${this.config.fromName}" <${this.config.fromEmail}>`,
+        from: `"${data.businessName || this.config.fromName}" <${this.config.fromEmail}>`,
         to: data.customerEmail,
         subject: `Receipt #${data.receiptNumber} - ${
           data.businessName || "Your Purchase"

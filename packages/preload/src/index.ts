@@ -9,7 +9,6 @@ import { scheduleAPI, shiftAPI } from "./api/shifts.js";
 import {
   transactionAPI,
   refundAPI,
-  voidAPI,
   cashDrawerAPI,
 } from "./api/transactions.js";
 import {
@@ -40,6 +39,8 @@ import { businessAPI } from "./api/business.js";
 import { terminalsAPI } from "./api/terminals.js";
 import { licenseAPI } from "./api/license.js";
 import { reportsExportAPI } from "./api/reportsExport.js";
+import { breakPolicyAPI } from "./api/breakPolicy.js";
+import { emailSettingsAPI } from "./api/emailSettings.js";
 import "./api/updates.js";
 
 // Expose APIs to renderer process
@@ -52,7 +53,6 @@ contextBridge.exposeInMainWorld("scheduleAPI", scheduleAPI);
 contextBridge.exposeInMainWorld("shiftAPI", shiftAPI);
 contextBridge.exposeInMainWorld("transactionAPI", transactionAPI);
 contextBridge.exposeInMainWorld("refundAPI", refundAPI);
-contextBridge.exposeInMainWorld("voidAPI", voidAPI);
 contextBridge.exposeInMainWorld("cashDrawerAPI", cashDrawerAPI);
 contextBridge.exposeInMainWorld("databaseAPI", databaseAPI);
 contextBridge.exposeInMainWorld("printerAPI", printerAPI);
@@ -82,6 +82,8 @@ contextBridge.exposeInMainWorld("businessAPI", businessAPI);
 contextBridge.exposeInMainWorld("terminalsAPI", terminalsAPI);
 contextBridge.exposeInMainWorld("licenseAPI", licenseAPI);
 contextBridge.exposeInMainWorld("reportsExportAPI", reportsExportAPI);
+contextBridge.exposeInMainWorld("breakPolicyAPI", breakPolicyAPI);
+contextBridge.exposeInMainWorld("emailSettingsAPI", emailSettingsAPI);
 contextBridge.exposeInMainWorld(
   "systemNotificationsAPI",
   systemNotificationsAPI

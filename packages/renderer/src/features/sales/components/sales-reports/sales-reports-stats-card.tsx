@@ -19,37 +19,10 @@ export interface SalesReportsStatsCardProps {
   className?: string;
 }
 
-const colorThemes = {
-  green: {
-    icon: "text-green-600",
-    value: "text-green-700",
-    bg: "bg-green-100",
-  },
-  blue: {
-    icon: "text-blue-600",
-    value: "text-blue-700",
-    bg: "bg-blue-100",
-  },
-  amber: {
-    icon: "text-amber-600",
-    value: "text-amber-700",
-    bg: "bg-amber-100",
-  },
-  red: {
-    icon: "text-red-600",
-    value: "text-red-700",
-    bg: "bg-red-100",
-  },
-  purple: {
-    icon: "text-purple-600",
-    value: "text-purple-700",
-    bg: "bg-purple-100",
-  },
-  default: {
-    icon: "text-slate-600",
-    value: "text-slate-700",
-    bg: "bg-slate-100",
-  },
+/** Classic dark grey for numbers and icons (no coloured themes) */
+const neutralTheme = {
+  icon: "text-slate-700",
+  value: "text-slate-800",
 };
 
 export function SalesReportsStatsCard({
@@ -57,18 +30,21 @@ export function SalesReportsStatsCard({
   value,
   change,
   icon: Icon,
-  colorTheme = "default",
+  colorTheme: _colorTheme = "default",
   isLoading = false,
   className,
 }: SalesReportsStatsCardProps) {
-  const theme = colorThemes[colorTheme];
-
   return (
     <Card className={cn("bg-white border-slate-200 shadow-sm h-full", className)}>
       <CardHeader className="pb-2 sm:pb-3">
         <CardTitle className="flex items-center justify-between text-sm sm:text-base font-semibold">
           <span className="text-slate-700">{title}</span>
-          <Icon className={cn("h-4 w-4 sm:h-5 sm:w-5 shrink-0", theme.icon)} />
+          <Icon
+            className={cn(
+              "h-4 w-4 sm:h-5 sm:w-5 shrink-0",
+              neutralTheme.icon
+            )}
+          />
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -79,7 +55,12 @@ export function SalesReportsStatsCard({
           </div>
         ) : (
           <>
-            <div className={cn("text-xl sm:text-2xl font-bold", theme.value)}>
+            <div
+              className={cn(
+                "text-xl sm:text-2xl font-bold",
+                neutralTheme.value
+              )}
+            >
               {typeof value === "number" ? `£${value.toFixed(2)}` : value}
             </div>
             {change && (

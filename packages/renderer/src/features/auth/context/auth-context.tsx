@@ -2,6 +2,8 @@ import { createContext, useState, useEffect, type ReactNode } from "react";
 import type { User, AuthContextType } from "@/types/domain";
 
 import { getLogger } from "@/shared/utils/logger";
+import { ForcePinChangeScreen } from "../components/force-pin-change-screen";
+
 const logger = getLogger("auth-context");
 
 /* eslint-disable react-refresh/only-export-components */
@@ -11,6 +13,8 @@ export const AuthContext = createContext<AuthContextType | undefined>(
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [requiresPinChange, setRequiresPinChange] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +64,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Update React context state
         setUser(response.user);
+        setSessionToken(response.token);
+        if (response.user.requiresPinChange) {
+            setRequiresPinChange(true);
+        } else {
+            setRequiresPinChange(false);
+        }
 
         // Clear permission cache
         if (typeof window !== "undefined") {
@@ -334,6 +344,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (response.success && response.user) {
             // Session is valid - update React context
             setUser(response.user);
+            setSessionToken(token); // Restore session token
+            if (response.user.requiresPinChange) {
+                setRequiresPinChange(true);
+            } else {
+                setRequiresPinChange(false);
+            }
             logger.info(
               `[ValidateSession] Session validated for user ${response.user.id}`
             );
@@ -344,6 +360,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               window.authStore.delete("user"),
               window.authStore.delete("token"),
             ]);
+            setSessionToken(null); 
+            setRequiresPinChange(false);
           }
         } else {
           logger.debug("[ValidateSession] No stored session found");
@@ -355,6 +373,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           window.authStore.delete("user"),
           window.authStore.delete("token"),
         ]);
+        setSessionToken(null);
+        setRequiresPinChange(false);
       } finally {
         setIsInitializing(false);
       }
@@ -446,10 +466,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  /**
+   * Complete forced PIN change
+   */
+  const completeForceChangePIN = async (
+    newPin: string
+  ): Promise<{ success: boolean; message: string }> => {
+    try {
+        if (!sessionToken) throw new Error("No session");
+        
+        const result = await window.authAPI.setNewPin(sessionToken, newPin);
+        
+        if (result.success) {
+            setRequiresPinChange(false);
+            
+            // Also update the stored user object locally as requiresPinChange is now false
+            if (user) {
+                const updatedUser = { ...user, requiresPinChange: false };
+                setUser(updatedUser);
+                await window.authStore.set("user", JSON.stringify(updatedUser));
+            }
+        }
+        return result;
+    } catch (error) {
+        logger.error("Failed to complete forced PIN change", error);
+        return { success: false, message: "Failed to update PIN" };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
         user,
+        sessionToken,
+        requiresPinChange,
+        completeForceChangePIN,
         login,
         register,
         registerBusiness,
@@ -463,7 +514,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isInitializing,
       }}
     >
-      {children}
+      {requiresPinChange && user ? (
+        <ForcePinChangeScreen onComplete={() => setRequiresPinChange(false)} />
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 }

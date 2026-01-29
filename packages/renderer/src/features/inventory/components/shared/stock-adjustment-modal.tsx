@@ -192,7 +192,7 @@ const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           handleClose();
@@ -200,17 +200,17 @@ const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
       }}
     >
       <div
-        className={`bg-white rounded-xl shadow-2xl mx-4 flex flex-col transition-all duration-200 ${
-          showKeyboard ? "w-[700px] max-w-[95vw]" : "w-[500px] max-w-[90vw]"
+        className={`bg-white rounded-xl shadow-2xl flex flex-col transition-all duration-200 max-h-[95vh] w-full sm:w-[500px] md:w-[600px] lg:w-[700px] ${
+          showKeyboard ? "max-w-[95vw]" : "max-w-[90vw]"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-6 border-b">
-          <h3 className="text-xl font-semibold text-gray-900">
+        <div className="p-4 sm:p-6 border-b shrink-0">
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">
             Adjust Stock: {product.name}
           </h3>
-          <div className="mt-3 flex gap-4 text-sm">
+          <div className="mt-3 flex flex-col sm:flex-row gap-2 sm:gap-4 text-xs sm:text-sm">
             <div className="bg-blue-50 px-3 py-2 rounded-lg">
               <span className="text-blue-600">Current Stock:</span>{" "}
               <span className="font-semibold text-blue-900">
@@ -227,13 +227,13 @@ const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-5">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto flex-1 min-h-0">
           {/* Adjustment Type Tabs */}
-          <div className="flex gap-3">
+          <div className="flex gap-2 sm:gap-3">
             <Button
               type="button"
               size="lg"
-              className="flex-1 h-12"
+              className="flex-1 h-10 sm:h-12 text-sm sm:text-base"
               variant={adjustmentType === "add" ? "default" : "outline"}
               onClick={(e) => {
                 e.preventDefault();
@@ -247,7 +247,7 @@ const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
             <Button
               type="button"
               size="lg"
-              className="flex-1 h-12"
+              className="flex-1 h-10 sm:h-12 text-sm sm:text-base"
               variant={adjustmentType === "remove" ? "default" : "outline"}
               onClick={(e) => {
                 e.preventDefault();
@@ -261,7 +261,7 @@ const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
           </div>
 
           {/* Form Fields */}
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-3 sm:gap-4">
             {/* Quantity Input */}
             <div>
               <Label htmlFor="stock-quantity" className="text-sm font-medium">
@@ -274,7 +274,7 @@ const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
                 value={localQuantity}
                 readOnly
                 onFocus={() => handleFieldFocus("quantity")}
-                className="mt-1.5"
+                className="mt-1.5 text-sm sm:text-base"
               />
             </div>
 
@@ -284,12 +284,12 @@ const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
                 Reason
               </Label>
               <Select value={selectedReason} onValueChange={handleReasonSelect}>
-                <SelectTrigger className="w-full mt-1.5 h-10">
+                <SelectTrigger className="w-full mt-1.5 h-10 sm:h-11 text-sm sm:text-base">
                   <SelectValue placeholder="Select a reason" />
                 </SelectTrigger>
                 <SelectContent>
                   {currentReasons.map((r) => (
-                    <SelectItem key={r} value={r}>
+                    <SelectItem key={r} value={r} className="text-sm sm:text-base">
                       {r}
                     </SelectItem>
                   ))}
@@ -310,7 +310,7 @@ const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
                   value={customNote}
                   readOnly
                   onFocus={() => handleFieldFocus("note")}
-                  className="mt-1.5"
+                  className="mt-1.5 text-sm sm:text-base"
                 />
               </div>
             )}
@@ -319,7 +319,7 @@ const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
 
         {/* Adaptive Keyboard */}
         {showKeyboard && (
-          <div className="border-t bg-background px-2 py-2">
+          <div className="border-t bg-background px-2 py-2 shrink-0">
             <div className="max-w-full overflow-hidden">
               <AdaptiveKeyboard
                 visible={showKeyboard}
@@ -335,11 +335,11 @@ const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
         )}
 
         {/* Action Buttons */}
-        <div className="p-6 border-t bg-gray-50/50 rounded-b-xl flex gap-3">
+        <div className="p-4 sm:p-6 border-t bg-gray-50/50 rounded-b-xl flex gap-2 sm:gap-3 shrink-0">
           <Button
             type="button"
             size="lg"
-            className="flex-1 h-12"
+            className="flex-1 h-10 sm:h-12 text-sm sm:text-base"
             onClick={handleConfirm}
           >
             Confirm Adjustment
@@ -348,7 +348,7 @@ const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
             type="button"
             variant="outline"
             size="lg"
-            className="flex-1 h-12"
+            className="flex-1 h-10 sm:h-12 text-sm sm:text-base"
             onClick={handleClose}
           >
             Cancel

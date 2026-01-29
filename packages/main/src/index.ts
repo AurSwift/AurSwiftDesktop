@@ -98,37 +98,21 @@ export async function initApp(initConfig: AppInitConfig) {
   // Initialize database
   const db = await getDatabase();
 
-  // Initialize thermal printer service after database is ready
-  await import("./services/thermalPrinterService.js");
+  // Load hardware services in parallel - they're independent
+  await Promise.all([
+    import("./services/thermalPrinterService.js"),
+    import("./services/officePrinterService.js"),
+    import("./services/pdfReceiptService.js"),
+    import("./services/paymentService.js"),
+    import("./services/scaleService.js"),
+    import("./services/vivaWallet/index.js"),
+  ]);
 
-  // Initialize office printer service for HP LaserJet and similar printers
-  await import("./services/officePrinterService.js");
-
-  // Initialize PDF receipt generation service
-  await import("./services/pdfReceiptService.js");
-
-  // Initialize payment service for BBPOS WisePad 3
-  await import("./services/paymentService.js");
-
-  // Initialize scale hardware service for weight measurement
-  await import("./services/scaleService.js");
-
-  // Initialize Viva Wallet service for payment terminal integration
-  await import("./services/vivaWallet/index.js");
-
-  // Initialize email service (with console mode by default - can be configured via settings)
+  // Initialize email service in console mode at startup.
+  // We load Gmail credentials per-business (businessId) at send time.
   const emailInitResult = await emailService.initialize({
-    provider: "smtp",
-    smtp: {
-      host: "smtp.gmail.com", // Your SMTP host
-      port: 587, // SMTP port
-      secure: false, // true for 465, false for 587
-      auth: {
-        user: "aurswiftassistanceteam@gmail.com", // Your email
-        pass: "qhgs bgpy xejt kwro", // App password (not regular password)
-      },
-    },
-    fromEmail: "aurswiftassistanceteam@gmail.com",
+    provider: "console",
+    fromEmail: "no-reply@aurswift.local",
     fromName: "AurSwift POS",
   });
 
