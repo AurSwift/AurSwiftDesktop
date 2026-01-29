@@ -241,17 +241,14 @@ interface CompatibilityResult {
 **Repair Strategies (in order of aggressiveness):**
 
 1. **WAL Checkpoint** (non-destructive)
-
    - Consolidates WAL (Write-Ahead Log) files
    - Commands: `PRAGMA wal_checkpoint(TRUNCATE)`
 
 2. **Integrity Check**
-
    - Validates database integrity
    - Command: `PRAGMA integrity_check`
 
 3. **REINDEX** (rebuild indexes)
-
    - Rebuilds all database indexes
    - Command: `REINDEX`
 
