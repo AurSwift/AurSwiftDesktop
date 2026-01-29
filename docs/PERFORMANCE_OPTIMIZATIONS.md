@@ -17,6 +17,7 @@ Performance optimizations are critical for providing a responsive user experienc
 **Issue:** Six hardware services were being loaded sequentially using `await import()`, causing each import to block the next one. This sequential loading pattern significantly delayed application startup time.
 
 **Original Code:**
+
 ```typescript
 // Initialize thermal printer service after database is ready
 await import("./services/thermalPrinterService.js");
@@ -38,6 +39,7 @@ await import("./services/vivaWallet/index.js");
 ```
 
 **Impact:**
+
 - Each service import blocks the next import
 - Total startup time = sum of all individual import times
 - No parallelism, wasting CPU and I/O resources
@@ -48,6 +50,7 @@ await import("./services/vivaWallet/index.js");
 **Approach:** Load all independent hardware services in parallel using `Promise.all()`.
 
 **Fixed Code:**
+
 ```typescript
 // Load hardware services in parallel - they're independent
 await Promise.all([
@@ -61,12 +64,14 @@ await Promise.all([
 ```
 
 **Benefits:**
+
 - All services load concurrently instead of sequentially
 - Total startup time ≈ longest individual import time (not sum)
 - Better CPU and I/O utilization
 - Faster application initialization
 
 **Why This Works:**
+
 - These services are independent hardware modules with no interdependencies
 - They can safely initialize in parallel without race conditions
 - `Promise.all()` waits for all imports to complete before proceeding
@@ -85,6 +90,7 @@ await Promise.all([
 **Issue:** According to Electron documentation, `Menu.setApplicationMenu()` should be called **before** `app.on("ready")` to prevent Electron from building the default application menu. The original code was setting the menu after `app.whenReady()`, causing Electron to waste time constructing a default menu that would immediately be replaced.
 
 **Original Code:**
+
 ```typescript
 async enable({ app }: ModuleContext): Promise<void> {
   await app.whenReady();  // ← Menu setup happens AFTER ready
@@ -94,6 +100,7 @@ async enable({ app }: ModuleContext): Promise<void> {
 ```
 
 **Impact:**
+
 - Electron builds the default menu during app initialization
 - Default menu is immediately discarded when custom menu is set
 - Wasted CPU cycles and memory allocation
@@ -106,6 +113,7 @@ async enable({ app }: ModuleContext): Promise<void> {
 **Fixed Code:**
 
 **Entry Point (`packages/entry-point.mjs`):**
+
 ```javascript
 import { app, Menu } from "electron";
 
@@ -118,31 +126,35 @@ Menu.setApplicationMenu(null);
 ```
 
 **WindowManager (`packages/main/src/modules/WindowManager.ts`):**
+
 ```typescript
 async enable({ app }: ModuleContext): Promise<void> {
   await app.whenReady();
-  
+
   // Create minimal application menu with update checking
   // This replaces the null menu set in entry-point.mjs
   this.createApplicationMenu();
-  
+
   // ...
 }
 ```
 
 **Benefits:**
+
 - Electron skips building the default menu entirely
 - No wasted CPU cycles or memory allocation
 - Faster application initialization
 - Custom menu is set immediately after app is ready
 
 **Why This Works:**
+
 - Setting `Menu.setApplicationMenu(null)` before `app.whenReady()` tells Electron not to create a default menu
 - The custom menu is still created by `WindowManager.createApplicationMenu()` after the app is ready
 - This follows Electron's recommended pattern for custom menu setup
 - The null menu is a lightweight placeholder that prevents default menu construction
 
 **Locations:**
+
 - `packages/entry-point.mjs` (line 18)
 - `packages/main/src/modules/WindowManager.ts` (unchanged - still creates custom menu after ready)
 
@@ -157,6 +169,7 @@ async enable({ app }: ModuleContext): Promise<void> {
 **Issue:** All 30+ database managers were instantiated eagerly during `getDatabase()`, even though many are only used when specific features are exercised (e.g. `ageVerification`, `expiryNotifications`, `breakPolicy`, `savedBaskets`). This increased startup cost and memory use.
 
 **Impact:**
+
 - Unnecessary work during database initialization
 - Higher memory footprint at startup
 - Slower time-to-ready for the main process
@@ -166,17 +179,20 @@ async enable({ app }: ModuleContext): Promise<void> {
 **Approach:** Lazy initialization via getters. Only **`SessionManager`** and **`AuditLogManager`** are created eagerly, because they run startup cleanups (expired sessions, old audit logs). All other managers are created on first access via `db.<manager>` and then cached.
 
 **Implementation:**
+
 - A host object implements `DatabaseManagers` with getters for each manager.
 - Eager instances: `sessions`, `auditLogs`; run `cleanupExpiredSessions()` and `cleanupOldLogs(90)` during init.
 - Lazy getters use a `createLazy(key, factory)` helper: create on first access, cache, return.
 - Dependency order is enforced by getters: e.g. `users` ensures `sessions`, `timeTracking`, `schedules` exist first; `inventory` ensures `stockMovements` (and thus `batches`) exist.
 
 **Benefits:**
+
 - Fewer managers created at startup; less-used managers created only when needed
 - Lower memory use early in the app lifecycle
 - Same public API: consumers still use `getDatabase()` and `db.<manager>` unchanged
 
 **Why This Works:**
+
 - Getters ensure dependencies are created before dependents, avoiding cycles
 - Caching ensures each manager is a singleton per database lifecycle
 - `closeDatabase()` discards the host and caches; next `getDatabase()` builds a fresh instance
@@ -188,18 +204,21 @@ async enable({ app }: ModuleContext): Promise<void> {
 ## Performance Impact Summary
 
 ### Before Optimizations
+
 - **Service Loading:** Sequential (sum of all import times)
 - **Menu Setup:** Default menu built, then replaced
 - **Database Managers:** All 30+ managers eagerly created at startup
 - **Startup Time:** Slower due to blocking operations
 
 ### After Optimizations
+
 - **Service Loading:** Parallel (longest import time)
 - **Menu Setup:** No default menu built
 - **Database Managers:** Only `SessionManager` and `AuditLogManager` eager; rest lazy on first access
 - **Startup Time:** Faster, more efficient initialization
 
 ### Estimated Improvements
+
 - **Service Loading:** ~60-80% reduction in initialization time (depending on number of services)
 - **Menu Setup:** Eliminated unnecessary default menu construction
 - **Database Managers:** Deferred creation and lower memory use for less-used managers
@@ -246,4 +265,4 @@ When adding new services or initialization code:
 
 ---
 
-*Last Updated: January 28, 2026*
+_Last Updated: January 28, 2026_
