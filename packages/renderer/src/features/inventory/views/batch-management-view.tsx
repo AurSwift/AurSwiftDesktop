@@ -33,7 +33,7 @@ import type {
   ProductBatch,
   ExpirySettings,
   Supplier,
-} from "../types/batch.types";
+} from "@/types/features/batches";
 import type { Product } from "@/types/domain";
 import { toast } from "sonner";
 

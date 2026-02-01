@@ -7,7 +7,7 @@ import type {
   BatchResponse,
   ExpirySettings,
   Supplier,
-} from "../types/batch.types";
+} from "@/types/features/batches";
 
 interface UseBatchDataProps {
   businessId?: string;

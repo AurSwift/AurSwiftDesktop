@@ -10,7 +10,7 @@ import {
   DollarSign,
   BarChart3,
 } from "lucide-react";
-import type { ProductBatch, ExpirySettings } from "../types/batch.types";
+import type { ProductBatch, ExpirySettings } from "@/types/features/batches";
 import { useExpiryAlerts } from "@/features/inventory/hooks/use-expiry-alerts";
 import { formatExpiryDate } from "../utils/expiry-calculations";
 

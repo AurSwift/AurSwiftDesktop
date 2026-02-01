@@ -6,7 +6,7 @@ import type {
   ProductBatch,
   ExpiryAlert,
   ExpirySettings,
-} from "../types/batch.types";
+} from "@/types/features/batches";
 import {
   generateExpiryAlert,
   filterBatchesByExpiryStatus,

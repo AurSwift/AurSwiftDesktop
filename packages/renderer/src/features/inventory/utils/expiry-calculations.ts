@@ -7,7 +7,7 @@ import type {
   ExpiryAlert,
   NotificationType,
   BatchStatus,
-} from "../types/batch.types";
+} from "@/types/features/batches";
 
 /**
  * Calculate days until expiry from a given expiry date

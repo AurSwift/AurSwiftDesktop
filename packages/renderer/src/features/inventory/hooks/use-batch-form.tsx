@@ -14,7 +14,7 @@ import {
   type BatchUpdateData,
 } from "../schemas/batch-schema";
 import { useFormNotification } from "@/shared/hooks/use-form-notification";
-import type { ProductBatch } from "../types/batch.types";
+import type { ProductBatch } from "@/types/features/batches";
 
 import { getLogger } from "@/shared/utils/logger";
 const logger = getLogger("use-batch-form");
