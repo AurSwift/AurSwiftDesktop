@@ -12,6 +12,11 @@ interface BreadcrumbProps {
 }
 
 export function Breadcrumb({ breadcrumb, onBreadcrumbClick }: BreadcrumbProps) {
+  // Safety check for undefined breadcrumb
+  if (!breadcrumb || breadcrumb.length === 0) {
+    return null;
+  }
+
   return (
     <div className="flex items-center gap-1 text-xs sm:text-sm overflow-x-auto">
       {breadcrumb.map((item, index) => (

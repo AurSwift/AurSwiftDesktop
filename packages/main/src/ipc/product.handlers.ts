@@ -27,7 +27,7 @@ export function registerProductHandlers() {
         const db = await getDatabase();
         const products = await db.products.getProductsByBusiness(
           businessId,
-          includeInactive
+          includeInactive,
         );
         return {
           success: true,
@@ -41,7 +41,7 @@ export function registerProductHandlers() {
           message: error.message || "Failed to get products",
         };
       }
-    }
+    },
   );
 
   ipcMain.handle("products:getById", async (event, id) => {
@@ -92,11 +92,14 @@ export function registerProductHandlers() {
         const result = await db.products.getProductsByBusinessPaginated(
           businessId,
           pagination,
-          filters
+          filters,
         );
         return {
           success: true,
-          data: result,
+          data: {
+            items: result.items,
+            pagination: result.pagination,
+          },
         };
       } catch (error: any) {
         logger.error("Get paginated products IPC error:", error);
@@ -105,7 +108,7 @@ export function registerProductHandlers() {
           message: error.message || "Failed to get products",
         };
       }
-    }
+    },
   );
 
   // Get lightweight product lookup (optimized for dropdowns - only id, name, sku)
@@ -114,13 +117,13 @@ export function registerProductHandlers() {
     async (
       event,
       businessId,
-      options?: { includeInactive?: boolean; productIds?: string[] }
+      options?: { includeInactive?: boolean; productIds?: string[] },
     ) => {
       try {
         const db = await getDatabase();
         const products = await db.products.getProductLookup(
           businessId,
-          options
+          options,
         );
         return {
           success: true,
@@ -133,7 +136,7 @@ export function registerProductHandlers() {
           message: error.message || "Failed to get product lookup",
         };
       }
-    }
+    },
   );
 
   // Stock adjustment with audit trail
@@ -207,7 +210,7 @@ export function registerProductHandlers() {
         await db.batches.updateBatchQuantity(
           batchId,
           quantity,
-          type === "add" ? "INBOUND" : "OUTBOUND"
+          type === "add" ? "INBOUND" : "OUTBOUND",
         );
       } else {
         // Update product stock level directly
@@ -252,7 +255,7 @@ export function registerProductHandlers() {
       for (const product of products) {
         const currentStock = product.stockLevel || 0;
         const calculatedStock = await db.batches.calculateProductStock(
-          product.id
+          product.id,
         );
 
         if (currentStock !== calculatedStock) {
@@ -290,9 +293,8 @@ export function registerProductHandlers() {
   ipcMain.handle("stock:adjust", async (event, adjustmentData) => {
     try {
       const db = await getDatabase();
-      const adjustment = await db.inventory.createStockAdjustment(
-        adjustmentData
-      );
+      const adjustment =
+        await db.inventory.createStockAdjustment(adjustmentData);
       return {
         success: true,
         message: "Stock adjustment created successfully",
@@ -390,7 +392,7 @@ ipcMain.handle(
       const db = await getDatabase();
       const movements = await db.stockMovements.getMovementsByBusiness(
         businessId,
-        filters
+        filters,
       );
 
       return {
@@ -404,7 +406,7 @@ ipcMain.handle(
         message: "Failed to get stock movements",
       };
     }
-  }
+  },
 );
 
 // Get product statistics for dashboard (optimized - no full product loading)

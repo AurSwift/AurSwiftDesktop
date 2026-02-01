@@ -10,7 +10,7 @@ export interface ProductAPI {
   create: (productData: Record<string, any>) => Promise<any>;
   getByBusiness: (
     businessId: string,
-    includeInactive?: boolean
+    includeInactive?: boolean,
   ) => Promise<any>;
   getPaginated: (
     businessId: string,
@@ -22,10 +22,12 @@ export interface ProductAPI {
     },
     filters?: {
       categoryId?: string;
+      /** When true, include products from all descendant categories */
+      includeCategoryDescendants?: boolean;
       searchTerm?: string;
       stockStatus?: "all" | "in_stock" | "low" | "out_of_stock";
       isActive?: boolean;
-    }
+    },
   ) => Promise<any>;
   /**
    * Get lightweight product lookup data (optimized for dropdowns)
@@ -33,7 +35,7 @@ export interface ProductAPI {
    */
   getLookup: (
     businessId: string,
-    options?: { includeInactive?: boolean; productIds?: string[] }
+    options?: { includeInactive?: boolean; productIds?: string[] },
   ) => Promise<{
     success: boolean;
     products?: Array<{ id: string; name: string; sku: string | null }>;

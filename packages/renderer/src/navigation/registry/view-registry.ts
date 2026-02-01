@@ -16,6 +16,7 @@ import { staffViews } from "@/features/staff/config/feature-config";
 import { rbacViews } from "@/features/rbac/config/feature-config";
 import { usersViews } from "@/features/users/config/feature-config";
 import { salesViews } from "@/features/sales/config/feature-config";
+import { quickSellViews } from "@/features/quick-sell-config/config/feature-config";
 
 // Wrapper components that use navigation hook
 import { DashboardPageWrapper } from "../components/dashboard-page-wrapper";
@@ -68,6 +69,12 @@ export const VIEW_REGISTRY: Record<string, ViewConfig> = {
   ...settingsViews,
 
   // ============================================================================
+  // Quick Sell Config Views
+  // Imported from quick-sell-config feature config
+  // ============================================================================
+  ...quickSellViews,
+
+  // ============================================================================
   // Staff Management Views
   // Imported from staff feature config
   // ============================================================================
@@ -103,7 +110,7 @@ export function getView(viewId: string): ViewConfig | undefined {
     process.env.NODE_ENV === "development"
   ) {
     logger.warn(
-      `Deprecated route "${viewId}" has been mapped to "${mappedViewId}". Please update to use the new route constant.`
+      `Deprecated route "${viewId}" has been mapped to "${mappedViewId}". Please update to use the new route constant.`,
     );
   }
 
@@ -127,7 +134,7 @@ export function getRootViews(): ViewConfig[] {
  */
 export function getNestedViews(parentId: string): ViewConfig[] {
   return Object.values(VIEW_REGISTRY).filter(
-    (view) => view.parentId === parentId
+    (view) => view.parentId === parentId,
   );
 }
 
@@ -164,7 +171,7 @@ export function getViewHierarchy(viewId: string): ViewConfig[] {
 export function canAccessView(
   viewId: string,
   userPermissions: string[],
-  userRole: string
+  userRole: string,
 ): boolean {
   const view = getView(viewId);
   if (!view) return false;

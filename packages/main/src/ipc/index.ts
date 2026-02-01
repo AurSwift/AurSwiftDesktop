@@ -14,6 +14,7 @@ import { registerEmailSettingsHandlers } from "./email-settings.handlers.js";
 import { registerLicenseHandlers } from "./license.handlers.js";
 import { registerSalesUnitSettingsHandlers } from "./sales-unit-settings.handlers.js";
 import { registerProductHandlers } from "./product.handlers.js";
+import { registerQuickSellHandlers } from "./quick-sell.handlers.js";
 import { registerRoleHandlers } from "./role.handlers.js";
 import { registerSeedHandlers } from "./seed.handlers.js";
 import { registerShiftHandlers } from "./shift.handlers.js";
@@ -39,6 +40,7 @@ export function registerAllIpcHandlers() {
   registerEmailSettingsHandlers();
   registerExpiryProductHandlers();
   registerLicenseHandlers();
+  registerQuickSellHandlers();
   registerSalesUnitSettingsHandlers();
   registerProductHandlers();
   registerRoleHandlers();

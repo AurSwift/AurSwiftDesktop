@@ -25,6 +25,7 @@ import {
   useVirtualCategories,
 } from "../hooks";
 import { useSalesMode } from "../hooks/use-sales-mode";
+import { useQuickSellButtons } from "../hooks/use-quick-sell-buttons";
 import {
   USE_VIRTUALIZED_PRODUCTS,
   USE_VIRTUAL_CATEGORIES,
@@ -237,6 +238,9 @@ export function NewTransactionView({
 
   // Sales mode detection
   const salesMode = useSalesMode();
+
+  // Quick Sell Buttons hook
+  const quickSell = useQuickSellButtons();
 
   // Shift hook (only used for cashier mode)
   const shift = useShift({
@@ -520,6 +524,33 @@ export function NewTransactionView({
       weightInput,
       categoryPriceInput,
     ],
+  );
+
+  // Handle Quick Sell product button click - looks up product and triggers handleProductClick
+  const handleQuickSellProductClick = useCallback(
+    async (productId: string) => {
+      // Find product in current products list
+      let product = products.products.find((p) => p.id === productId);
+
+      // If not found in current list, try to fetch from API
+      if (!product) {
+        try {
+          const response = await window.productAPI.getById(productId);
+          if (response.success && response.product) {
+            product = response.product;
+          }
+        } catch (error) {
+          logger.error("Failed to fetch product for quick sell:", error);
+        }
+      }
+
+      if (product) {
+        await handleProductClick(product);
+      } else {
+        toast.error("Product not found");
+      }
+    },
+    [products.products, handleProductClick],
   );
 
   // Handle generic item click
@@ -1112,13 +1143,19 @@ export function NewTransactionView({
   }
 
   // Get products to display
-  // In virtualized mode, filtering is done server-side, so we use products directly
-  // In legacy mode, we filter client-side using getFilteredProducts
-  const displayProducts = USE_VIRTUALIZED_PRODUCTS
-    ? products.products // Server-side filtering already applied
-    : searchQuery
-      ? legacyProducts.getFilteredProducts(searchQuery)
-      : categories.getCurrentCategoryProducts();
+  // When inside a category (breadcrumb > 1), always filter by category regardless of mode
+  // In virtualized mode with search, use server-side results
+  // Otherwise, use client-side filtering
+  const isInsideCategory = categories.breadcrumb.length > 1;
+  const displayProducts = searchQuery
+    ? USE_VIRTUALIZED_PRODUCTS
+      ? products.products // Server-side search results
+      : legacyProducts.getFilteredProducts(searchQuery)
+    : isInsideCategory
+      ? categories.getCurrentCategoryProducts() // Filter by current category
+      : USE_VIRTUALIZED_PRODUCTS
+        ? products.products // Root level - show all products
+        : categories.getCurrentCategoryProducts();
 
   return (
     <>
@@ -1173,6 +1210,13 @@ export function NewTransactionView({
             isLoadingMore={
               USE_VIRTUALIZED_PRODUCTS ? paginatedProducts.loading : false
             }
+            // Quick Sell Props
+            quickSellPages={quickSell.pagesWithButtons}
+            quickSellPageIndex={quickSell.selectedPageIndex}
+            onQuickSellPageChange={quickSell.setSelectedPageIndex}
+            quickSellButtons={quickSell.currentButtons}
+            quickSellLoading={quickSell.isLoading}
+            onQuickSellProductClick={handleQuickSellProductClick}
           />
           {!payment.paymentStep && (
             <div className="shrink-0">

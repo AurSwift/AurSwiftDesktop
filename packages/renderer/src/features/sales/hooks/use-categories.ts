@@ -123,7 +123,7 @@ export function useCategories({
     };
 
     const categoryIds = getDescendantIds(currentCategoryId);
-    return products.filter((p) => p.category && categoryIds.includes(p.category));
+    return products.filter((p) => p.categoryId && categoryIds.includes(p.categoryId));
   }, [currentCategoryId, categories, products]);
 
   return {

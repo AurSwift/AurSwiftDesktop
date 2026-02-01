@@ -42,16 +42,18 @@ export const productAPI = {
     },
     filters?: {
       categoryId?: string;
+      /** When true, include products from all descendant categories */
+      includeCategoryDescendants?: boolean;
       searchTerm?: string;
       stockStatus?: "all" | "in_stock" | "low" | "out_of_stock";
       isActive?: boolean;
-    }
+    },
   ) =>
     ipcRenderer.invoke(
       "products:getPaginated",
       businessId,
       pagination,
-      filters
+      filters,
     ),
 
   getById: (id: string) => ipcRenderer.invoke("products:getById", id),
@@ -83,7 +85,7 @@ export const productAPI = {
       isActive: boolean;
       allowPriceOverride: boolean;
       allowDiscount: boolean;
-    }>
+    }>,
   ) => ipcRenderer.invoke("products:update", id, updates),
 
   delete: (id: string) => ipcRenderer.invoke("products:delete", id),
@@ -104,7 +106,7 @@ export const productAPI = {
    */
   getLookup: (
     businessId: string,
-    options?: { includeInactive?: boolean; productIds?: string[] }
+    options?: { includeInactive?: boolean; productIds?: string[] },
   ) => ipcRenderer.invoke("products:getLookup", businessId, options),
 
   adjustStock: (adjustmentData: {

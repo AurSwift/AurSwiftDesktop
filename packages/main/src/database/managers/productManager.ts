@@ -33,7 +33,7 @@ export class ProductManager {
   }
 
   async createProduct(
-    productData: Omit<NewProduct, "id" | "createdAt" | "updatedAt">
+    productData: Omit<NewProduct, "id" | "createdAt" | "updatedAt">,
   ): Promise<Product> {
     const productId = this.uuid.v4();
 
@@ -85,7 +85,7 @@ export class ProductManager {
 
   async getProductById(
     id: string,
-    includeInactive: boolean = false
+    includeInactive: boolean = false,
   ): Promise<Product> {
     const conditions = [eq(schema.products.id, id)];
 
@@ -111,7 +111,7 @@ export class ProductManager {
       .select()
       .from(schema.products)
       .where(
-        and(eq(schema.products.plu, plu), eq(schema.products.isActive, true))
+        and(eq(schema.products.plu, plu), eq(schema.products.isActive, true)),
       )
       .limit(1);
 
@@ -127,7 +127,7 @@ export class ProductManager {
       .select()
       .from(schema.products)
       .where(
-        and(eq(schema.products.sku, sku), eq(schema.products.isActive, true))
+        and(eq(schema.products.sku, sku), eq(schema.products.isActive, true)),
       )
       .limit(1);
 
@@ -147,7 +147,7 @@ export class ProductManager {
     options?: {
       includeInactive?: boolean;
       productIds?: string[];
-    }
+    },
   ): Promise<Array<{ id: string; name: string; sku: string | null }>> {
     const conditions = [eq(schema.products.businessId, businessId)];
 
@@ -160,8 +160,8 @@ export class ProductManager {
       conditions.push(
         drizzleSql`${schema.products.id} IN (${drizzleSql.join(
           options.productIds.map((id) => drizzleSql`${id}`),
-          drizzleSql`, `
-        )})`
+          drizzleSql`, `,
+        )})`,
       );
     }
 
@@ -180,7 +180,7 @@ export class ProductManager {
 
   async getProductsByBusiness(
     businessId: string,
-    includeInactive: boolean = false
+    includeInactive: boolean = false,
   ): Promise<Product[]> {
     const conditions = includeInactive
       ? [eq(schema.products.businessId, businessId)]
@@ -199,16 +199,50 @@ export class ProductManager {
   }
 
   /**
+   * Get all descendant category IDs for a given category (recursive)
+   * Returns an array including the parent category and all its descendants
+   */
+  private async getDescendantCategoryIds(
+    businessId: string,
+    categoryId: string,
+  ): Promise<string[]> {
+    // Start with the given category
+    const result: string[] = [categoryId];
+
+    // Use recursive query to get all descendants
+    const getAllDescendants = async (parentId: string): Promise<void> => {
+      const children = await this.drizzle
+        .select({ id: schema.categories.id })
+        .from(schema.categories)
+        .where(
+          and(
+            eq(schema.categories.businessId, businessId),
+            eq(schema.categories.parentId, parentId),
+            eq(schema.categories.isActive, true),
+          ),
+        );
+
+      for (const child of children) {
+        result.push(child.id);
+        await getAllDescendants(child.id);
+      }
+    };
+
+    await getAllDescendants(categoryId);
+    return result;
+  }
+
+  /**
    * Get products by business with pagination and filters
    */
   async getProductsByBusinessPaginated(
     businessId: string,
     pagination: PaginationParams,
-    filters?: ProductFilters
+    filters?: ProductFilters,
   ): Promise<PaginatedResult<Product>> {
     const { limit, offset } = calculateLimitOffset(
       pagination.page,
-      pagination.pageSize
+      pagination.pageSize,
     );
 
     // Build WHERE conditions
@@ -221,9 +255,29 @@ export class ProductManager {
       conditions.push(eq(schema.products.isActive, true)); // Default to active only
     }
 
-    // Filter by category
+    // Filter by category (with optional descendant support)
     if (filters?.categoryId) {
-      conditions.push(eq(schema.products.categoryId, filters.categoryId));
+      if (filters?.includeCategoryDescendants) {
+        // Get all descendant category IDs
+        const categoryIds = await this.getDescendantCategoryIds(
+          businessId,
+          filters.categoryId,
+        );
+        if (categoryIds.length > 0) {
+          // Use IN clause for multiple categories
+          conditions.push(
+            drizzleSql`${schema.products.categoryId} IN (${drizzleSql.join(
+              categoryIds.map((id) => drizzleSql`${id}`),
+              drizzleSql`, `,
+            )})`,
+          );
+        } else {
+          // No descendants, just filter by the exact category
+          conditions.push(eq(schema.products.categoryId, filters.categoryId));
+        }
+      } else {
+        conditions.push(eq(schema.products.categoryId, filters.categoryId));
+      }
     }
 
     // Filter by search term (name or SKU)
@@ -234,7 +288,7 @@ export class ProductManager {
           ${schema.products.name} LIKE ${searchPattern} OR 
           ${schema.products.sku} LIKE ${searchPattern} OR
           ${schema.products.barcode} LIKE ${searchPattern}
-        )`
+        )`,
       );
     }
 
@@ -244,11 +298,11 @@ export class ProductManager {
         conditions.push(drizzleSql`${schema.products.stockLevel} = 0`);
       } else if (filters.stockStatus === "low") {
         conditions.push(
-          drizzleSql`${schema.products.stockLevel} > 0 AND ${schema.products.stockLevel} <= ${schema.products.minStockLevel}`
+          drizzleSql`${schema.products.stockLevel} > 0 AND ${schema.products.stockLevel} <= ${schema.products.minStockLevel}`,
         );
       } else if (filters.stockStatus === "in_stock") {
         conditions.push(
-          drizzleSql`${schema.products.stockLevel} > ${schema.products.minStockLevel}`
+          drizzleSql`${schema.products.stockLevel} > ${schema.products.minStockLevel}`,
         );
       }
     }
@@ -295,14 +349,14 @@ export class ProductManager {
       pagination: calculatePagination(
         totalItems,
         pagination.page,
-        pagination.pageSize
+        pagination.pageSize,
       ),
     };
   }
 
   async updateProduct(
     id: string,
-    updates: Partial<Omit<Product, "id" | "createdAt" | "updatedAt">>
+    updates: Partial<Omit<Product, "id" | "createdAt" | "updatedAt">>,
   ): Promise<Product> {
     if (Object.keys(updates).length === 0) {
       return this.getProductById(id, true);
@@ -334,8 +388,8 @@ export class ProductManager {
       .where(
         and(
           eq(schema.productBatches.productId, id),
-          eq(schema.productBatches.status, "ACTIVE")
-        )
+          eq(schema.productBatches.status, "ACTIVE"),
+        ),
       )
       .all();
 
@@ -343,7 +397,7 @@ export class ProductManager {
       throw new Error(
         `Cannot delete product: ${activeBatches.length} active batch${
           activeBatches.length > 1 ? "es" : ""
-        } still exist. Please remove or mark batches as REMOVED first.`
+        } still exist. Please remove or mark batches as REMOVED first.`,
       );
     }
 
@@ -351,7 +405,7 @@ export class ProductManager {
     const product = await this.getProductById(id);
     if ((product.stockLevel ?? 0) > 0) {
       throw new Error(
-        `Cannot delete product: Product still has ${product.stockLevel} items in stock. Please adjust stock to 0 first.`
+        `Cannot delete product: Product still has ${product.stockLevel} items in stock. Please adjust stock to 0 first.`,
       );
     }
 
@@ -362,7 +416,7 @@ export class ProductManager {
         updatedAt: now,
       })
       .where(
-        and(eq(schema.products.id, id), eq(schema.products.isActive, true))
+        and(eq(schema.products.id, id), eq(schema.products.isActive, true)),
       );
 
     return result.changes > 0;
@@ -373,7 +427,7 @@ export class ProductManager {
    */
   async searchProducts(
     businessId: string,
-    searchTerm: string
+    searchTerm: string,
   ): Promise<Product[]> {
     const searchPattern = `%${searchTerm}%`;
 
@@ -387,8 +441,8 @@ export class ProductManager {
           drizzleSql`(
             ${schema.products.name} LIKE ${searchPattern} OR 
             ${schema.products.sku} LIKE ${searchPattern}
-          )`
-        )
+          )`,
+        ),
       )
       .orderBy(schema.products.name);
 
@@ -407,13 +461,13 @@ export class ProductManager {
       .from(schema.products)
       .leftJoin(
         schema.categories,
-        eq(schema.products.categoryId, schema.categories.id)
+        eq(schema.products.categoryId, schema.categories.id),
       )
       .where(
         and(
           eq(schema.products.businessId, businessId),
-          eq(schema.products.isActive, true)
-        )
+          eq(schema.products.isActive, true),
+        ),
       )
       .orderBy(schema.products.name);
 
@@ -425,7 +479,7 @@ export class ProductManager {
    */
   async getLowStockProducts(
     businessId: string,
-    threshold: number = 10
+    threshold: number = 10,
   ): Promise<Product[]> {
     const products = await this.drizzle
       .select()
@@ -434,8 +488,8 @@ export class ProductManager {
         and(
           eq(schema.products.businessId, businessId),
           eq(schema.products.isActive, true),
-          drizzleSql`${schema.products.stockLevel} <= ${threshold}`
-        )
+          drizzleSql`${schema.products.stockLevel} <= ${threshold}`,
+        ),
       )
       .orderBy(schema.products.stockLevel);
 
@@ -445,7 +499,7 @@ export class ProductManager {
   // Business Logic Methods (with validation and response wrapping)
 
   async createProductWithValidation(
-    productData: Omit<NewProduct, "id" | "createdAt" | "updatedAt">
+    productData: Omit<NewProduct, "id" | "createdAt" | "updatedAt">,
   ): Promise<ProductResponse> {
     try {
       // Validate weight-based product data
@@ -475,7 +529,7 @@ export class ProductManager {
       if (productData.plu) {
         try {
           const existingProductByPLU = await this.getProductByPLU(
-            productData.plu
+            productData.plu,
           );
           if (existingProductByPLU) {
             return {
@@ -509,7 +563,7 @@ export class ProductManager {
   }
 
   async getProductsByBusinessWithResponse(
-    businessId: string
+    businessId: string,
   ): Promise<ProductResponse> {
     try {
       const products = await this.getProductsByBusiness(businessId);
@@ -548,7 +602,7 @@ export class ProductManager {
 
   async updateProductWithValidation(
     id: string,
-    updates: Partial<Omit<Product, "id" | "createdAt" | "updatedAt">>
+    updates: Partial<Omit<Product, "id" | "createdAt" | "updatedAt">>,
   ): Promise<ProductResponse> {
     try {
       // If updating SKU, check it doesn't already exist

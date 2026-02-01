@@ -229,7 +229,7 @@ export function useVirtualCategories({
 
     const categoryIds = getDescendantIds(currentCategoryId);
     return products.filter(
-      (p) => p.category && categoryIds.includes(p.category)
+      (p) => p.categoryId && categoryIds.includes(p.categoryId)
     );
   }, [currentCategoryId, allCategories, products]);
 

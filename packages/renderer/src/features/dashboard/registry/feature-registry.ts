@@ -24,6 +24,7 @@ import {
   Brain,
   Coffee,
   Clock,
+  LayoutGrid,
 } from "lucide-react";
 import { PERMISSIONS } from "@app/shared/constants/permissions";
 import type { FeatureConfig } from "../types/feature-config";
@@ -190,6 +191,13 @@ export const FEATURE_REGISTRY: FeatureConfig[] = [
         permissions: [PERMISSIONS.SETTINGS_MANAGE],
       },
       {
+        id: "quick-sell-config",
+        label: "Quick Sell Buttons",
+        icon: LayoutGrid,
+        onClick: () => {},
+        permissions: [PERMISSIONS.SETTINGS_MANAGE],
+      },
+      {
         id: "security-settings",
         label: "Security Settings",
         icon: Shield,
@@ -326,7 +334,7 @@ export const FEATURE_REGISTRY: FeatureConfig[] = [
  * @returns Array of features in the specified category
  */
 export function getFeaturesByCategory(
-  category: FeatureConfig["category"]
+  category: FeatureConfig["category"],
 ): FeatureConfig[] {
   return FEATURE_REGISTRY.filter((feature) => feature.category === category);
 }

@@ -10,6 +10,7 @@ import { RBAC_ROUTES } from "@/features/rbac/config/navigation";
 import { SALES_ROUTES } from "@/features/sales/config/navigation";
 import { STAFF_ROUTES } from "@/features/staff/config/navigation";
 import { SETTINGS_ROUTES } from "@/features/settings/config/navigation";
+import { QUICK_SELL_ROUTES } from "@/features/quick-sell-config/config/navigation";
 
 export type MappedViewTarget =
   | string
@@ -30,7 +31,7 @@ export type MappedViewTarget =
  */
 export function mapActionToView(
   featureId: string,
-  actionId: string
+  actionId: string,
 ): MappedViewTarget | undefined {
   const mapping: Record<string, Record<string, MappedViewTarget>> = {
     "user-management": {
@@ -59,6 +60,7 @@ export function mapActionToView(
     "system-settings": {
       "general-settings": SETTINGS_ROUTES.GENERAL,
       "store-configuration": SETTINGS_ROUTES.STORE_CONFIGURATION,
+      "quick-sell-config": QUICK_SELL_ROUTES.CONFIG,
       "break-policies": STAFF_ROUTES.BREAK_POLICIES,
     },
     "time-breaks": {

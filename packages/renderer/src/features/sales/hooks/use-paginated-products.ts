@@ -32,6 +32,8 @@ interface UsePaginatedProductsOptions {
   businessId: string | undefined;
   /** Filter by category ID (optional) */
   categoryId?: string | null;
+  /** When true, include products from all descendant categories (default: true) */
+  includeCategoryDescendants?: boolean;
   /** Search term for filtering (optional) */
   searchTerm?: string;
   /** Number of items per page (default: 50) */
@@ -71,6 +73,7 @@ interface UsePaginatedProductsResult {
 export function usePaginatedProducts({
   businessId,
   categoryId,
+  includeCategoryDescendants = true,
   searchTerm,
   pageSize = DEFAULT_PAGE_SIZE,
   useCache = true,
@@ -123,7 +126,7 @@ export function usePaginatedProducts({
           page,
           pageSize,
           categoryId || undefined,
-          searchTerm
+          searchTerm,
         );
         const cached = productCache.get(cacheKey) as
           | {
@@ -156,9 +159,12 @@ export function usePaginatedProducts({
           { page, pageSize },
           {
             categoryId: categoryId || undefined,
+            includeCategoryDescendants: categoryId
+              ? includeCategoryDescendants
+              : undefined,
             searchTerm: searchTerm || undefined,
             isActive: true,
-          }
+          },
         );
 
         // Ignore if component unmounted or newer fetch started
@@ -193,7 +199,7 @@ export function usePaginatedProducts({
               page,
               pageSize,
               categoryId || undefined,
-              searchTerm
+              searchTerm,
             );
             productCache.set(cacheKey, { items, pagination: paginationData });
           }
@@ -218,7 +224,14 @@ export function usePaginatedProducts({
         }
       }
     },
-    [businessId, categoryId, searchTerm, pageSize, useCache]
+    [
+      businessId,
+      categoryId,
+      includeCategoryDescendants,
+      searchTerm,
+      pageSize,
+      useCache,
+    ],
   );
 
   /**
@@ -255,7 +268,7 @@ export function usePaginatedProducts({
   // Memoize hasMore for stability
   const hasMore = useMemo(
     () => pagination.hasNextPage,
-    [pagination.hasNextPage]
+    [pagination.hasNextPage],
   );
 
   return {

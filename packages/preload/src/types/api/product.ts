@@ -37,7 +37,7 @@ export interface ProductAPIPreload {
 
   getByBusiness: (
     businessId: string,
-    includeInactive?: boolean
+    includeInactive?: boolean,
   ) => Promise<any>;
 
   getPaginated: (
@@ -50,10 +50,12 @@ export interface ProductAPIPreload {
     },
     filters?: {
       categoryId?: string;
+      /** When true, include products from all descendant categories */
+      includeCategoryDescendants?: boolean;
       searchTerm?: string;
       stockStatus?: "all" | "in_stock" | "low" | "out_of_stock";
       isActive?: boolean;
-    }
+    },
   ) => Promise<any>;
 
   getById: (id: string) => Promise<any>;
@@ -64,7 +66,7 @@ export interface ProductAPIPreload {
    */
   getLookup: (
     businessId: string,
-    options?: { includeInactive?: boolean; productIds?: string[] }
+    options?: { includeInactive?: boolean; productIds?: string[] },
   ) => Promise<{
     success: boolean;
     products?: Array<{ id: string; name: string; sku: string | null }>;
@@ -98,7 +100,7 @@ export interface ProductAPIPreload {
       isActive: boolean;
       allowPriceOverride: boolean;
       allowDiscount: boolean;
-    }>
+    }>,
   ) => Promise<any>;
 
   delete: (id: string) => Promise<any>;

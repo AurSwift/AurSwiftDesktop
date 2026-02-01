@@ -25,6 +25,8 @@ export interface PaginatedResult<T> {
 
 export interface ProductFilters {
   categoryId?: string;
+  /** When true, include products from all descendant categories */
+  includeCategoryDescendants?: boolean;
   searchTerm?: string;
   stockStatus?: "all" | "in_stock" | "low" | "out_of_stock";
   isActive?: boolean;
@@ -43,7 +45,7 @@ export interface BatchFilters {
 export function calculatePagination(
   totalItems: number,
   page: number,
-  pageSize: number
+  pageSize: number,
 ): PaginatedResult<never>["pagination"] {
   const totalPages = Math.ceil(totalItems / pageSize);
 
@@ -62,7 +64,7 @@ export function calculatePagination(
  */
 export function calculateLimitOffset(
   page: number,
-  pageSize: number
+  pageSize: number,
 ): {
   limit: number;
   offset: number;

@@ -32,6 +32,7 @@ import { UserRoleManager } from "./managers/userRoleManager.js";
 import { UserPermissionManager } from "./managers/userPermissionManager.js";
 import { TerminalManager } from "./managers/terminalManager.js";
 import { BreakPolicyManager } from "./managers/breakPolicyManager.js";
+import { QuickSellManager } from "./managers/quickSellManager.js";
 import { initializeDrizzle, resetDrizzle } from "./drizzle.js";
 import { getDatabaseInfo } from "./utils/dbInfo.js";
 import { isDevelopmentMode } from "./utils/environment.js";
@@ -92,6 +93,9 @@ export interface DatabaseManagers {
 
   // Break policy management
   breakPolicy: BreakPolicyManager;
+
+  // Quick sell button configuration
+  quickSell: QuickSellManager;
 
   getDatabaseInfo: () => {
     path: string;
@@ -375,6 +379,12 @@ export async function getDatabase(): Promise<DatabaseManagers> {
         return createLazy(
           "breakPolicy",
           () => new BreakPolicyManager(drizzle, uuid),
+        );
+      },
+      get quickSell() {
+        return createLazy(
+          "quickSell",
+          () => new QuickSellManager(drizzle, uuid),
         );
       },
 

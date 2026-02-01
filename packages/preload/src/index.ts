@@ -41,6 +41,7 @@ import { licenseAPI } from "./api/license.js";
 import { reportsExportAPI } from "./api/reportsExport.js";
 import { breakPolicyAPI } from "./api/breakPolicy.js";
 import { emailSettingsAPI } from "./api/emailSettings.js";
+import { quickSellAPI } from "./api/quickSell.js";
 import "./api/updates.js";
 
 // Expose APIs to renderer process
@@ -68,7 +69,7 @@ contextBridge.exposeInMainWorld("suppliersAPI", suppliersAPI);
 contextBridge.exposeInMainWorld("expirySettingsAPI", expirySettingsAPI);
 contextBridge.exposeInMainWorld(
   "expiryNotificationsAPI",
-  expiryNotificationsAPI
+  expiryNotificationsAPI,
 );
 contextBridge.exposeInMainWorld("salesUnitSettingsAPI", salesUnitSettingsAPI);
 contextBridge.exposeInMainWorld("stockMovementsAPI", stockMovementsAPI);
@@ -84,9 +85,10 @@ contextBridge.exposeInMainWorld("licenseAPI", licenseAPI);
 contextBridge.exposeInMainWorld("reportsExportAPI", reportsExportAPI);
 contextBridge.exposeInMainWorld("breakPolicyAPI", breakPolicyAPI);
 contextBridge.exposeInMainWorld("emailSettingsAPI", emailSettingsAPI);
+contextBridge.exposeInMainWorld("quickSellAPI", quickSellAPI);
 contextBridge.exposeInMainWorld(
   "systemNotificationsAPI",
-  systemNotificationsAPI
+  systemNotificationsAPI,
 );
 
 // Generic IPC send function for testing and general IPC communication

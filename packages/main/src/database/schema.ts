@@ -3030,6 +3030,132 @@ export type Table = InferSelectModel<typeof table1>;
 export type NewTable = InferInsertModel<typeof table1>;
 
 // ============================================================================
+// QUICK SELL BUTTONS CONFIGURATION
+// ============================================================================
+
+/**
+ * Quick Sell Pages - defines pages for quick sell button layouts
+ * Main Screen + up to 6 Sub Pages (7 total)
+ */
+export const quickSellPages = createTable(
+  "quick_sell_pages",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(), // "Main Screen", "Sub Page 1", etc.
+    pageIndex: integer("page_index").notNull(), // 0 = Main, 1-6 = Sub Pages
+    isMainScreen: integer("is_main_screen", { mode: "boolean" })
+      .notNull()
+      .default(false),
+    isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+    businessId: text("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    ...timestampColumns,
+  },
+  (table) => [
+    index("quick_sell_pages_business_idx").on(table.businessId),
+    index("quick_sell_pages_index_idx").on(table.pageIndex),
+    unique("quick_sell_pages_business_index_unique").on(
+      table.businessId,
+      table.pageIndex,
+    ),
+  ],
+);
+
+/**
+ * Quick Sell Buttons - configurable buttons for rapid product/category selection
+ * Grid: 4 columns × 6 rows = 24 buttons per page
+ */
+export const quickSellButtons = createTable(
+  "quick_sell_buttons",
+  {
+    id: text("id").primaryKey(),
+    pageId: text("page_id")
+      .notNull()
+      .references(() => quickSellPages.id, { onDelete: "cascade" }),
+
+    // Grid position (0-23 for 4x6 grid)
+    position: integer("position").notNull(),
+
+    // Button appearance
+    label: text("label"), // Custom label or null to use product/category name
+    color: text("color").default("#3b82f6"), // Tailwind blue-500 default
+    textColor: text("text_color").default("#ffffff"),
+    shape: text("shape", {
+      enum: ["rectangle", "rounded", "pill"],
+    })
+      .notNull()
+      .default("rounded"),
+
+    // Link type: product, category, or unassigned
+    linkType: text("link_type", {
+      enum: ["product", "category", "unassigned"],
+    })
+      .notNull()
+      .default("unassigned"),
+
+    // Foreign keys (only one should be set based on linkType)
+    productId: text("product_id").references(() => products.id, {
+      onDelete: "set null",
+    }),
+    categoryId: text("category_id").references(() => categories.id, {
+      onDelete: "set null",
+    }),
+
+    // Visibility
+    isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+
+    businessId: text("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    ...timestampColumns,
+  },
+  (table) => [
+    index("quick_sell_buttons_page_idx").on(table.pageId),
+    index("quick_sell_buttons_business_idx").on(table.businessId),
+    index("quick_sell_buttons_product_idx").on(table.productId),
+    index("quick_sell_buttons_category_idx").on(table.categoryId),
+    // Ensure unique position per page
+    unique("quick_sell_buttons_page_position_unique").on(
+      table.pageId,
+      table.position,
+    ),
+  ],
+);
+
+// Relations for quick sell tables
+export const quickSellPagesRelations = relations(
+  quickSellPages,
+  ({ many }) => ({
+    buttons: many(quickSellButtons),
+  }),
+);
+
+export const quickSellButtonsRelations = relations(
+  quickSellButtons,
+  ({ one }) => ({
+    page: one(quickSellPages, {
+      fields: [quickSellButtons.pageId],
+      references: [quickSellPages.id],
+    }),
+    product: one(products, {
+      fields: [quickSellButtons.productId],
+      references: [products.id],
+    }),
+    category: one(categories, {
+      fields: [quickSellButtons.categoryId],
+      references: [categories.id],
+    }),
+  }),
+);
+
+// Type exports for quick sell tables
+export type QuickSellPage = InferSelectModel<typeof quickSellPages>;
+export type NewQuickSellPage = InferInsertModel<typeof quickSellPages>;
+export type QuickSellButton = InferSelectModel<typeof quickSellButtons>;
+export type NewQuickSellButton = InferInsertModel<typeof quickSellButtons>;
+
+// ============================================================================
 // APP VERSION TABLE (Preserve existing table)
 // ============================================================================
 

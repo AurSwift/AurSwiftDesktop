@@ -43,6 +43,7 @@ import type { BasketAPI } from "../types/api/basket";
 import type { ReportsExportAPI } from "../types/api/reports-export";
 import type { BreakPolicyAPI } from "../types/api/break-policy";
 import type { EmailSettingsAPI } from "../types/api/email-settings";
+import type { QuickSellAPI } from "../types/api/quick-sell";
 import type { APIResponse } from "../types/api/common";
 
 declare global {
@@ -134,10 +135,13 @@ declare global {
     // Receipt Email (Gmail) Settings
     emailSettingsAPI: EmailSettingsAPI;
 
+    // Quick Sell Button Configuration
+    quickSellAPI: QuickSellAPI;
+
     // System Notifications
     systemNotificationsAPI?: {
       onNotification: (
-        callback: (data: { type: string; message: string }) => void
+        callback: (data: { type: string; message: string }) => void,
       ) => () => void;
     };
 
