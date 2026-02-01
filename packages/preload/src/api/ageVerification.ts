@@ -4,13 +4,11 @@ export interface CreateAgeVerificationData {
   transactionId?: string;
   transactionItemId?: string;
   productId: string;
-  verificationMethod: "manual" | "scan" | "override";
-  customerBirthdate?: Date | string;
-  calculatedAge?: number;
-  idScanData?: any;
+  verificationMethod: "manual";
+  customerBirthdate: Date | string;
+  calculatedAge: number;
+  verificationNotes?: string;
   verifiedBy: string;
-  managerOverrideId?: string;
-  overrideReason?: string;
   businessId: string;
 }
 
@@ -19,13 +17,11 @@ export interface AgeVerificationRecord {
   transactionId?: string | null;
   transactionItemId?: string | null;
   productId: string;
-  verificationMethod: "manual" | "scan" | "override";
-  customerBirthdate?: Date | null;
-  calculatedAge?: number | null;
-  idScanData?: any;
+  verificationMethod: "manual";
+  customerBirthdate: Date;
+  calculatedAge: number;
+  verificationNotes?: string | null;
   verifiedBy: string;
-  managerOverrideId?: string | null;
-  overrideReason?: string | null;
   businessId: string;
   verifiedAt: Date;
   createdAt: Date;
@@ -35,7 +31,7 @@ export interface AgeVerificationRecord {
 export interface GetAgeVerificationsOptions {
   startDate?: Date;
   endDate?: Date;
-  verificationMethod?: "manual" | "scan" | "override";
+  verificationMethod?: "manual";
 }
 
 export const ageVerificationAPI = {

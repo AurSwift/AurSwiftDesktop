@@ -21,11 +21,10 @@ import type { Product } from "@/types/domain";
  */
 export interface AgeVerificationData {
   verified: boolean;
-  verificationMethod: "manual" | "scan" | "override";
-  customerBirthdate?: string;
-  calculatedAge?: number;
-  overrideReason?: string;
-  managerId?: string;
+  verificationMethod: "manual";
+  customerBirthdate: string;
+  calculatedAge: number;
+  verificationNotes?: string;
 }
 
 interface AgeVerificationModalProps {
@@ -41,14 +40,11 @@ export const AgeVerificationModal: React.FC<AgeVerificationModalProps> = ({
   product,
   onVerify,
   onCancel,
-  currentUser,
+  currentUser: _currentUser,
 }) => {
-  const [verificationMethod, setVerificationMethod] = useState<
-    "manual" | "scan" | "override"
-  >("manual");
   const [birthdate, setBirthdate] = useState("");
   const [calculatedAge, setCalculatedAge] = useState<number | null>(null);
-  const [overrideReason, setOverrideReason] = useState("");
+  const [verificationNotes, setVerificationNotes] = useState("");
 
   // Get minimum age from restriction level
   const getMinimumAge = (level: string): number => {
@@ -91,58 +87,25 @@ export const AgeVerificationModal: React.FC<AgeVerificationModalProps> = ({
   };
 
   const handleVerify = () => {
-    if (verificationMethod === "manual") {
-      if (!birthdate || !calculatedAge) {
-        toast.error("Please enter customer date of birth");
-        return;
-      }
-
-      if (calculatedAge < requiredAge) {
-        toast.error(
-          `Customer is ${calculatedAge} years old. Minimum age required: ${requiredAge}`
-        );
-        return;
-      }
-
-      onVerify({
-        verified: true,
-        verificationMethod: "manual",
-        customerBirthdate: birthdate,
-        calculatedAge: calculatedAge,
-      });
-    } else if (verificationMethod === "scan") {
-      // TODO: Implement ID scanner integration
-      // Tracking: docs/TODO_TRACKING.md#4
-      toast.info("ID scanner integration coming soon");
-      // For now, allow manual entry
-      if (!birthdate || !calculatedAge) {
-        toast.error("Please enter customer date of birth");
-        return;
-      }
-      onVerify({
-        verified: true,
-        verificationMethod: "scan",
-        customerBirthdate: birthdate,
-        calculatedAge: calculatedAge,
-      });
-    } else if (verificationMethod === "override") {
-      if (!overrideReason.trim()) {
-        toast.error("Please provide a reason for override");
-        return;
-      }
-
-      if (currentUser?.role !== "manager" && currentUser?.role !== "admin") {
-        toast.error("Only managers can override age verification");
-        return;
-      }
-
-      onVerify({
-        verified: true,
-        verificationMethod: "override",
-        overrideReason: overrideReason.trim(),
-        managerId: currentUser?.id,
-      });
+    if (!birthdate || !calculatedAge) {
+      toast.error("Please enter customer date of birth");
+      return;
     }
+
+    if (calculatedAge < requiredAge) {
+      toast.error(
+        `Customer is ${calculatedAge} years old. Minimum age required: ${requiredAge}`
+      );
+      return;
+    }
+
+    onVerify({
+      verified: true,
+      verificationMethod: "manual",
+      customerBirthdate: birthdate,
+      calculatedAge: calculatedAge,
+      verificationNotes: verificationNotes.trim() || undefined,
+    });
   };
 
   const isEligible = calculatedAge !== null && calculatedAge >= requiredAge;
@@ -179,144 +142,71 @@ export const AgeVerificationModal: React.FC<AgeVerificationModalProps> = ({
             )}
           </div>
 
-          {/* Verification Method Selection */}
+          {/* Manual Entry */}
           <div className="space-y-2">
-            <Label className="text-xs sm:text-sm">Verification Method</Label>
-            <div className="grid grid-cols-3 gap-2">
-              <Button
-                variant={
-                  verificationMethod === "manual" ? "default" : "outline"
-                }
-                size="sm"
-                onClick={() => setVerificationMethod("manual")}
-                className="h-9 sm:h-10 text-xs sm:text-sm touch-manipulation"
+            <Label htmlFor="birthdate" className="text-xs sm:text-sm">
+              Customer Date of Birth
+            </Label>
+            <Input
+              id="birthdate"
+              type="date"
+              value={birthdate}
+              onChange={(e) => handleDateChange(e.target.value)}
+              max={new Date().toISOString().split("T")[0]}
+              className="w-full h-10 sm:h-11 text-sm sm:text-base"
+            />
+
+            {calculatedAge !== null && (
+              <div
+                className={`p-2 sm:p-3 rounded-lg ${
+                  isEligible
+                    ? "bg-green-50 border border-green-200"
+                    : "bg-red-50 border border-red-200"
+                }`}
               >
-                Manual
-              </Button>
-              <Button
-                variant={verificationMethod === "scan" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setVerificationMethod("scan")}
-                disabled={true} // TODO: Enable when ID scanner is integrated
-                // Tracking: docs/TODO_TRACKING.md#4
-                className="h-9 sm:h-10 text-xs sm:text-sm touch-manipulation"
-              >
-                ID Scan
-              </Button>
-              <Button
-                variant={
-                  verificationMethod === "override" ? "default" : "outline"
-                }
-                size="sm"
-                onClick={() => setVerificationMethod("override")}
-                disabled={
-                  currentUser?.role !== "manager" &&
-                  currentUser?.role !== "admin"
-                }
-                className="h-9 sm:h-10 text-xs sm:text-sm touch-manipulation"
-              >
-                Override
-              </Button>
-            </div>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+                  <div className="flex items-center gap-2">
+                    {isEligible ? (
+                      <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 shrink-0" />
+                    ) : (
+                      <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 shrink-0" />
+                    )}
+                    <span className="font-semibold text-xs sm:text-sm">
+                      Age: {calculatedAge} years
+                    </span>
+                  </div>
+                  <Badge
+                    variant={isEligible ? "default" : "destructive"}
+                    className={`text-caption ${
+                      isEligible ? "bg-green-600" : "bg-red-600"
+                    }`}
+                  >
+                    {isEligible
+                      ? "Eligible to purchase"
+                      : "Below required age"}
+                  </Badge>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Manual Entry */}
-          {verificationMethod === "manual" && (
-            <div className="space-y-2">
-              <Label htmlFor="birthdate" className="text-xs sm:text-sm">
-                Customer Date of Birth
-              </Label>
-              <Input
-                id="birthdate"
-                type="date"
-                value={birthdate}
-                onChange={(e) => handleDateChange(e.target.value)}
-                max={new Date().toISOString().split("T")[0]}
-                className="w-full h-10 sm:h-11 text-sm sm:text-base"
-              />
-
-              {calculatedAge !== null && (
-                <div
-                  className={`p-2 sm:p-3 rounded-lg ${
-                    isEligible
-                      ? "bg-green-50 border border-green-200"
-                      : "bg-red-50 border border-red-200"
-                  }`}
-                >
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
-                    <div className="flex items-center gap-2">
-                      {isEligible ? (
-                        <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 shrink-0" />
-                      ) : (
-                        <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 shrink-0" />
-                      )}
-                      <span className="font-semibold text-xs sm:text-sm">
-                        Age: {calculatedAge} years
-                      </span>
-                    </div>
-                    <Badge
-                      variant={isEligible ? "default" : "destructive"}
-                      className={`text-caption ${
-                        isEligible ? "bg-green-600" : "bg-red-600"
-                      }`}
-                    >
-                      {isEligible
-                        ? "Eligible to purchase"
-                        : "Below required age"}
-                    </Badge>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ID Scan */}
-          {verificationMethod === "scan" && (
-            <div className="p-3 sm:p-4 bg-blue-50 rounded-lg text-center">
-              <p className="text-xs sm:text-sm text-slate-600">
-                ID Scanner integration coming soon. Please use manual entry for
-                now.
-              </p>
-              <div className="mt-3 space-y-2">
-                <Label htmlFor="scan-birthdate" className="text-xs sm:text-sm">
-                  Customer Date of Birth
-                </Label>
-                <Input
-                  id="scan-birthdate"
-                  type="date"
-                  value={birthdate}
-                  onChange={(e) => handleDateChange(e.target.value)}
-                  max={new Date().toISOString().split("T")[0]}
-                  className="w-full h-10 sm:h-11 text-sm sm:text-base"
-                />
-                {calculatedAge !== null && (
-                  <p className="text-xs sm:text-sm font-semibold">
-                    Age: {calculatedAge} years
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Manager Override */}
-          {verificationMethod === "override" && (
-            <div className="space-y-2">
-              <Label htmlFor="override-reason" className="text-xs sm:text-sm">
-                Override Reason
-              </Label>
-              <Input
-                id="override-reason"
-                type="text"
-                value={overrideReason}
-                onChange={(e) => setOverrideReason(e.target.value)}
-                placeholder="e.g., Parent present, Valid ID shown, etc."
-                className="w-full h-10 sm:h-11 text-sm sm:text-base"
-              />
-              <p className="text-caption text-slate-500">
-                Manager override will be logged for audit purposes.
-              </p>
-            </div>
-          )}
+          {/* Verification Notes */}
+          <div className="space-y-2">
+            <Label htmlFor="verification-notes" className="text-xs sm:text-sm">
+              Verification Notes (Optional)
+            </Label>
+            <Input
+              id="verification-notes"
+              type="text"
+              value={verificationNotes}
+              onChange={(e) => setVerificationNotes(e.target.value)}
+              placeholder="e.g., Customer showed ID, Regular customer, etc."
+              className="w-full h-10 sm:h-11 text-sm sm:text-base"
+            />
+            <p className="text-caption text-slate-500">
+              Add any additional notes about this verification for audit purposes.
+            </p>
+          </div>
         </div>
 
         <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
@@ -329,18 +219,10 @@ export const AgeVerificationModal: React.FC<AgeVerificationModalProps> = ({
           </Button>
           <Button
             onClick={handleVerify}
-            disabled={verificationMethod === "manual" && !isEligible}
-            className={`w-full sm:w-auto min-h-[44px] h-10 sm:h-11 text-sm sm:text-base touch-manipulation ${
-              verificationMethod === "override"
-                ? "bg-orange-600 hover:bg-orange-700"
-                : ""
-            }`}
+            disabled={!isEligible}
+            className="w-full sm:w-auto min-h-[44px] h-10 sm:h-11 text-sm sm:text-base touch-manipulation"
           >
-            <span className="truncate">
-              {verificationMethod === "override"
-                ? "Override & Continue"
-                : "Verify & Continue"}
-            </span>
+            Verify & Continue
           </Button>
         </DialogFooter>
       </DialogContent>

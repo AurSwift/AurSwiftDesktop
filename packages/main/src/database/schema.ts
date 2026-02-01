@@ -1301,24 +1301,24 @@ export const ageVerificationRecords = createTable(
       .notNull()
       .references(() => products.id, { onDelete: "cascade" }),
 
-    // Verification method
+    // Verification method (simplified to manual only)
     verificationMethod: text("verification_method", {
-      enum: ["manual", "scan", "override"],
+      enum: ["manual"],
     }).notNull(),
 
     // Customer age information
-    customerBirthdate: integer("customer_birthdate", { mode: "timestamp_ms" }), // Date of birth from ID or manual entry
-    calculatedAge: integer("calculated_age"), // Calculated age at time of verification
+    customerBirthdate: integer("customer_birthdate", {
+      mode: "timestamp_ms",
+    }).notNull(), // Date of birth from manual entry
+    calculatedAge: integer("calculated_age").notNull(), // Calculated age at time of verification
 
-    // ID scan data (if method was "scan")
-    idScanData: text("id_scan_data", { mode: "json" }), // JSON data from ID scanner
+    // Verification notes
+    verificationNotes: text("verification_notes"), // Optional notes about the verification
 
     // Staff information
     verifiedBy: text("verified_by")
       .notNull()
       .references(() => users.id), // Staff member who verified
-    managerOverrideId: text("manager_override_id").references(() => users.id), // Manager who approved override (if method was "override")
-    overrideReason: text("override_reason"), // Reason for manager override
 
     // Business reference
     businessId: text("business_id")
@@ -2263,9 +2263,6 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   ageVerificationsPerformed: many(ageVerificationRecords, {
     relationName: "verifiedBy",
   }),
-  ageVerificationOverrides: many(ageVerificationRecords, {
-    relationName: "managerOverride",
-  }),
   cartSessions: many(cartSessions),
 }));
 
@@ -2523,6 +2520,10 @@ export const transactionsRelations = relations(
       fields: [transactions.businessId],
       references: [businesses.id],
     }),
+    terminal: one(terminals, {
+      fields: [transactions.terminalId],
+      references: [terminals.id],
+    }),
     originalTransaction: one(transactions, {
       fields: [transactions.originalTransactionId],
       references: [transactions.id],
@@ -2582,6 +2583,10 @@ export const cartSessionsRelations = relations(
       fields: [cartSessions.businessId],
       references: [businesses.id],
     }),
+    terminal: one(terminals, {
+      fields: [cartSessions.terminal_id],
+      references: [terminals.id],
+    }),
     verifiedByUser: one(users, {
       fields: [cartSessions.verifiedBy],
       references: [users.id],
@@ -2625,11 +2630,6 @@ export const ageVerificationRecordsRelations = relations(
       fields: [ageVerificationRecords.verifiedBy],
       references: [users.id],
       relationName: "verifiedBy",
-    }),
-    managerOverride: one(users, {
-      fields: [ageVerificationRecords.managerOverrideId],
-      references: [users.id],
-      relationName: "managerOverride",
     }),
     business: one(businesses, {
       fields: [ageVerificationRecords.businessId],

@@ -18,13 +18,11 @@ export interface CreateAgeVerificationData {
   transactionId?: string;
   transactionItemId?: string;
   productId: string;
-  verificationMethod: "manual" | "scan" | "override";
-  customerBirthdate?: Date;
-  calculatedAge?: number;
-  idScanData?: any;
+  verificationMethod: "manual";
+  customerBirthdate: Date;
+  calculatedAge: number;
+  verificationNotes?: string;
   verifiedBy: string;
-  managerOverrideId?: string;
-  overrideReason?: string;
   businessId: string;
 }
 
@@ -55,13 +53,14 @@ export class AgeVerificationManager {
     if (!data.businessId) {
       throw new Error("Business ID is required");
     }
-    if (!["manual", "scan", "override"].includes(data.verificationMethod)) {
-      throw new Error("Invalid verification method");
+    if (data.verificationMethod !== "manual") {
+      throw new Error("Only manual verification method is supported");
     }
-
-    // If override method, managerOverrideId is required
-    if (data.verificationMethod === "override" && !data.managerOverrideId) {
-      throw new Error("Manager override ID is required for override method");
+    if (!data.customerBirthdate) {
+      throw new Error("Customer birthdate is required");
+    }
+    if (!data.calculatedAge && data.calculatedAge !== 0) {
+      throw new Error("Calculated age is required");
     }
 
     await this.db.insert(schema.ageVerificationRecords).values({
@@ -70,14 +69,10 @@ export class AgeVerificationManager {
       transactionItemId: data.transactionItemId ?? null,
       productId: data.productId,
       verificationMethod: data.verificationMethod,
-      customerBirthdate: data.customerBirthdate
-        ? new Date(data.customerBirthdate)
-        : null,
-      calculatedAge: data.calculatedAge ?? null,
-      idScanData: data.idScanData ? JSON.stringify(data.idScanData) : null,
+      customerBirthdate: new Date(data.customerBirthdate),
+      calculatedAge: data.calculatedAge,
+      verificationNotes: data.verificationNotes ?? null,
       verifiedBy: data.verifiedBy,
-      managerOverrideId: data.managerOverrideId ?? null,
-      overrideReason: data.overrideReason ?? null,
       businessId: data.businessId,
       verifiedAt: new Date(),
     });
@@ -101,12 +96,7 @@ export class AgeVerificationManager {
       throw new Error("Age verification record not found");
     }
 
-    return {
-      ...record,
-      idScanData: record.idScanData
-        ? JSON.parse(record.idScanData as string)
-        : null,
-    } as AgeVerificationRecord;
+    return record as AgeVerificationRecord;
   }
 
   /**
@@ -121,12 +111,7 @@ export class AgeVerificationManager {
       .where(eq(schema.ageVerificationRecords.transactionId, transactionId))
       .orderBy(desc(schema.ageVerificationRecords.verifiedAt));
 
-    return records.map((record) => ({
-      ...record,
-      idScanData: record.idScanData
-        ? JSON.parse(record.idScanData as string)
-        : null,
-    })) as AgeVerificationRecord[];
+    return records as AgeVerificationRecord[];
   }
 
   /**
@@ -143,12 +128,7 @@ export class AgeVerificationManager {
       )
       .orderBy(desc(schema.ageVerificationRecords.verifiedAt));
 
-    return records.map((record) => ({
-      ...record,
-      idScanData: record.idScanData
-        ? JSON.parse(record.idScanData as string)
-        : null,
-    })) as AgeVerificationRecord[];
+    return records as AgeVerificationRecord[];
   }
 
   /**
@@ -197,12 +177,7 @@ export class AgeVerificationManager {
       .where(and(...conditions))
       .orderBy(desc(schema.ageVerificationRecords.verifiedAt));
 
-    return records.map((record) => ({
-      ...record,
-      idScanData: record.idScanData
-        ? JSON.parse(record.idScanData as string)
-        : null,
-    })) as AgeVerificationRecord[];
+    return records as AgeVerificationRecord[];
   }
 
   /**
@@ -217,12 +192,7 @@ export class AgeVerificationManager {
       .where(eq(schema.ageVerificationRecords.productId, productId))
       .orderBy(desc(schema.ageVerificationRecords.verifiedAt));
 
-    return records.map((record) => ({
-      ...record,
-      idScanData: record.idScanData
-        ? JSON.parse(record.idScanData as string)
-        : null,
-    })) as AgeVerificationRecord[];
+    return records as AgeVerificationRecord[];
   }
 
   /**
@@ -261,12 +231,7 @@ export class AgeVerificationManager {
       .where(and(...conditions))
       .orderBy(desc(schema.ageVerificationRecords.verifiedAt));
 
-    return records.map((record) => ({
-      ...record,
-      idScanData: record.idScanData
-        ? JSON.parse(record.idScanData as string)
-        : null,
-    })) as AgeVerificationRecord[];
+    return records as AgeVerificationRecord[];
   }
 }
 
