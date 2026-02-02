@@ -99,7 +99,7 @@
     "baseline-browser-mapping": "^2.9.15",
     "conventional-changelog-cli": "^5.0.0",
     "create-vite": "7.1.2",
-    "electron": "^38.1.2",
+    "electron": "^40.1.0",
     "electron-builder": "26.0.12",
     "glob": "^11.0.3",
     "jsdom": "^25.0.0",
