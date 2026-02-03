@@ -30,7 +30,12 @@ export interface SalesReportsTransactionTableProps {
   className?: string;
 }
 
-type SortField = "timestamp" | "receiptNumber" | "total" | "type" | "paymentMethod";
+type SortField =
+  | "timestamp"
+  | "receiptNumber"
+  | "total"
+  | "type"
+  | "paymentMethod";
 type SortDirection = "asc" | "desc";
 
 export function SalesReportsTransactionTable({
@@ -44,7 +49,9 @@ export function SalesReportsTransactionTable({
   const [pageSize, setPageSize] = useState(25);
   const [sortField, setSortField] = useState<SortField>("timestamp");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-  const [typeFilter, setTypeFilter] = useState<"all" | "sale" | "refund" | "void">("all");
+  const [typeFilter, setTypeFilter] = useState<
+    "all" | "sale" | "refund" | "void"
+  >("all");
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<
     "all" | "cash" | "card" | "mixed"
   >("all");
@@ -61,7 +68,9 @@ export function SalesReportsTransactionTable({
 
     // Filter by payment method
     if (paymentMethodFilter !== "all") {
-      filtered = filtered.filter((t) => t.paymentMethod === paymentMethodFilter);
+      filtered = filtered.filter(
+        (t) => t.paymentMethod === paymentMethodFilter,
+      );
     }
 
     // Search filter
@@ -72,8 +81,8 @@ export function SalesReportsTransactionTable({
           t.receiptNumber.toLowerCase().includes(query) ||
           t.timestamp.toLowerCase().includes(query) ||
           t.items.some((item) =>
-            item.productName.toLowerCase().includes(query)
-          )
+            item.productName.toLowerCase().includes(query),
+          ),
       );
     }
 
@@ -158,23 +167,20 @@ export function SalesReportsTransactionTable({
       }
       setCurrentPage(1);
     },
-    [sortField, sortDirection]
+    [sortField, sortDirection],
   );
 
-  const handleSearchChange = useCallback(
-    (value: string) => {
-      setSearchQuery(value);
-      setCurrentPage(1);
-    },
-    []
-  );
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  }, []);
 
   const handleTypeFilterChange = useCallback(
     (value: "all" | "sale" | "refund" | "void") => {
       setTypeFilter(value);
       handleFilterChange();
     },
-    [handleFilterChange]
+    [handleFilterChange],
   );
 
   const handlePaymentMethodFilterChange = useCallback(
@@ -182,7 +188,7 @@ export function SalesReportsTransactionTable({
       setPaymentMethodFilter(value);
       handleFilterChange();
     },
-    [handleFilterChange]
+    [handleFilterChange],
   );
 
   if (isLoading) {
@@ -244,7 +250,9 @@ export function SalesReportsTransactionTable({
             </div>
             <p className="text-sm font-medium">{emptyStateMessage}</p>
             <p className="text-xs mt-1">
-              {searchQuery || typeFilter !== "all" || paymentMethodFilter !== "all"
+              {searchQuery ||
+              typeFilter !== "all" ||
+              paymentMethodFilter !== "all"
                 ? "Try adjusting your filters"
                 : "Transactions will appear here once processed"}
             </p>
@@ -289,7 +297,9 @@ export function SalesReportsTransactionTable({
                         <ArrowUpDown className="ml-2 h-3 w-3" />
                       </Button>
                     </TableHead>
-                    <TableHead className="hidden sm:table-cell">Items</TableHead>
+                    <TableHead className="hidden sm:table-cell">
+                      Items
+                    </TableHead>
                     <TableHead>
                       <Button
                         variant="ghost"

@@ -61,15 +61,14 @@ export function SalesReportsStatsCard({
   };
 
   return (
-    <Card className={cn("bg-white border-slate-200 shadow-sm h-full", className)}>
+    <Card
+      className={cn("bg-white border-slate-200 shadow-sm h-full", className)}
+    >
       <CardHeader className="pb-2 sm:pb-3">
         <CardTitle className="flex items-center justify-between text-sm sm:text-base font-semibold">
           <span className="text-slate-700">{title}</span>
           <Icon
-            className={cn(
-              "h-4 w-4 sm:h-5 sm:w-5 shrink-0",
-              neutralTheme.icon
-            )}
+            className={cn("h-4 w-4 sm:h-5 sm:w-5 shrink-0", neutralTheme.icon)}
           />
         </CardTitle>
       </CardHeader>
@@ -84,15 +83,13 @@ export function SalesReportsStatsCard({
             <div
               className={cn(
                 "text-xl sm:text-2xl font-bold",
-                neutralTheme.value
+                neutralTheme.value,
               )}
             >
               {formatValue(value)}
             </div>
             {change && (
-              <p className="text-xs sm:text-sm text-slate-600 mt-2">
-                {change}
-              </p>
+              <p className="text-xs sm:text-sm text-slate-600 mt-2">{change}</p>
             )}
           </>
         )}
@@ -100,4 +97,3 @@ export function SalesReportsStatsCard({
     </Card>
   );
 }
-

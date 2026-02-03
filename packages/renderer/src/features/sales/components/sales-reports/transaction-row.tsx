@@ -69,7 +69,7 @@ export function TransactionRow({
       <TableRow
         className={cn(
           "cursor-pointer hover:bg-muted/50",
-          isExpanded && "bg-muted/30"
+          isExpanded && "bg-muted/30",
         )}
         onClick={onToggleExpand}
       >
@@ -94,7 +94,7 @@ export function TransactionRow({
           <div
             className={cn(
               "flex items-center justify-center w-8 h-8 rounded-full",
-              getTypeBadgeColor(transaction.type)
+              getTypeBadgeColor(transaction.type),
             )}
           >
             {getTypeIcon(transaction.type)}
@@ -108,7 +108,8 @@ export function TransactionRow({
         </TableCell>
         {showItemsColumn && (
           <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
-            {transaction.items.length} item{transaction.items.length !== 1 ? "s" : ""}
+            {transaction.items.length} item
+            {transaction.items.length !== 1 ? "s" : ""}
           </TableCell>
         )}
         <TableCell>
@@ -117,7 +118,7 @@ export function TransactionRow({
               variant="outline"
               className={cn(
                 "text-xs uppercase",
-                getPaymentMethodBadgeColor(transaction.paymentMethod)
+                getPaymentMethodBadgeColor(transaction.paymentMethod),
               )}
             >
               {transaction.paymentMethod}
@@ -144,9 +145,7 @@ export function TransactionRow({
           <div
             className={cn(
               "font-semibold",
-              transaction.type === "sale"
-                ? "text-green-700"
-                : "text-red-700"
+              transaction.type === "sale" ? "text-green-700" : "text-red-700",
             )}
           >
             {transaction.type === "sale"
@@ -158,6 +157,3 @@ export function TransactionRow({
     </>
   );
 }
-
-
-
