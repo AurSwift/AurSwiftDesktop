@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { cn } from "@/shared/utils/cn";
 import { KeyboardKey } from "./keyboard-key";
 import { LAYOUTS, type KeyboardMode, type KeyType } from "./keyboard-layouts";
@@ -32,6 +32,7 @@ export function AdaptiveKeyboard({
   const [mode, setMode] = useState<KeyboardMode>(initialMode);
   const [isShifted, setIsShifted] = useState(false);
   const [isCapsLock, setIsCapsLock] = useState(false);
+  const keyboardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (inputType === "number" || inputType === "tel") {
@@ -42,6 +43,22 @@ export function AdaptiveKeyboard({
       setMode(initialMode);
     }
   }, [inputType, initialMode]);
+
+  useEffect(() => {
+    if (!visible || !onClose) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (!target) return;
+      if (keyboardRef.current?.contains(target)) return;
+      onClose();
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [visible, onClose]);
 
   const handleKeyPress = useCallback(
     (key: KeyType) => {
@@ -106,6 +123,7 @@ export function AdaptiveKeyboard({
 
   return (
     <div
+      ref={keyboardRef}
       className={cn(
         "w-full bg-slate-100 dark:bg-slate-800 border-t-2 border-slate-300 dark:border-slate-600 rounded-t-xl shadow-2xl",
         // Container query support
@@ -122,155 +140,6 @@ export function AdaptiveKeyboard({
       role="application"
       aria-label="Adaptive Virtual Keyboard"
     >
-      {/* Header */}
-      <div
-        className={cn(
-          "flex items-center justify-between px-0.5",
-          // Small screens
-          "mb-1.5 gap-1",
-          // Medium screens
-          "md:mb-2 md:gap-1.5",
-          // Large screens
-          "lg:mb-2 lg:gap-1.5",
-        )}
-      >
-        <div className="flex items-center gap-1 md:gap-1.5">
-          <div
-            className={cn(
-              "flex items-center gap-0.5 bg-teal-100 dark:bg-teal-600/20 rounded-full",
-              // Small screens
-              "px-1.5 py-0.5",
-              // Medium screens
-              "md:px-2 md:py-1",
-              // Large screens
-              "lg:px-2.5 lg:py-1",
-            )}
-          >
-            <span className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4">
-              {getModeIcon(mode)}
-            </span>
-            <span
-              className={cn(
-                "font-medium text-teal-700 dark:text-teal-400 capitalize",
-                "text-xs",
-              )}
-            >
-              {mode}
-            </span>
-          </div>
-          {(isShifted || isCapsLock) && (
-            <div
-              className={cn(
-                "flex items-center gap-0.5 bg-amber-100 dark:bg-amber-500/20 rounded-full",
-                // Small screens
-                "px-1.5 py-0.5",
-                // Medium screens
-                "md:px-2 md:py-1",
-                // Large screens
-                "lg:px-2.5 lg:py-1",
-              )}
-            >
-              <span
-                className={cn(
-                  "font-medium text-amber-700 dark:text-amber-400",
-                "text-xs",
-                )}
-              >
-                {isCapsLock ? "CAPS" : "SHIFT"}
-              </span>
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-0.5 md:gap-1">
-          {/* Mode Quick Switch */}
-          <div
-            className={cn(
-              "flex items-center bg-slate-200 dark:bg-slate-700 rounded-lg",
-              // Small screens
-              "gap-0.5 p-0.5",
-              // Medium screens
-              "md:gap-1 md:p-1",
-              // Large screens
-              "lg:gap-1 lg:p-1",
-            )}
-          >
-            <button
-              onClick={() => setMode("qwerty")}
-              className={cn(
-                "rounded-md transition-colors text-slate-700 dark:text-white",
-                // Small screens
-                "p-1",
-                // Medium screens
-                "md:p-1",
-                // Large screens
-                "lg:p-1.5",
-                mode === "qwerty"
-                  ? "bg-teal-500 dark:bg-teal-600 text-white"
-                  : "hover:bg-slate-300 dark:hover:bg-slate-600",
-              )}
-              aria-label="QWERTY mode"
-            >
-              <Keyboard className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4" />
-            </button>
-            <button
-              onClick={() => setMode("numeric")}
-              className={cn(
-                "rounded-md transition-colors text-slate-700 dark:text-white",
-                // Small screens
-                "p-1",
-                // Medium screens
-                "md:p-1",
-                // Large screens
-                "lg:p-1.5",
-                mode === "numeric"
-                  ? "bg-teal-500 dark:bg-teal-600 text-white"
-                  : "hover:bg-slate-300 dark:hover:bg-slate-600",
-              )}
-              aria-label="Numeric mode"
-            >
-              <Calculator className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4" />
-            </button>
-            <button
-              onClick={() => setMode("symbols")}
-              className={cn(
-                "rounded-md transition-colors text-slate-700 dark:text-white",
-                // Small screens
-                "p-1",
-                // Medium screens
-                "md:p-1",
-                // Large screens
-                "lg:p-1.5",
-                mode === "symbols"
-                  ? "bg-teal-500 dark:bg-teal-600 text-white"
-                  : "hover:bg-slate-300 dark:hover:bg-slate-600",
-              )}
-              aria-label="Symbols mode"
-            >
-              <Hash className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4" />
-            </button>
-          </div>
-
-          {onClose && (
-            <button
-              onClick={onClose}
-              className={cn(
-                "rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors text-slate-700 dark:text-white",
-                // Small screens
-                "p-1",
-                // Medium screens
-                "md:p-1",
-                // Large screens
-                "lg:p-1.5",
-              )}
-              aria-label="Close keyboard"
-            >
-              <X className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4" />
-            </button>
-          )}
-        </div>
-      </div>
-
       {/* Keyboard Grid */}
       <div
         className={cn(
@@ -307,22 +176,22 @@ export function AdaptiveKeyboard({
                 (isShifted || isCapsLock ? key.key.toUpperCase() : key.key);
 
               return (
-                  <KeyboardKey
-                    key={`${rowIndex}-${keyIndex}`}
-                    onClick={() => handleKeyPress(key)}
-                    variant={key.variant}
-                    style={{
-                      gridColumn: `span ${key.width ?? 1} / span ${
-                        key.width ?? 1
-                      }`,
-                    }}
-                    className={cn(
-                      // Numeric mode specific sizing
+                <KeyboardKey
+                  key={`${rowIndex}-${keyIndex}`}
+                  onClick={() => handleKeyPress(key)}
+                  variant={key.variant}
+                  style={{
+                    gridColumn: `span ${key.width ?? 1} / span ${
+                      key.width ?? 1
+                    }`,
+                  }}
+                  className={cn(
+                    // Numeric mode specific sizing
                       mode === "numeric" &&
                         cn(
-                          "min-h-[50px] text-base",
-                          "md:min-h-[55px] md:text-lg",
-                          "lg:min-h-[60px] lg:text-lg",
+                          "min-h-[42px] text-base",
+                          "md:min-h-[46px] md:text-lg",
+                          "lg:min-h-[50px] lg:text-lg",
                         ),
                   )}
                   ariaLabel={key.action || key.key}
