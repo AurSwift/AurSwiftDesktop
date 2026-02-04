@@ -286,15 +286,20 @@ export function AdaptiveKeyboard({
           <div
             key={rowIndex}
             className={cn(
-              "flex justify-center",
+              "grid w-full",
               // Small screens
               "gap-0.5",
               // Medium screens
               "md:gap-1",
               // Large screens
               "lg:gap-1",
-              mode === "numeric" && "max-w-xs mx-auto",
             )}
+            style={{
+              gridTemplateColumns: `repeat(${row.reduce(
+                (sum, key) => sum + (key.width ?? 1),
+                0,
+              )}, minmax(0, 1fr))`,
+            }}
           >
             {row.map((key, keyIndex) => {
               const displayKey =
@@ -302,36 +307,23 @@ export function AdaptiveKeyboard({
                 (isShifted || isCapsLock ? key.key.toUpperCase() : key.key);
 
               return (
-                <KeyboardKey
-                  key={`${rowIndex}-${keyIndex}`}
-                  onClick={() => handleKeyPress(key)}
-                  variant={key.variant}
-                  className={cn(
-                    // Width 2 (wide keys)
-                    key.width === 2 &&
-                      cn(
-                        "min-w-[70px] md:min-w-20 lg:min-w-[90px]",
-                        "in-[.license-keyboard]:min-w-[58px] in-[.license-keyboard]:md:min-w-[65px] in-[.license-keyboard]:lg:min-w-[75px]",
-                      ),
-                    // Width 4
-                    key.width === 4 &&
-                      cn(
-                        "min-w-[120px] md:min-w-[140px] lg:min-w-40",
-                        "in-[.license-keyboard]:min-w-[95px] in-[.license-keyboard]:md:min-w-[110px] in-[.license-keyboard]:lg:min-w-[130px]",
-                      ),
-                    // Width 5 (extra wide - spacebar)
-                    key.width === 5 &&
-                      cn(
-                        "min-w-[150px] flex-1 max-w-[220px] md:min-w-[180px] md:max-w-[250px] lg:min-w-[200px] lg:max-w-[280px]",
-                        "in-[.license-keyboard]:min-w-[120px] in-[.license-keyboard]:max-w-[180px] in-[.license-keyboard]:md:min-w-[140px] in-[.license-keyboard]:md:max-w-[200px] in-[.license-keyboard]:lg:min-w-40 in-[.license-keyboard]:lg:max-w-[230px]",
-                      ),
-                    // Numeric mode specific sizing
-                    mode === "numeric" &&
-                      cn(
-                        "min-h-[50px] min-w-[60px] text-base",
-                        "md:min-h-[55px] md:min-w-[65px] md:text-lg",
-                        "lg:min-h-[60px] lg:min-w-[70px] lg:text-lg",
-                      ),
+                  <KeyboardKey
+                    key={`${rowIndex}-${keyIndex}`}
+                    onClick={() => handleKeyPress(key)}
+                    variant={key.variant}
+                    style={{
+                      gridColumn: `span ${key.width ?? 1} / span ${
+                        key.width ?? 1
+                      }`,
+                    }}
+                    className={cn(
+                      // Numeric mode specific sizing
+                      mode === "numeric" &&
+                        cn(
+                          "min-h-[50px] text-base",
+                          "md:min-h-[55px] md:text-lg",
+                          "lg:min-h-[60px] lg:text-lg",
+                        ),
                   )}
                   ariaLabel={key.action || key.key}
                 >

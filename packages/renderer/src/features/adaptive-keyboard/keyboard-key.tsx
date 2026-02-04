@@ -1,5 +1,5 @@
 import { cn } from "@/shared/utils/cn";
-import { memo, type ReactNode } from "react";
+import { memo, type ReactNode, type CSSProperties } from "react";
 
 export type KeyVariant =
   | "default"
@@ -17,6 +17,7 @@ interface KeyboardKeyProps {
   className?: string;
   disabled?: boolean;
   ariaLabel?: string;
+  style?: CSSProperties;
 }
 
 const variantStyles: Record<KeyVariant, string> = {
@@ -42,6 +43,7 @@ export const KeyboardKey = memo(function KeyboardKey({
   className,
   disabled = false,
   ariaLabel,
+  style,
 }: KeyboardKeyProps) {
   return (
     <button
@@ -51,18 +53,19 @@ export const KeyboardKey = memo(function KeyboardKey({
       aria-label={
         ariaLabel || (typeof children === "string" ? children : undefined)
       }
+      style={style}
       className={cn(
         "flex items-center justify-center rounded-lg border border-slate-300/50 dark:border-slate-500/50",
         // Base responsive sizing
-        "min-h-11 min-w-8 px-1.5 py-2 text-xs",
+        "min-h-11 min-w-0 w-full px-1.5 py-2 text-xs",
         // License keyboard specific sizing (narrower container - smaller keys)
-        "in-[.license-keyboard]:min-h-[38px] in-[.license-keyboard]:min-w-7 in-[.license-keyboard]:px-1 in-[.license-keyboard]:py-1.5 in-[.license-keyboard]:text-xs",
+        "in-[.license-keyboard]:min-h-[38px] in-[.license-keyboard]:min-w-0 in-[.license-keyboard]:px-1 in-[.license-keyboard]:py-1.5 in-[.license-keyboard]:text-xs",
         // Medium screens (md: 768px+)
-        "md:min-h-12 md:min-w-9 md:px-2 md:py-2.5 md:text-sm",
-        "in-[.license-keyboard]:md:min-h-[42px] in-[.license-keyboard]:md:min-w-[30px] in-[.license-keyboard]:md:text-xs",
+        "md:min-h-12 md:min-w-0 md:px-2 md:py-2.5 md:text-sm",
+        "in-[.license-keyboard]:md:min-h-[42px] in-[.license-keyboard]:md:min-w-0 in-[.license-keyboard]:md:text-xs",
         // Large screens (lg: 1024px+)
-        "lg:min-h-[52px] lg:min-w-10 lg:px-2 lg:py-3 lg:text-sm",
-        "in-[.license-keyboard]:lg:min-h-[46px] in-[.license-keyboard]:lg:min-w-[34px] in-[.license-keyboard]:lg:text-sm",
+        "lg:min-h-[52px] lg:min-w-0 lg:px-2 lg:py-3 lg:text-sm",
+        "in-[.license-keyboard]:lg:min-h-[46px] in-[.license-keyboard]:lg:min-w-0 in-[.license-keyboard]:lg:text-sm",
         "font-medium",
         "select-none touch-manipulation",
         "shadow-sm active:shadow-none",
