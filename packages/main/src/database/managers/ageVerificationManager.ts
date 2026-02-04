@@ -39,7 +39,7 @@ export class AgeVerificationManager {
    * Create age verification record
    */
   async createAgeVerification(
-    data: CreateAgeVerificationData
+    data: CreateAgeVerificationData,
   ): Promise<AgeVerificationRecord> {
     const recordId = this.uuid.v4();
 
@@ -83,9 +83,7 @@ export class AgeVerificationManager {
   /**
    * Get age verification record by ID
    */
-  async getAgeVerificationById(
-    id: string
-  ): Promise<AgeVerificationRecord> {
+  async getAgeVerificationById(id: string): Promise<AgeVerificationRecord> {
     const [record] = await this.db
       .select()
       .from(schema.ageVerificationRecords)
@@ -103,7 +101,7 @@ export class AgeVerificationManager {
    * Get age verification records by transaction ID
    */
   async getAgeVerificationsByTransaction(
-    transactionId: string
+    transactionId: string,
   ): Promise<AgeVerificationRecord[]> {
     const records = await this.db
       .select()
@@ -118,13 +116,13 @@ export class AgeVerificationManager {
    * Get age verification records by transaction item ID
    */
   async getAgeVerificationsByTransactionItem(
-    transactionItemId: string
+    transactionItemId: string,
   ): Promise<AgeVerificationRecord[]> {
     const records = await this.db
       .select()
       .from(schema.ageVerificationRecords)
       .where(
-        eq(schema.ageVerificationRecords.transactionItemId, transactionItemId)
+        eq(schema.ageVerificationRecords.transactionItemId, transactionItemId),
       )
       .orderBy(desc(schema.ageVerificationRecords.verifiedAt));
 
@@ -140,25 +138,21 @@ export class AgeVerificationManager {
       startDate?: Date;
       endDate?: Date;
       verificationMethod?: "manual" | "scan" | "override";
-    }
+    },
   ): Promise<AgeVerificationRecord[]> {
-    const conditions = [eq(schema.ageVerificationRecords.businessId, businessId)];
+    const conditions = [
+      eq(schema.ageVerificationRecords.businessId, businessId),
+    ];
 
     if (options?.startDate) {
       conditions.push(
-        gte(
-          schema.ageVerificationRecords.verifiedAt,
-          options.startDate
-        )
+        gte(schema.ageVerificationRecords.verifiedAt, options.startDate),
       );
     }
 
     if (options?.endDate) {
       conditions.push(
-        lte(
-          schema.ageVerificationRecords.verifiedAt,
-          options.endDate
-        )
+        lte(schema.ageVerificationRecords.verifiedAt, options.endDate),
       );
     }
 
@@ -166,8 +160,8 @@ export class AgeVerificationManager {
       conditions.push(
         eq(
           schema.ageVerificationRecords.verificationMethod,
-          options.verificationMethod
-        )
+          options.verificationMethod as "manual",
+        ),
       );
     }
 
@@ -184,7 +178,7 @@ export class AgeVerificationManager {
    * Get age verification records by product ID
    */
   async getAgeVerificationsByProduct(
-    productId: string
+    productId: string,
   ): Promise<AgeVerificationRecord[]> {
     const records = await this.db
       .select()
@@ -203,25 +197,19 @@ export class AgeVerificationManager {
     options?: {
       startDate?: Date;
       endDate?: Date;
-    }
+    },
   ): Promise<AgeVerificationRecord[]> {
     const conditions = [eq(schema.ageVerificationRecords.verifiedBy, staffId)];
 
     if (options?.startDate) {
       conditions.push(
-        gte(
-          schema.ageVerificationRecords.verifiedAt,
-          options.startDate
-        )
+        gte(schema.ageVerificationRecords.verifiedAt, options.startDate),
       );
     }
 
     if (options?.endDate) {
       conditions.push(
-        lte(
-          schema.ageVerificationRecords.verifiedAt,
-          options.endDate
-        )
+        lte(schema.ageVerificationRecords.verifiedAt, options.endDate),
       );
     }
 
@@ -234,4 +222,3 @@ export class AgeVerificationManager {
     return records as AgeVerificationRecord[];
   }
 }
-

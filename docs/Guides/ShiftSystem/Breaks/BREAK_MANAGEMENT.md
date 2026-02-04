@@ -28,13 +28,6 @@ Industry-standard break management system implemented following labor law compli
   - "End Shift & Logout" (clocks out)
 - Shows current work duration
 
-### 4. **BreakReminder** ([break-reminder.tsx](./components/break-reminder.tsx))
-
-- Automatic popup after 6 hours of work without meal break
-- Labor law compliance reminder
-- Educational content about meal breaks
-- One-click break start
-
 ### 5. **useActiveShift Hook** ([hooks/use-active-shift.ts](./hooks/use-active-shift.ts))
 
 - Real-time shift and break status

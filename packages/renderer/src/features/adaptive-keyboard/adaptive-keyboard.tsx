@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { cn } from "@/shared/utils/cn";
 import { KeyboardKey } from "./keyboard-key";
 import { LAYOUTS, type KeyboardMode, type KeyType } from "./keyboard-layouts";
-import { Keyboard, Hash, Calculator, X } from "lucide-react";
 
 interface AdaptiveKeyboardProps {
   onInput: (value: string) => void;
@@ -108,17 +107,6 @@ export function AdaptiveKeyboard({
 
   const currentLayout = LAYOUTS[mode];
 
-  const getModeIcon = (currentMode: KeyboardMode) => {
-    switch (currentMode) {
-      case "qwerty":
-        return <Keyboard className="h-4 w-4" />;
-      case "numeric":
-        return <Calculator className="h-4 w-4" />;
-      case "symbols":
-        return <Hash className="h-4 w-4" />;
-    }
-  };
-
   if (!visible) return null;
 
   return (
@@ -187,12 +175,12 @@ export function AdaptiveKeyboard({
                   }}
                   className={cn(
                     // Numeric mode specific sizing
-                      mode === "numeric" &&
-                        cn(
-                          "min-h-[42px] text-base",
-                          "md:min-h-[46px] md:text-lg",
-                          "lg:min-h-[50px] lg:text-lg",
-                        ),
+                    mode === "numeric" &&
+                      cn(
+                        "min-h-[42px] text-base",
+                        "md:min-h-[46px] md:text-lg",
+                        "lg:min-h-[50px] lg:text-lg",
+                      ),
                   )}
                   ariaLabel={key.action || key.key}
                 >

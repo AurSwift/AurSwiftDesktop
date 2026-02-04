@@ -5,7 +5,7 @@ import { useAuth } from "@/shared/hooks/use-auth";
 import { LicenseHeaderBadge } from "./license-header-badge";
 import { WiFiStatusIcon } from "@/features/license";
 import { LogoutConfirmationDialog } from "./logout-confirmation-dialog";
-import { BreakReminder } from "./break-reminder";
+
 import { useActiveShift } from "../hooks/use-active-shift";
 import { getLogger } from "@/shared/utils/logger";
 import {
@@ -38,9 +38,6 @@ export function DashboardHeader({ subtitle }: DashboardHeaderProps) {
     workDuration,
   } = useActiveShift(user?.id);
 
-  // Check if user has had a meal break today
-  const hasMealBreakToday = false; // TODO: Implement check for meal breaks in shift history
-
   const handleLogoutClick = () => {
     if (activeShift) {
       // Show confirmation dialog if user has active shift
@@ -55,10 +52,6 @@ export function DashboardHeader({ subtitle }: DashboardHeaderProps) {
     if (!user) return;
     // Backend automatically handles clock-out during logout
     await logout();
-  };
-
-  const handleTakeBreak = () => {
-    // No need for separate state, break controls manages its own dialog
   };
 
   const handleBreakStarted = async () => {
@@ -141,7 +134,9 @@ export function DashboardHeader({ subtitle }: DashboardHeaderProps) {
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setShowChangePinDialog(true)}>
+                  <DropdownMenuItem
+                    onClick={() => setShowChangePinDialog(true)}
+                  >
                     <Lock className="mr-2 h-4 w-4" />
                     Change PIN
                   </DropdownMenuItem>
@@ -186,16 +181,6 @@ export function DashboardHeader({ subtitle }: DashboardHeaderProps) {
       )}
 
       {/* Break Reminder (shows after 6 hours without meal break) */}
-      {activeShift &&
-        !activeBreak &&
-        (
-          <BreakReminder
-            workDuration={workDuration}
-            hasMealBreakToday={hasMealBreakToday}
-            onTakeBreak={handleTakeBreak}
-          />
-        )}
     </>
   );
 }
-
