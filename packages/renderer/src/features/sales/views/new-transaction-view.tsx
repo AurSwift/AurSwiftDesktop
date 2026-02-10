@@ -8,6 +8,7 @@ import { toast } from "sonner";
 // Hooks
 import { useAuth } from "@/shared/hooks/use-auth";
 import { useActiveShift } from "@/features/dashboard/hooks/use-active-shift";
+import { useNavigation } from "@/navigation/hooks/use-navigation";
 import {
   useReceiptPrintingFlow,
   useThermalPrinter,
@@ -107,6 +108,7 @@ export function NewTransactionView({
 }: NewTransactionViewProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { navigateTo } = useNavigation();
   const salesUnitSettings = useSalesUnitSettings(user?.businessId);
   void embeddedInDashboard;
 
@@ -1022,6 +1024,10 @@ export function NewTransactionView({
     toast.info("Receipts feature coming soon");
   }, []);
 
+  const handleBackOffice = useCallback(() => {
+    navigateTo("dashboard");
+  }, [navigateTo]);
+
   // Clear selected item if it's no longer in the cart (EPOS-style)
   useEffect(() => {
     if (selectedCartItem) {
@@ -1252,6 +1258,7 @@ export function NewTransactionView({
             onCount={() => setShowCountModal(true)}
             onReceipts={handleReceipts}
             onLogOff={logout}
+            onBackOffice={handleBackOffice}
             hasActiveShift={!!shift.activeShift}
           />
 

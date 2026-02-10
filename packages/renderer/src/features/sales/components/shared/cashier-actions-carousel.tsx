@@ -1,9 +1,10 @@
 import {
   Calculator,
   ChevronRight,
-  RotateCcw,
-  Receipt,
+  LayoutDashboard,
   LogOut,
+  Receipt,
+  RotateCcw,
 } from "lucide-react";
 import React from "react";
 import { useState } from "react";
@@ -17,6 +18,8 @@ interface QuickActionsCarouselProps {
   onCount: () => void;
   onReceipts?: () => void;
   onLogOff: () => void;
+  /** Navigate to dashboard (back office). */
+  onBackOffice?: () => void;
   hasActiveShift?: boolean; // Enable buttons only when cashier has active shift
   /** When false, Refund is disabled and shows permission tooltip. Requires TRANSACTIONS_OVERRIDE. */
   canVoidAndRefund?: boolean;
@@ -27,6 +30,7 @@ export const QuickActionsCarousel: React.FC<QuickActionsCarouselProps> = ({
   onCount,
   onReceipts,
   onLogOff,
+  onBackOffice,
   hasActiveShift = false,
   canVoidAndRefund = true,
 }) => {
@@ -76,6 +80,19 @@ export const QuickActionsCarousel: React.FC<QuickActionsCarouselProps> = ({
             title: "Receipts",
             onClick: onReceipts,
             hoverColor: "hover:bg-amber-50",
+            disabled: false,
+            disabledTitle: undefined as string | undefined,
+            requiresShift: false,
+          },
+        ]
+      : []),
+    ...(onBackOffice
+      ? [
+          {
+            icon: LayoutDashboard,
+            title: "Back Office",
+            onClick: onBackOffice,
+            hoverColor: "hover:bg-violet-50",
             disabled: false,
             disabledTitle: undefined as string | undefined,
             requiresShift: false,
