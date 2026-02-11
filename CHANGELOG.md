@@ -2,6 +2,61 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.42.0](https://github.com/AurSwift/AurSwift/compare/v1.41.2...v1.42.0) (2026-02-11)
+
+
+* Merge pull request #26 from AurSwift/dependabot/npm_and_yarn/eslint-plugin-react-hooks-7.0.1 ([](https://github.com/AurSwift/AurSwift/commit/d4907c16d5734f3fc9fb6418cb4a078aa7f66844)), closes [#26](https://github.com/AurSwift/AurSwift/issues/26)
+
+
+### chore
+
+* **deps-dev:** bump eslint-plugin-react-hooks from 5.2.0 to 7.0.1 ([](https://github.com/AurSwift/AurSwift/commit/6470b892f594ec8b385d4620f68c5d9328fb489b))
+
+
+### delete
+
+* **docs:** remove outdated authentication and permissions documentation ([](https://github.com/AurSwift/AurSwift/commit/973be07441d38f7161b82ee93df521e9c36764e0))
+
+
+### docs
+
+* Relocate 'Need of Cart Item Table' guide and add 'Total Calculation' guide to the Cart documentation section. ([](https://github.com/AurSwift/AurSwift/commit/21a1d2a33e4e947d25e1648795925ab92e360be2))
+
+
+### feat
+
+* **cashier-actions-carousel:** add Back Office navigation action to QuickActionsCarousel ([](https://github.com/AurSwift/AurSwift/commit/3d33870d2044d33433353db3a64e583318c1fea0))
+* **stats-cards:** add change severity styling and badges for metrics ([](https://github.com/AurSwift/AurSwift/commit/acccfac90d9fc79eb11e66286d6bf999a621a552))
+* add quick sell configuration feature ([](https://github.com/AurSwift/AurSwift/commit/d3a28c32e8fad20abcb151bd4b358a9907279a20))
+* **sales-reports:** enhance components with improved formatting and new props for value display ([](https://github.com/AurSwift/AurSwift/commit/b26dc4f3c23ca76379ff1cfa7aaca0eaba6d5cb6))
+* **date-range-picker:** enhance date range picker with touch-friendly calendar and improved selection logic ([](https://github.com/AurSwift/AurSwift/commit/853de387f067a50ed2a15b0c6a5a972fe931533d))
+* **adaptive-keyboard:** enhance keyboard layout with grid styling and dynamic key sizing ([](https://github.com/AurSwift/AurSwift/commit/291b4850a2b03d6f34945f1f70c264d51de4367d))
+* **license-management:** enhance license info modal and dashboard views with connection status and grace period details ([](https://github.com/AurSwift/AurSwift/commit/5dea71ddb67da1349c3fc6ccfefd63304cf01913))
+* **user-management:** enhance user management features with new components and improved functionality ([](https://github.com/AurSwift/AurSwift/commit/f923f1d3c3a30197eee7561819c2f132c8c16fe2))
+* **adaptive-keyboard:** implement pointer event handling for keyboard closure and enhance key styling ([](https://github.com/AurSwift/AurSwift/commit/da9dcb4aeadb5484f2a693949e15f84bc15b4264))
+* **database-schema:** update verification method to support future enhancements ([](https://github.com/AurSwift/AurSwift/commit/f2e42f266465e73ee88e0a4f004d29113f93115e))
+
+
+### fix
+
+* add missing commas in various components for syntax correctness ([](https://github.com/AurSwift/AurSwift/commit/2075c65033105e29c5bffae554f8f27ae0b342c0))
+
+
+### refactor
+
+* **sales-reports:** improve code formatting and consistency in sales components ([](https://github.com/AurSwift/AurSwift/commit/8092d99c11a4f79b09b6d4ead536ad22373f85a1))
+* **break-reminder:** remove BreakReminder component and related references ([](https://github.com/AurSwift/AurSwift/commit/9f8305b3038179ea43a798fa1067727c346c5e15))
+* **sales:** remove time change detection and related components ([](https://github.com/AurSwift/AurSwift/commit/4908f3518870c0ea5487768730328a0e62f76412))
+* **logging:** replace console.error with logger in various components ([](https://github.com/AurSwift/AurSwift/commit/405badf8d5d25cf34c9895bcaf75d65ec295b42d))
+* **database:** simplify age verification schema and update related logic ([](https://github.com/AurSwift/AurSwift/commit/e918c34db93c59088a380c9094215c77c008c3a1))
+* **stats-cards:** standardize string quotes and improve code formatting ([](https://github.com/AurSwift/AurSwift/commit/9bdde68b2be541c5f1275a66b1071e9437032755))
+* update imports to new types location and remove deprecated files ([](https://github.com/AurSwift/AurSwift/commit/bcf9de3e27d7d47320693c944c65b90967084c3a))
+
+
+### style
+
+* **age-verification-manager:** format code for consistency and readability ([](https://github.com/AurSwift/AurSwift/commit/5e38ddd2597fdb4e02f023b96bd3ccbc902e0f13))
+
 ## [1.41.2](https://github.com/AurSwift/AurSwift/compare/v1.41.1...v1.41.2) (2026-01-29)
 
 
