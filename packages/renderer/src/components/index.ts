@@ -4,6 +4,7 @@ export { PublicRoute } from "../components/public-route";
 export { RetryableLazyRoute } from "../components/retryable-lazy-route";
 export { RouteErrorBoundary } from "../components/route-error-boundary";
 export { useRetryContext } from "../components/retry-context";
+export { MiniBar } from "../components/mini-bar";
 export { ViewLoadErrorBoundary } from "../components/view-load-error-boundary";
 export { ViewLoadingFallback } from "../components/view-loading-fallback";
 export { ViewTransitionContainer } from "../components/view-transition-container";

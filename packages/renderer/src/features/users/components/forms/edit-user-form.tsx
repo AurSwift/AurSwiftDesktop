@@ -241,15 +241,16 @@ export function EditUserForm({
                 <FormControl>
                   <AdaptiveFormField
                     {...form.register("firstName")}
+                    variant="borderOnly"
                     label="First Name *"
                     value={keyboard.formValues.firstName || ""}
                     error={form.formState.errors.firstName?.message}
                     onFocus={() => keyboard.handleFieldFocus("firstName")}
                     placeholder="John"
                     className={cn(
-                      "text-xs sm:text-sm md:text-base lg:text-base h-8 sm:h-9 md:h-10",
+                      "text-xs sm:text-sm md:text-base",
                       keyboard.activeField === "firstName" &&
-                        "ring-2 ring-primary border-primary"
+                        "border-primary"
                     )}
                     readOnly
                   />
@@ -267,15 +268,16 @@ export function EditUserForm({
                 <FormControl>
                   <AdaptiveFormField
                     {...form.register("lastName")}
+                    variant="borderOnly"
                     label="Last Name *"
                     value={keyboard.formValues.lastName || ""}
                     error={form.formState.errors.lastName?.message}
                     onFocus={() => keyboard.handleFieldFocus("lastName")}
                     placeholder="Smith"
                     className={cn(
-                      "text-xs sm:text-sm md:text-base lg:text-base h-8 sm:h-9 md:h-10",
+                      "text-xs sm:text-sm md:text-base",
                       keyboard.activeField === "lastName" &&
-                        "ring-2 ring-primary border-primary"
+                        "border-primary"
                     )}
                     readOnly
                   />
@@ -299,7 +301,7 @@ export function EditUserForm({
                 <Input
                   type="email"
                   disabled
-                  className="bg-gray-50 text-xs sm:text-sm md:text-base lg:text-base h-8 sm:h-9 md:h-10"
+                  className="rounded-none border-0 border-b-2 border-input bg-transparent px-0 py-2 text-xs sm:text-sm md:text-base h-9 sm:h-10 focus-visible:ring-0"
                   {...field}
                 />
               </FormControl>
@@ -320,15 +322,16 @@ export function EditUserForm({
               <FormControl>
                 <AdaptiveFormField
                   {...form.register("address")}
+                  variant="borderOnly"
                   label="Address"
                   value={keyboard.formValues.address || ""}
                   error={form.formState.errors.address?.message}
                   onFocus={() => keyboard.handleFieldFocus("address")}
                   placeholder="123 Main Street, City, State"
                   className={cn(
-                    "text-xs sm:text-sm md:text-base lg:text-base h-8 sm:h-9 md:h-10",
+                    "text-xs sm:text-sm md:text-base",
                     keyboard.activeField === "address" &&
-                      "ring-2 ring-primary border-primary"
+                      "border-primary"
                   )}
                   readOnly
                 />
@@ -355,9 +358,9 @@ export function EditUserForm({
                 <FormControl>
                   <SelectTrigger
                     className={cn(
-                      "min-h-12 h-auto rounded-lg border-2 bg-input px-4 py-3",
-                      "text-xs sm:text-sm md:text-base lg:text-base font-medium",
-                      "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      "min-h-10 h-auto rounded-none border-0 border-b-2 bg-transparent pl-0 pr-8 py-2",
+                      "text-xs sm:text-sm md:text-base font-medium",
+                      "focus-visible:ring-0 focus-visible:border-primary border-input hover:bg-transparent"
                     )}
                   >
                     {(() => {

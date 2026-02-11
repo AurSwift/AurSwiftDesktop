@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -17,6 +16,7 @@ interface UserFiltersProps {
   onSearchChange: (value: string) => void;
   filterRole: string;
   onRoleFilterChange: (value: string) => void;
+  variant?: "card" | "miniBar";
 }
 
 export function UserFilters({
@@ -24,6 +24,7 @@ export function UserFilters({
   onSearchChange,
   filterRole,
   onRoleFilterChange,
+  variant = "card",
 }: UserFiltersProps) {
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -99,52 +100,41 @@ export function UserFilters({
     setKeyboardVisible(true);
   };
 
+  const content = (
+    <div
+      className={cn(
+        "flex flex-col sm:flex-row gap-3 sm:gap-4",
+        variant === "miniBar" && "w-full",
+      )}
+    >
+      <div className="flex-1 min-w-0">
+        <div className="relative">
+          <Search className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
+          <Input
+            ref={searchInputRef}
+            placeholder="Search staff by name or email..."
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            onFocus={handleSearchFocus}
+            className={cn(
+              "pl-7 sm:pl-10 text-xs sm:text-sm md:text-base",
+              variant === "miniBar" ? "h-8 sm:h-9" : "h-8 sm:h-9 md:h-10",
+            )}
+          />
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <>
-      <Card>
-        <CardContent className="p-3 sm:p-4 md:p-6">
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-            <div className="flex-1 min-w-0">
-              <div className="relative">
-                <Search className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
-                <Input
-                  ref={searchInputRef}
-                  placeholder="Search staff by name or email..."
-                  value={searchTerm}
-                  onChange={(e) => onSearchChange(e.target.value)}
-                  onFocus={handleSearchFocus}
-                  className="pl-7 sm:pl-10 h-8 sm:h-9 md:h-10 text-xs sm:text-sm md:text-base"
-                />
-              </div>
-            </div>
-            <Select value={filterRole} onValueChange={onRoleFilterChange}>
-              <SelectTrigger className="w-full sm:w-48 h-8 sm:h-9 md:h-10 text-xs sm:text-sm md:text-base">
-                <SelectValue placeholder="Filter by role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem
-                  value="all"
-                  className="text-xs sm:text-sm md:text-base"
-                >
-                  All Roles
-                </SelectItem>
-                <SelectItem
-                  value="cashier"
-                  className="text-xs sm:text-sm md:text-base"
-                >
-                  Cashiers
-                </SelectItem>
-                <SelectItem
-                  value="manager"
-                  className="text-xs sm:text-sm md:text-base"
-                >
-                  Managers
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      {variant === "card" ? (
+        <div className="rounded-lg border bg-background p-3 sm:p-4 md:p-6">
+          {content}
+        </div>
+      ) : (
+        content
+      )}
 
       {/* Adaptive Keyboard - Bottom attached, full width, no gap */}
       {keyboardVisible && (
@@ -172,7 +162,7 @@ export function UserFilters({
             inputType="text"
             visible={keyboardVisible}
             onClose={() => setKeyboardVisible(false)}
-            className="!rounded-none"
+            className="rounded-none!"
           />
         </div>
       )}

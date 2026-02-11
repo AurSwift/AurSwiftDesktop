@@ -199,15 +199,16 @@ export function AddUserForm({
                 <FormControl>
                   <AdaptiveFormField
                     {...form.register("firstName")}
+                    variant="borderOnly"
                     label="First Name *"
                     value={keyboard.formValues.firstName || ""}
                     error={form.formState.errors.firstName?.message}
                     onFocus={() => keyboard.handleFieldFocus("firstName")}
                     placeholder="John"
                     className={cn(
-                      "text-xs sm:text-sm md:text-base lg:text-base h-8 sm:h-9 md:h-10",
+                      "text-xs sm:text-sm md:text-base",
                       keyboard.activeField === "firstName" &&
-                        "ring-2 ring-primary border-primary"
+                        "border-primary"
                     )}
                     readOnly
                   />
@@ -225,15 +226,16 @@ export function AddUserForm({
                 <FormControl>
                   <AdaptiveFormField
                     {...form.register("lastName")}
+                    variant="borderOnly"
                     label="Last Name *"
                     value={keyboard.formValues.lastName || ""}
                     error={form.formState.errors.lastName?.message}
                     onFocus={() => keyboard.handleFieldFocus("lastName")}
                     placeholder="Smith"
                     className={cn(
-                      "text-xs sm:text-sm md:text-base lg:text-base h-8 sm:h-9 md:h-10",
+                      "text-xs sm:text-sm md:text-base",
                       keyboard.activeField === "lastName" &&
-                        "ring-2 ring-primary border-primary"
+                        "border-primary"
                     )}
                     readOnly
                   />
@@ -253,15 +255,16 @@ export function AddUserForm({
               <FormControl>
                 <AdaptiveFormField
                   {...form.register("email")}
+                  variant="borderOnly"
                   label="Email *"
                   value={keyboard.formValues.email || ""}
                   error={form.formState.errors.email?.message}
                   onFocus={() => keyboard.handleFieldFocus("email")}
                   placeholder="john.smith@example.com"
                   className={cn(
-                    "text-xs sm:text-sm md:text-base lg:text-base h-8 sm:h-9 md:h-10",
+                    "text-xs sm:text-sm md:text-base",
                     keyboard.activeField === "email" &&
-                      "ring-2 ring-primary border-primary"
+                      "border-primary"
                   )}
                   readOnly
                 />
@@ -280,15 +283,16 @@ export function AddUserForm({
               <FormControl>
                 <AdaptiveFormField
                   {...form.register("username")}
+                  variant="borderOnly"
                   label="Username *"
                   value={keyboard.formValues.username || ""}
                   error={form.formState.errors.username?.message}
                   onFocus={() => keyboard.handleFieldFocus("username")}
                   placeholder="Choose a username"
                   className={cn(
-                    "text-xs sm:text-sm md:text-base lg:text-base h-8 sm:h-9 md:h-10",
+                    "text-xs sm:text-sm md:text-base",
                     keyboard.activeField === "username" &&
-                      "ring-2 ring-primary border-primary"
+                      "border-primary"
                   )}
                   readOnly
                 />
@@ -307,15 +311,16 @@ export function AddUserForm({
               <FormControl>
                 <AdaptiveFormField
                   {...form.register("address")}
+                  variant="borderOnly"
                   label="Address"
                   value={keyboard.formValues.address || ""}
                   error={form.formState.errors.address?.message}
                   onFocus={() => keyboard.handleFieldFocus("address")}
                   placeholder="123 Main Street, City, State"
                   className={cn(
-                    "text-xs sm:text-sm md:text-base lg:text-base h-8 sm:h-9 md:h-10",
+                    "text-xs sm:text-sm md:text-base",
                     keyboard.activeField === "address" &&
-                      "ring-2 ring-primary border-primary"
+                      "border-primary"
                   )}
                   readOnly
                 />
@@ -342,9 +347,9 @@ export function AddUserForm({
                 <FormControl>
                   <SelectTrigger
                     className={cn(
-                      "min-h-12 h-auto rounded-lg border-2 bg-input px-4 py-3",
-                      "text-xs sm:text-sm md:text-base lg:text-base font-medium",
-                      "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      "min-h-10 h-auto rounded-none border-0 border-b-2 bg-transparent pl-0 pr-8 py-2",
+                      "text-xs sm:text-sm md:text-base font-medium",
+                      "focus-visible:ring-0 focus-visible:border-primary border-input hover:bg-transparent"
                     )}
                   >
                     {(() => {
@@ -425,6 +430,7 @@ export function AddUserForm({
               <FormControl>
                 <AdaptiveFormField
                   {...form.register("pin")}
+                  variant="borderOnly"
                   label="PIN *"
                   type="password"
                   value={keyboard.formValues.pin || ""}
@@ -432,9 +438,9 @@ export function AddUserForm({
                   onFocus={() => keyboard.handleFieldFocus("pin")}
                   placeholder="Enter 4-digit PIN"
                   className={cn(
-                    "text-xs sm:text-sm md:text-base lg:text-base h-8 sm:h-9 md:h-10",
+                    "text-xs sm:text-sm md:text-base",
                     keyboard.activeField === "pin" &&
-                      "ring-2 ring-primary border-primary"
+                      "border-primary"
                   )}
                   readOnly
                   maxLength={4}

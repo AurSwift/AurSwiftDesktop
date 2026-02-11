@@ -1,9 +1,10 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Plus, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Plus, Shield } from "lucide-react";
 import { useAuth } from "@/shared/hooks/use-auth";
 import { useUserPermissions } from "@/features/dashboard/hooks/use-user-permissions";
 import { PERMISSIONS } from "@app/shared/constants/permissions";
+import { MiniBar } from "@/components/mini-bar";
 
 import { getLogger } from "@/shared/utils/logger";
 const logger = getLogger("user-management-view");
@@ -58,6 +59,15 @@ export default function UserManagementView({ onBack }: { onBack: () => void }) {
   const { deleteStaffUser } = useDeleteUser();
 
   const canManageUsers = hasPermission(PERMISSIONS.USERS_MANAGE);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const totalItems = filteredUsers.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [totalItems]);
 
   // Handle loading state
   if (!user || isLoadingPermissions) {
@@ -130,7 +140,7 @@ export default function UserManagementView({ onBack }: { onBack: () => void }) {
   const handleDeleteUser = async (userId: string, userName: string) => {
     if (
       !confirm(
-        `Are you sure you want to delete ${userName}? This action cannot be undone.`
+        `Are you sure you want to delete ${userName}? This action cannot be undone.`,
       )
     ) {
       return;
@@ -143,63 +153,93 @@ export default function UserManagementView({ onBack }: { onBack: () => void }) {
   };
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-[1600px] space-y-6 sm:space-y-8">
+    <div className="container mx-auto p-1 max-w-[1600px] flex flex-col flex-1 min-h-0 gap-4 sm:gap-6">
       {/* Focus target to avoid accidental navigation on drawer close */}
-      <div ref={safeFocusRef} tabIndex={-1} className="sr-only" aria-hidden="true" />
-      {/* Back button */}
-      <div className="flex items-center space-x-2 sm:space-x-4">
-        <Button
-          variant="outline"
-          onClick={onBack}
-          className="flex items-center space-x-2 h-9 sm:h-10"
-        >
-          <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span className="text-sm sm:text-base">Back to Dashboard</span>
-        </Button>
-      </div>
-
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 break-words tracking-tight">
-            User Management
-          </h1>
-          <p className="text-sm sm:text-base text-muted-foreground mt-1 break-words">
-            Manage staff members and their permissions
-          </p>
-        </div>
-
-        <Button
-          className="w-full sm:w-auto h-10 sm:h-11 text-sm sm:text-base shadow-sm"
-          onClick={openAddDialog}
-        >
-          <Plus className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-          Add Staff Member
-        </Button>
-      </div>
-
-      {/* Stats Cards */}
-      <UserStatsCards staffUsers={staffUsers} />
-
-      {/* Filters */}
-      <UserFilters
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        filterRole={filterRole}
-        onRoleFilterChange={setFilterRole}
+      <div
+        ref={safeFocusRef}
+        tabIndex={-1}
+        className="sr-only"
+        aria-hidden="true"
+      />
+      <MiniBar
+        className="shrink-0"
+        title="User Management"
+        onBack={onBack}
+        backAriaLabel="Back to Dashboard"
+        action={{
+          label: "New",
+          onClick: openAddDialog,
+          icon: <Plus className="h-4 w-4" />,
+          ariaLabel: "Add staff member",
+        }}
+        center={
+          <div className="w-full max-w-md">
+            <UserFilters
+              variant="miniBar"
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              filterRole={filterRole}
+              onRoleFilterChange={setFilterRole}
+            />
+          </div>
+        }
+        right={
+          <div className="flex items-center gap-1 sm:gap-2">
+            <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
+              {totalItems === 0
+                ? "0 / 0"
+                : `${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, totalItems)} / ${totalItems}`}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage <= 1 || totalPages <= 1}
+              aria-label="Previous page"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages || totalPages <= 1}
+              aria-label="Next page"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        }
       />
 
-      {/* Staff Table */}
-      <UserTable
-        users={filteredUsers}
-        isLoading={isLoadingUsers}
-        searchTerm={searchTerm}
-        filterRole={filterRole}
-        onViewUser={openViewDialog}
-        onEditUser={openEditDialog}
-        onDeleteUser={handleDeleteUser}
-        onAddUser={openAddDialog}
-      />
+      {/* Staff Table - fills remaining height */}
+      <div className="flex-1 min-h-0 flex flex-col">
+        <UserTable
+          users={filteredUsers}
+          isLoading={isLoadingUsers}
+          searchTerm={searchTerm}
+          filterRole={filterRole}
+          onResetFilters={() => {
+            setSearchTerm("");
+            setFilterRole("all");
+          }}
+          onViewUser={openViewDialog}
+          onEditUser={openEditDialog}
+          onDeleteUser={handleDeleteUser}
+          onAddUser={openAddDialog}
+          pagination={{
+            currentPage,
+            pageSize,
+            onPageChange: setCurrentPage,
+            onPageSizeChange: (size) => {
+              setPageSize(size);
+              setCurrentPage(1);
+            },
+          }}
+        />
+      </div>
 
       {/* Add User Drawer */}
       <AddUserDrawer
