@@ -1,4 +1,8 @@
 export { RoleCard } from "./role-card";
+export { RoleFilters } from "./role-filters";
+export { RoleTable } from "./role-table";
+export { RoleTableRow } from "./role-table-row";
+export { RoleEmptyState } from "./role-empty-state";
 export { CreateRoleDialog } from "./create-role-dialog";
 export { CreateRoleDrawer } from "./create-role-drawer";
 export { EditRoleDialog } from "./edit-role-dialog";

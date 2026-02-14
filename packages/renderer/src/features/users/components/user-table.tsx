@@ -1,4 +1,3 @@
-import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -24,9 +23,15 @@ import { UserTableRow } from "./user-table-row";
 import type { StaffUser } from "../schemas/types";
 import {
   getUserRoleDisplayName,
-  getUserRoleName,
 } from "@/shared/utils/rbac-helpers";
 import { getStaffDisplayName } from "../utils/user-helpers";
+
+// Import new hooks and utilities
+import { useTableSort } from "../hooks/use-table-sort";
+import { useTablePagination } from "../hooks/use-table-pagination";
+import { useTableSelection } from "../hooks/use-table-selection";
+import { useTableColumns } from "../hooks/use-table-columns";
+import { exportToCSV, formatDateForCSV } from "../utils/csv-export";
 
 interface UserTableProps {
   users: StaffUser[];
@@ -48,27 +53,15 @@ interface UserTableProps {
 }
 
 type SortKey = "name" | "email" | "role" | "createdAt" | "status";
-type SortDirection = "asc" | "desc";
 
-function downloadCsv(filename: string, csv: string) {
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.setAttribute("download", filename);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-}
-
-function toCsvValue(value: unknown) {
-  const str = String(value ?? "");
-  // Escape quotes and wrap in quotes if needed
-  const escaped = str.replace(/"/g, '""');
-  return /[",\n]/.test(escaped) ? `"${escaped}"` : escaped;
-}
-
+/**
+ * User Table Component (Refactored)
+ * Now uses extracted hooks for better separation of concerns
+ * - useTableSort: Sorting logic
+ * - useTablePagination: Pagination with race condition fix
+ * - useTableSelection: Row selection management
+ * - useTableColumns: Column visibility
+ */
 export function UserTable({
   users,
   isLoading,
@@ -81,149 +74,74 @@ export function UserTable({
   onAddUser,
   pagination: controlledPagination,
 }: UserTableProps) {
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [sortKey, setSortKey] = useState<SortKey>("createdAt");
-  const [sortDir, setSortDir] = useState<SortDirection>("desc");
-
-  const [showEmail, setShowEmail] = useState(true);
-  const [showCreated, setShowCreated] = useState(true);
-  const [showStatus, setShowStatus] = useState(true);
-
-  const [internalPageSize, setInternalPageSize] = useState(10);
-  const [internalCurrentPage, setInternalCurrentPage] = useState(1);
-
-  const pageSize = controlledPagination?.pageSize ?? internalPageSize;
-  const currentPage = controlledPagination?.currentPage ?? internalCurrentPage;
-  const setPageSize = controlledPagination?.onPageSizeChange ?? setInternalPageSize;
-  const setCurrentPage = controlledPagination?.onPageChange ?? setInternalCurrentPage;
+  const hasActiveFilters = Boolean(searchTerm) || filterRole !== "all";
+  const activeFilterCount =
+    (searchTerm ? 1 : 0) + (filterRole !== "all" ? 1 : 0);
   const paginationInMiniBar = controlledPagination != null;
 
-  const hasActiveFilters = Boolean(searchTerm) || filterRole !== "all";
-  const activeFilterCount = (searchTerm ? 1 : 0) + (filterRole !== "all" ? 1 : 0);
-
-  const sortedUsers = useMemo(() => {
-    const copy = [...users];
-
-    const dir = sortDir === "asc" ? 1 : -1;
-    const getValue = (u: StaffUser) => {
-      switch (sortKey) {
+  // Sorting hook
+  const sort = useTableSort<StaffUser, SortKey>(users, {
+    initialSortKey: "createdAt",
+    initialSortDirection: "desc",
+    getSortValue: (user, key) => {
+      switch (key) {
         case "name":
-          return getStaffDisplayName(u).toLowerCase();
+          return getStaffDisplayName(user).toLowerCase();
         case "email":
-          return (u.email ?? "").toLowerCase();
+          return (user.email ?? "").toLowerCase();
         case "role":
-          return getUserRoleDisplayName(u).toLowerCase();
+          return getUserRoleDisplayName(user).toLowerCase();
         case "status":
-          return u.isActive ? 1 : 0;
+          return user.isActive ? 1 : 0;
         case "createdAt":
         default:
-          return new Date(u.createdAt).getTime();
+          return new Date(user.createdAt).getTime();
       }
-    };
+    },
+  });
 
-    copy.sort((a, b) => {
-      const av = getValue(a);
-      const bv = getValue(b);
-      if (typeof av === "number" && typeof bv === "number") return (av - bv) * dir;
-      return String(av).localeCompare(String(bv)) * dir;
-    });
+  // Pagination hook with controlled mode support
+  const pagination = useTablePagination<StaffUser>({
+    totalItems: sort.sortedData.length,
+    initialPageSize: 10,
+    initialPage: 1,
+    controlled: controlledPagination,
+  });
 
-    return copy;
-  }, [users, sortKey, sortDir]);
+  // Get paginated data for current page
+  const pageUsers = pagination.getPaginatedData(sort.sortedData);
 
-  const totalItems = sortedUsers.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  // Selection hook
+  const selection = useTableSelection({
+    items: pageUsers,
+    getId: (user) => user.id,
+  });
 
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(totalPages);
-  }, [currentPage, totalPages]);
+  // Column visibility hook with localStorage persistence
+  const columns = useTableColumns({
+    initialColumns: {
+      email: true,
+      created: true,
+      status: true,
+    },
+    storageKey: "user-table-columns",
+  });
 
-  const pageUsers = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    const end = start + pageSize;
-    return sortedUsers.slice(start, end);
-  }, [sortedUsers, currentPage, pageSize]);
-
-  // Keep selection only for existing users
-  useEffect(() => {
-    setSelectedIds((prev) => {
-      if (prev.size === 0) return prev;
-      const existing = new Set(users.map((u) => u.id));
-      const next = new Set<string>();
-      prev.forEach((id) => {
-        if (existing.has(id)) next.add(id);
-      });
-      return next;
-    });
-  }, [users]);
-
-  const visibleIds = pageUsers.map((u) => u.id);
-  const selectedVisibleCount = visibleIds.filter((id) => selectedIds.has(id)).length;
-  const allVisibleSelected = pageUsers.length > 0 && selectedVisibleCount === pageUsers.length;
-  const someVisibleSelected = selectedVisibleCount > 0 && !allVisibleSelected;
-
-  const toggleSelected = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const toggleSelectAllVisible = () => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (allVisibleSelected) {
-        visibleIds.forEach((id) => next.delete(id));
-      } else {
-        visibleIds.forEach((id) => next.add(id));
-      }
-      return next;
-    });
-  };
-
+  // CSV Export handler
   const handleExportCsv = () => {
-    const rows = pageUsers.map((u) => {
-      const name = getStaffDisplayName(u);
-      const role = getUserRoleName(u);
-      const roleLabel = getUserRoleDisplayName(u);
-      return {
-        name,
-        email: u.email ?? "",
-        role,
-        roleLabel,
-        status: u.isActive ? "Active" : "Inactive",
-        createdAt: new Date(u.createdAt).toISOString(),
-      };
-    });
+    const rows = pageUsers.map((user) => ({
+      Name: getStaffDisplayName(user),
+      Email: user.email ?? "",
+      Role: getUserRoleDisplayName(user),
+      Status: user.isActive ? "Active" : "Inactive",
+      "Created At": formatDateForCSV(user.createdAt),
+    }));
 
-    const headers = ["Name", "Email", "Role", "Status", "Created At"];
-    const csv =
-      headers.join(",") +
-      "\n" +
-      rows
-        .map((r) =>
-          [
-            toCsvValue(r.name),
-            toCsvValue(r.email),
-            toCsvValue(r.roleLabel),
-            toCsvValue(r.status),
-            toCsvValue(r.createdAt),
-          ].join(",")
-        )
-        .join("\n");
-
-    downloadCsv(`staff-members-${new Date().toISOString().slice(0, 10)}.csv`, csv);
-  };
-
-  const setSort = (key: SortKey) => {
-    if (key === sortKey) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-      return;
-    }
-    setSortKey(key);
-    setSortDir(key === "createdAt" ? "desc" : "asc");
+    exportToCSV(
+      rows,
+      ["Name", "Email", "Role", "Status", "Created At"],
+      "staff-members",
+    );
   };
 
   return (
@@ -272,27 +190,30 @@ export function UserTable({
             <DropdownMenuContent align="start">
               <DropdownMenuLabel>Sort by</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => setSort("name")}>
-                Name {sortKey === "name" ? `(${sortDir})` : ""}
+              <DropdownMenuItem onSelect={() => sort.setSort("name")}>
+                Name {sort.sortKey === "name" ? `(${sort.sortDirection})` : ""}
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setSort("email")}>
-                Email {sortKey === "email" ? `(${sortDir})` : ""}
+              <DropdownMenuItem onSelect={() => sort.setSort("email")}>
+                Email{" "}
+                {sort.sortKey === "email" ? `(${sort.sortDirection})` : ""}
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setSort("role")}>
-                Role {sortKey === "role" ? `(${sortDir})` : ""}
+              <DropdownMenuItem onSelect={() => sort.setSort("role")}>
+                Role {sort.sortKey === "role" ? `(${sort.sortDirection})` : ""}
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setSort("status")}>
-                Status {sortKey === "status" ? `(${sortDir})` : ""}
+              <DropdownMenuItem onSelect={() => sort.setSort("status")}>
+                Status{" "}
+                {sort.sortKey === "status" ? `(${sort.sortDirection})` : ""}
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setSort("createdAt")}>
-                Created {sortKey === "createdAt" ? `(${sortDir})` : ""}
+              <DropdownMenuItem onSelect={() => sort.setSort("createdAt")}>
+                Created{" "}
+                {sort.sortKey === "createdAt" ? `(${sort.sortDirection})` : ""}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {selectedIds.size > 0 && (
+          {selection.selectedCount > 0 && (
             <div className="text-xs sm:text-sm text-muted-foreground">
-              {selectedIds.size} selected
+              {selection.selectedCount} selected
             </div>
           )}
         </div>
@@ -319,14 +240,16 @@ export function UserTable({
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Columns</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => setShowEmail((v) => !v)}>
-                {showEmail ? "Hide" : "Show"} email
+              <DropdownMenuItem onSelect={() => columns.toggleColumn("email")}>
+                {columns.isColumnVisible("email") ? "Hide" : "Show"} email
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setShowCreated((v) => !v)}>
-                {showCreated ? "Hide" : "Show"} created
+              <DropdownMenuItem
+                onSelect={() => columns.toggleColumn("created")}
+              >
+                {columns.isColumnVisible("created") ? "Hide" : "Show"} created
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setShowStatus((v) => !v)}>
-                {showStatus ? "Hide" : "Show"} status
+              <DropdownMenuItem onSelect={() => columns.toggleColumn("status")}>
+                {columns.isColumnVisible("status") ? "Hide" : "Show"} status
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -358,32 +281,32 @@ export function UserTable({
                     <TableHead className="w-10">
                       <Checkbox
                         checked={
-                          allVisibleSelected
+                          selection.allSelected
                             ? true
-                            : someVisibleSelected
+                            : selection.someSelected
                               ? "indeterminate"
                               : false
                         }
-                        onCheckedChange={toggleSelectAllVisible}
+                        onCheckedChange={selection.toggleSelectAll}
                         aria-label="Select all visible rows"
                       />
                     </TableHead>
                     <TableHead
                       className={cn(
                         "text-xs uppercase tracking-wide text-muted-foreground",
-                        "cursor-pointer select-none"
+                        "cursor-pointer select-none",
                       )}
-                      onClick={() => setSort("name")}
+                      onClick={() => sort.setSort("name")}
                     >
                       Staff member
                     </TableHead>
-                    {showEmail && (
+                    {columns.isColumnVisible("email") && (
                       <TableHead
                         className={cn(
                           "hidden sm:table-cell text-xs uppercase tracking-wide text-muted-foreground",
-                          "cursor-pointer select-none"
+                          "cursor-pointer select-none",
                         )}
-                        onClick={() => setSort("email")}
+                        onClick={() => sort.setSort("email")}
                       >
                         Email
                       </TableHead>
@@ -391,30 +314,30 @@ export function UserTable({
                     <TableHead
                       className={cn(
                         "text-xs uppercase tracking-wide text-muted-foreground",
-                        "cursor-pointer select-none"
+                        "cursor-pointer select-none",
                       )}
-                      onClick={() => setSort("role")}
+                      onClick={() => sort.setSort("role")}
                     >
                       Role
                     </TableHead>
-                    {showCreated && (
+                    {columns.isColumnVisible("created") && (
                       <TableHead
                         className={cn(
                           "hidden md:table-cell text-xs uppercase tracking-wide text-muted-foreground",
-                          "cursor-pointer select-none"
+                          "cursor-pointer select-none",
                         )}
-                        onClick={() => setSort("createdAt")}
+                        onClick={() => sort.setSort("createdAt")}
                       >
                         Created
                       </TableHead>
                     )}
-                    {showStatus && (
+                    {columns.isColumnVisible("status") && (
                       <TableHead
                         className={cn(
                           "text-xs uppercase tracking-wide text-muted-foreground",
-                          "cursor-pointer select-none"
+                          "cursor-pointer select-none",
                         )}
-                        onClick={() => setSort("status")}
+                        onClick={() => sort.setSort("status")}
                       >
                         Status
                       </TableHead>
@@ -429,11 +352,11 @@ export function UserTable({
                     <UserTableRow
                       key={staffUser.id}
                       staffUser={staffUser}
-                      selected={selectedIds.has(staffUser.id)}
-                      onToggleSelected={toggleSelected}
-                      showEmail={showEmail}
-                      showCreated={showCreated}
-                      showStatus={showStatus}
+                      selected={selection.isSelected(staffUser.id)}
+                      onToggleSelected={selection.toggleSelection}
+                      showEmail={columns.isColumnVisible("email")}
+                      showCreated={columns.isColumnVisible("created")}
+                      showStatus={columns.isColumnVisible("status")}
                       onView={onViewUser}
                       onEdit={onEditUser}
                       onDelete={onDeleteUser}
@@ -447,24 +370,25 @@ export function UserTable({
             <div className="border-t bg-background shrink-0">
               <div className="px-3 sm:px-4 py-2 text-xs sm:text-sm text-muted-foreground flex items-center justify-between gap-3">
                 <span>
-                  {selectedIds.size} of {totalItems} row(s) selected
+                  {selection.selectedCount} of {sort.sortedData.length} row(s)
+                  selected
                 </span>
                 {!paginationInMiniBar && (
                   <span className="hidden sm:inline">
-                    Page {currentPage} of {totalPages}
+                    Page {pagination.currentPage} of {pagination.totalPages}
                   </span>
                 )}
               </div>
               {!paginationInMiniBar && (
                 <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  pageSize={pageSize}
-                  totalItems={totalItems}
-                  onPageChange={setCurrentPage}
+                  currentPage={pagination.currentPage}
+                  totalPages={pagination.totalPages}
+                  pageSize={pagination.pageSize}
+                  totalItems={sort.sortedData.length}
+                  onPageChange={pagination.setCurrentPage}
                   onPageSizeChange={(size) => {
-                    setPageSize(size);
-                    setCurrentPage(1);
+                    pagination.setPageSize(size);
+                    pagination.setCurrentPage(1);
                   }}
                   showPageSizeSelector={true}
                   showPageInfo={false}

@@ -331,30 +331,30 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                 className="w-full flex flex-col flex-1 min-h-0 overflow-hidden"
               >
                 {/* Fixed Tabs and Buttons Section */}
-                <div className="border-b bg-background flex-shrink-0">
+                <div className="border-b bg-background shrink-0">
                   <div className="px-6 pt-4">
                     <TabsList className="flex w-full gap-1 h-auto py-1.5 overflow-x-auto">
                       <TabsTrigger
                         value="basic"
-                        className="flex-1 min-w-[80px] !whitespace-nowrap px-3 py-2 text-xs sm:text-sm"
+                        className="flex-1 min-w-20 whitespace-nowrap! px-3 py-2 text-xs sm:text-sm"
                       >
                         Basic Info
                       </TabsTrigger>
                       <TabsTrigger
                         value="pricing"
-                        className="flex-1 min-w-[100px] !whitespace-nowrap px-3 py-2 text-xs sm:text-sm"
+                        className="flex-1 min-w-[100px] whitespace-nowrap! px-3 py-2 text-xs sm:text-sm"
                       >
                         Pricing & Stock
                       </TabsTrigger>
                       <TabsTrigger
                         value="expiry"
-                        className="flex-1 min-w-[80px] !whitespace-nowrap px-3 py-2 text-xs sm:text-sm"
+                        className="flex-1 min-w-20 whitespace-nowrap! px-3 py-2 text-xs sm:text-sm"
                       >
                         Expiry
                       </TabsTrigger>
                       <TabsTrigger
                         value="age-restriction"
-                        className="flex-1 min-w-[80px] !whitespace-nowrap px-3 py-2 text-xs sm:text-sm"
+                        className="flex-1 min-w-20 whitespace-nowrap! px-3 py-2 text-xs sm:text-sm"
                       >
                         Age
                       </TabsTrigger>

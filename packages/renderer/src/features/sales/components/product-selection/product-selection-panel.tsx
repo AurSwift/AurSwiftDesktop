@@ -128,7 +128,7 @@ function CategoryButton({
         "p-2 sm:p-3 shadow-md transition-all touch-manipulation overflow-hidden",
         "hover:scale-[1.02] active:scale-[0.98]",
         "min-h-[60px] sm:min-h-[72px] lg:min-h-20",
-        "rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white",
+        "rounded-xl bg-linear-to-br from-amber-500 to-orange-600 text-white",
       )}
     >
       <span className="font-semibold text-[10px] sm:text-xs lg:text-sm leading-tight text-center line-clamp-2 px-1">
@@ -156,7 +156,7 @@ function ProductButton({
         "p-2 sm:p-3 shadow-md transition-all touch-manipulation overflow-hidden",
         "hover:scale-[1.02] active:scale-[0.98]",
         "min-h-[60px] sm:min-h-[72px] lg:min-h-20",
-        "rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white",
+        "rounded-xl bg-linear-to-br from-blue-500 to-blue-600 text-white",
       )}
     >
       <span className="font-semibold text-[10px] sm:text-xs lg:text-sm leading-tight text-center line-clamp-2 px-1">

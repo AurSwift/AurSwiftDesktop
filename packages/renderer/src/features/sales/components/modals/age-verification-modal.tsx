@@ -213,14 +213,14 @@ export const AgeVerificationModal: React.FC<AgeVerificationModalProps> = ({
           <Button
             variant="outline"
             onClick={onCancel}
-            className="w-full sm:w-auto min-h-[44px] h-10 sm:h-11 text-sm sm:text-base touch-manipulation"
+            className="w-full sm:w-auto min-h-11 h-10 sm:h-11 text-sm sm:text-base touch-manipulation"
           >
             Cancel
           </Button>
           <Button
             onClick={handleVerify}
             disabled={!isEligible}
-            className="w-full sm:w-auto min-h-[44px] h-10 sm:h-11 text-sm sm:text-base touch-manipulation"
+            className="w-full sm:w-auto min-h-11 h-10 sm:h-11 text-sm sm:text-base touch-manipulation"
           >
             Verify & Continue
           </Button>

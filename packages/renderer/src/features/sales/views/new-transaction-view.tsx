@@ -1438,7 +1438,7 @@ export function NewTransactionView({
                   Total: £{cart.total.toFixed(2)}
                 </p>
                 <Button
-                  className="mt-4 bg-sky-600 hover:bg-sky-700 min-h-[44px] h-10 sm:h-11 text-sm sm:text-base touch-manipulation"
+                  className="mt-4 bg-sky-600 hover:bg-sky-700 min-h-11 h-10 sm:h-11 text-sm sm:text-base touch-manipulation"
                   onClick={() => {
                     payment.setTransactionComplete(false);
                   }}
@@ -1541,7 +1541,7 @@ export function NewTransactionView({
                           "."
                         ) : (
                           <Button
-                            className="w-full h-full min-h-[44px] py-3 sm:py-4 font-semibold text-sm sm:text-lg rounded transition-colors bg-sky-600 hover:bg-sky-700 text-white touch-manipulation"
+                            className="w-full h-full min-h-11 py-3 sm:py-4 font-semibold text-sm sm:text-lg rounded transition-colors bg-sky-600 hover:bg-sky-700 text-white touch-manipulation"
                             style={{ minHeight: 44, minWidth: 0 }}
                             onClick={() => payment.setPaymentStep(true)}
                             disabled={

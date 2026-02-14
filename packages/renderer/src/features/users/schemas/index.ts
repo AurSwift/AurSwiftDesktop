@@ -6,4 +6,4 @@
 
 export * from "./user-schema";
 export * from "./types";
-
+export * from "./api-types";

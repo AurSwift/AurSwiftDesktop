@@ -2,6 +2,7 @@ import { OperationsOverview } from "@/features/dashboard/components/operations-o
 
 interface AdminDashboardViewProps {
   onFront: () => void;
+  onActionClick?: (featureId: string, actionId: string) => void;
   onNewTransaction?: () => void;
   onNavigateToRoles?: () => void;
   onNavigateToUserRoles?: () => void;

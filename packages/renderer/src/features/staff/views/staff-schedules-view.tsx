@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import {
   getUserRoleName,
@@ -6,17 +6,19 @@ import {
 } from "@/shared/utils/rbac-helpers";
 import {
   Plus,
-  Edit2,
-  Trash2,
-  Clock,
-  Calendar as CalendarIcon,
-  User,
-  CreditCard,
-  StickyNote,
   ChevronLeft,
   ChevronRight,
-  ArrowLeft,
+  LayoutGrid,
+  Table as TableIcon,
+  Calendar as CalendarIcon,
+  Edit2,
+  Trash2,
+  StickyNote,
+  Clock,
+  CreditCard,
+  User,
 } from "lucide-react";
+import { MiniBar } from "@/components/mini-bar";
 import { useAuth } from "@/shared/hooks/use-auth";
 import { useUserPermissions } from "@/features/dashboard/hooks/use-user-permissions";
 import { PERMISSIONS } from "@app/shared/constants/permissions";
@@ -26,7 +28,6 @@ import {
   DrawerDescription,
   DrawerHeader,
   DrawerTitle,
-  DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import {
@@ -85,6 +86,7 @@ import {
 } from "date-fns";
 import { TimePicker } from "@/components/time-picker";
 import { useScheduleForm } from "../hooks/use-schedule-form";
+import { ScheduleFilters, ScheduleTable } from "../components";
 
 import { getLogger } from "@/shared/utils/logger";
 const logger = getLogger("staff-schedules-view");
@@ -297,11 +299,25 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
 
     loadSchedules();
   }, [businessId]);
+  const safeFocusRef = useRef<HTMLDivElement>(null);
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [currentWeek, setCurrentWeek] = useState(new Date());
-  const [viewMode, setViewMode] = useState<"week" | "day">("week");
+  const [viewMode, setViewMode] = useState<"table" | "calendar">("table");
+  const [calendarViewMode, setCalendarViewMode] = useState<"week" | "day">(
+    "week",
+  );
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Search and filter state
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "upcoming" | "active" | "completed" | "missed"
+  >("all");
 
   // Calendar view functions - memoized for performance
   const weekStart = useMemo(
@@ -529,7 +545,12 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
     showButtons = true,
     onSuccess,
   }) => {
-    const { form, handleSubmit: formHandleSubmit, isSubmitting, isEditMode } = useScheduleForm({
+    const {
+      form,
+      handleSubmit: formHandleSubmit,
+      isSubmitting,
+      isEditMode,
+    } = useScheduleForm({
       schedule: editingSchedule,
       selectedDate,
       businessId,
@@ -689,115 +710,119 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
           )}
 
           {/* Scrollable Form Content */}
-          <div className={showButtons ? "" : "p-6 overflow-y-auto flex-1 min-h-0 space-y-4"}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <FormField
-                  control={form.control}
-                  name="staffId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Staff Member</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value || ""}
-                        disabled={isSubmitting || isLoadingCashiers}
-                        onOpenChange={() => keyboard.handleCloseKeyboard()}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue
-                              placeholder={
-                                isLoadingCashiers
-                                  ? "Loading staff..."
-                                  : "Select staff member"
-                              }
-                            />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {isLoadingCashiers ? (
-                            <SelectItem value="loading" disabled>
-                              Loading staff members...
-                            </SelectItem>
-                          ) : cashiers.length === 0 ? (
-                            <SelectItem value="no-staff" disabled>
-                              No staff members found. Create staff users first.
-                            </SelectItem>
-                          ) : (
-                            cashiers.map((cashier) => (
-                              <SelectItem key={cashier.id} value={cashier.id}>
-                                <div className="flex items-center gap-2">
-                                  <User className="w-4 h-4" />
-                                  <div>
-                                    <div className="font-medium">
-                                      {cashier.firstName} {cashier.lastName}
-                                    </div>
-                                    <div className="text-xs text-muted-foreground">
-                                      {cashier.email} •{" "}
-                                      {getUserRoleDisplayName(cashier)}
-                                    </div>
+          <div
+            className={
+              showButtons ? "" : "p-6 overflow-y-auto flex-1 min-h-0 space-y-4"
+            }
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <FormField
+                control={form.control}
+                name="staffId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Staff Member</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value || ""}
+                      disabled={isSubmitting || isLoadingCashiers}
+                      onOpenChange={() => keyboard.handleCloseKeyboard()}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={
+                              isLoadingCashiers
+                                ? "Loading staff..."
+                                : "Select staff member"
+                            }
+                          />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {isLoadingCashiers ? (
+                          <SelectItem value="loading" disabled>
+                            Loading staff members...
+                          </SelectItem>
+                        ) : cashiers.length === 0 ? (
+                          <SelectItem value="no-staff" disabled>
+                            No staff members found. Create staff users first.
+                          </SelectItem>
+                        ) : (
+                          cashiers.map((cashier) => (
+                            <SelectItem key={cashier.id} value={cashier.id}>
+                              <div className="flex items-center gap-2">
+                                <User className="w-4 h-4" />
+                                <div>
+                                  <div className="font-medium">
+                                    {cashier.firstName} {cashier.lastName}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {cashier.email} •{" "}
+                                    {getUserRoleDisplayName(cashier)}
                                   </div>
                                 </div>
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                              </div>
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                <FormField
-                  control={form.control}
-                  name="date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Schedule Date</FormLabel>
-                      <Popover
-                        open={isDatePickerOpen}
-                        onOpenChange={(open) => {
-                          keyboard.handleCloseKeyboard();
-                          setIsDatePickerOpen(open);
-                        }}
-                      >
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "w-full justify-start text-left font-normal",
-                                !field.value && "text-muted-foreground",
-                              )}
-                              type="button"
-                            >
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {field.value
-                                ? format(new Date(field.value), "PPP")
-                                : "Pick a date"}
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={selectedDate}
-                            onSelect={(date) => {
-                              if (date) {
-                                setSelectedDate(date);
-                                field.onChange(format(date, "yyyy-MM-dd"));
-                              }
-                            }}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Schedule Date</FormLabel>
+                    <Popover
+                      open={isDatePickerOpen}
+                      onOpenChange={(open) => {
+                        keyboard.handleCloseKeyboard();
+                        setIsDatePickerOpen(open);
+                      }}
+                    >
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !field.value && "text-muted-foreground",
+                            )}
+                            type="button"
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {field.value
+                              ? format(new Date(field.value), "PPP")
+                              : "Pick a date"}
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={(date) => {
+                            if (date) {
+                              setSelectedDate(date);
+                              field.onChange(format(date, "yyyy-MM-dd"));
+                            }
+                          }}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                {/* <FormField
+              {/* <FormField
                   control={form.control}
                   name="assignedRegister"
                   render={() => (
@@ -831,218 +856,218 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
                   )}
                 /> */}
 
-                <FormField
-                  control={form.control}
-                  name="startTime"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <TimePicker
-                          id="startTime"
-                          label="Start Time"
-                          value={field.value || ""}
-                          onChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="endTime"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <TimePicker
-                          id="endTime"
-                          label="End Time"
-                          value={field.value || ""}
-                          onChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {startTime && endTime && (
-                  <div className="md:col-span-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Clock className="w-4 h-4 text-slate-600 shrink-0" />
-                      <span className="font-medium text-slate-800 text-sm sm:text-base">
-                        Shift Duration:
-                      </span>
-                      <span className="text-slate-700 text-sm sm:text-base">
-                        {(() => {
-                          const formatTime = (time: string) => {
-                            const [hour, minute] = time.split(":").map(Number);
-                            const period = hour >= 12 ? "PM" : "AM";
-                            const displayHour =
-                              hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-                            return `${displayHour}:${minute
-                              .toString()
-                              .padStart(2, "0")} ${period}`;
-                          };
-
-                          const durationMinutes = calculateShiftDuration(
-                            startTime,
-                            endTime,
-                          );
-
-                          if (durationMinutes === -1) {
-                            return "Invalid time format";
-                          }
-
-                          if (durationMinutes === 0) {
-                            return "Start and end time cannot be the same";
-                          }
-
-                          const hours = Math.floor(durationMinutes / 60);
-                          const minutes = durationMinutes % 60;
-
-                          const isOvernight = isOvernightShift(
-                            startTime,
-                            endTime,
-                          );
-
-                          let warningText = "";
-                          if (
-                            durationMinutes < SHIFT_CONFIG.MIN_DURATION_MINUTES
-                          ) {
-                            warningText = " ⚠️ Too short";
-                          } else if (
-                            durationMinutes > SHIFT_CONFIG.MAX_DURATION_MINUTES
-                          ) {
-                            warningText = " ⚠️ Too long";
-                          }
-
-                          return `${formatTime(startTime)} - ${formatTime(
-                            endTime,
-                          )}${
-                            isOvernight ? " (+1 day)" : ""
-                          } (${hours}h ${minutes}m)${warningText}`;
-                        })()}
-                      </span>
-                    </div>
-                  </div>
+              <FormField
+                control={form.control}
+                name="startTime"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <TimePicker
+                        id="startTime"
+                        label="Start Time"
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
+              />
 
-                <div className="space-y-2 md:col-span-2">
-                  <FormLabel>Quick Time Presets</FormLabel>
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        form.setValue("startTime", "09:00");
-                        form.setValue("endTime", "17:00");
-                      }}
-                      disabled={isSubmitting}
-                    >
-                      9 AM - 5 PM
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        form.setValue("startTime", "08:00");
-                        form.setValue("endTime", "16:00");
-                      }}
-                      disabled={isSubmitting}
-                    >
-                      8 AM - 4 PM
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        form.setValue("startTime", "10:00");
-                        form.setValue("endTime", "18:00");
-                      }}
-                      disabled={isSubmitting}
-                    >
-                      10 AM - 6 PM
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        form.setValue("startTime", "14:00");
-                        form.setValue("endTime", "22:00");
-                      }}
-                      disabled={isSubmitting}
-                    >
-                      2 PM - 10 PM
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        form.setValue("startTime", "22:00");
-                        form.setValue("endTime", "06:00");
-                      }}
-                      disabled={isSubmitting}
-                    >
-                      10 PM - 6 AM (Night)
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        form.setValue("startTime", "23:00");
-                        form.setValue("endTime", "07:00");
-                      }}
-                      disabled={isSubmitting}
-                    >
-                      11 PM - 7 AM (Night)
-                    </Button>
+              <FormField
+                control={form.control}
+                name="endTime"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <TimePicker
+                        id="endTime"
+                        label="End Time"
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {startTime && endTime && (
+                <div className="md:col-span-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Clock className="w-4 h-4 text-slate-600 shrink-0" />
+                    <span className="font-medium text-slate-800 text-sm sm:text-base">
+                      Shift Duration:
+                    </span>
+                    <span className="text-slate-700 text-sm sm:text-base">
+                      {(() => {
+                        const formatTime = (time: string) => {
+                          const [hour, minute] = time.split(":").map(Number);
+                          const period = hour >= 12 ? "PM" : "AM";
+                          const displayHour =
+                            hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                          return `${displayHour}:${minute
+                            .toString()
+                            .padStart(2, "0")} ${period}`;
+                        };
+
+                        const durationMinutes = calculateShiftDuration(
+                          startTime,
+                          endTime,
+                        );
+
+                        if (durationMinutes === -1) {
+                          return "Invalid time format";
+                        }
+
+                        if (durationMinutes === 0) {
+                          return "Start and end time cannot be the same";
+                        }
+
+                        const hours = Math.floor(durationMinutes / 60);
+                        const minutes = durationMinutes % 60;
+
+                        const isOvernight = isOvernightShift(
+                          startTime,
+                          endTime,
+                        );
+
+                        let warningText = "";
+                        if (
+                          durationMinutes < SHIFT_CONFIG.MIN_DURATION_MINUTES
+                        ) {
+                          warningText = " ⚠️ Too short";
+                        } else if (
+                          durationMinutes > SHIFT_CONFIG.MAX_DURATION_MINUTES
+                        ) {
+                          warningText = " ⚠️ Too long";
+                        }
+
+                        return `${formatTime(startTime)} - ${formatTime(
+                          endTime,
+                        )}${
+                          isOvernight ? " (+1 day)" : ""
+                        } (${hours}h ${minutes}m)${warningText}`;
+                      })()}
+                    </span>
                   </div>
                 </div>
+              )}
 
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={() => (
-                    <FormItem className="md:col-span-2">
-                      <FormLabel>Notes (Optional)</FormLabel>
-                      <FormControl>
-                        <AdaptiveTextarea
-                          id="notes"
-                          label=""
-                          value={keyboard.formValues.notes || ""}
-                          placeholder="Add any special instructions or notes for this schedule..."
-                          readOnly
-                          onClick={() => keyboard.handleFieldFocus("notes")}
-                          onFocus={() => keyboard.handleFieldFocus("notes")}
-                          error={form.formState.errors.notes?.message}
-                          className={cn(
-                            keyboard.activeField === "notes" &&
-                              "ring-2 ring-primary border-primary",
-                            isSubmitting && "opacity-50 cursor-not-allowed",
-                          )}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div className="space-y-2 md:col-span-2">
+                <FormLabel>Quick Time Presets</FormLabel>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      form.setValue("startTime", "09:00");
+                      form.setValue("endTime", "17:00");
+                    }}
+                    disabled={isSubmitting}
+                  >
+                    9 AM - 5 PM
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      form.setValue("startTime", "08:00");
+                      form.setValue("endTime", "16:00");
+                    }}
+                    disabled={isSubmitting}
+                  >
+                    8 AM - 4 PM
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      form.setValue("startTime", "10:00");
+                      form.setValue("endTime", "18:00");
+                    }}
+                    disabled={isSubmitting}
+                  >
+                    10 AM - 6 PM
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      form.setValue("startTime", "14:00");
+                      form.setValue("endTime", "22:00");
+                    }}
+                    disabled={isSubmitting}
+                  >
+                    2 PM - 10 PM
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      form.setValue("startTime", "22:00");
+                      form.setValue("endTime", "06:00");
+                    }}
+                    disabled={isSubmitting}
+                  >
+                    10 PM - 6 AM (Night)
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      form.setValue("startTime", "23:00");
+                      form.setValue("endTime", "07:00");
+                    }}
+                    disabled={isSubmitting}
+                  >
+                    11 PM - 7 AM (Night)
+                  </Button>
+                </div>
               </div>
+
+              <FormField
+                control={form.control}
+                name="notes"
+                render={() => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Notes (Optional)</FormLabel>
+                    <FormControl>
+                      <AdaptiveTextarea
+                        id="notes"
+                        label=""
+                        value={keyboard.formValues.notes || ""}
+                        placeholder="Add any special instructions or notes for this schedule..."
+                        readOnly
+                        onClick={() => keyboard.handleFieldFocus("notes")}
+                        onFocus={() => keyboard.handleFieldFocus("notes")}
+                        error={form.formState.errors.notes?.message}
+                        className={cn(
+                          keyboard.activeField === "notes" &&
+                            "ring-2 ring-primary border-primary",
+                          isSubmitting && "opacity-50 cursor-not-allowed",
+                        )}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
+          </div>
 
           {/* Actions - Only show if showButtons is true */}
           {showButtons && (
             <div
               className={cn(
                 "flex flex-col sm:flex-row gap-2 sm:gap-2 pt-4",
-                keyboard.showKeyboard && "pb-[340px]"
+                keyboard.showKeyboard && "pb-[340px]",
               )}
             >
               <Button
@@ -1073,9 +1098,13 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
 
           {/* Adaptive Keyboard */}
           {keyboard.showKeyboard && (
-            <div className={cn(
-              showButtons ? "sticky bottom-0 left-0 right-0 z-50 mt-4 bg-background" : "border-t bg-background px-2 py-2 shrink-0"
-            )}>
+            <div
+              className={cn(
+                showButtons
+                  ? "sticky bottom-0 left-0 right-0 z-50 mt-4 bg-background"
+                  : "border-t bg-background px-2 py-2 shrink-0",
+              )}
+            >
               <div className={showButtons ? "" : "max-w-full overflow-hidden"}>
                 <AdaptiveKeyboard
                   onInput={keyboard.handleInput}
@@ -1147,6 +1176,13 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
     }
   }, [scheduleToDelete, schedules]);
 
+  const handleViewSchedule = useCallback(
+    (schedule: Schedule) => {
+      openDrawer(schedule);
+    },
+    [openDrawer],
+  );
+
   const getShiftDuration = (startTime: string, endTime: string) => {
     try {
       const start = new Date(startTime);
@@ -1206,14 +1242,13 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
   // Filter schedules based on user permissions
   // Managers should only see cashier schedules, not their own or other managers' schedules
   const filteredSchedules = useMemo(() => {
-    // If user can schedule all (admin), show all schedules
-    if (canScheduleAll) {
-      return schedules;
-    }
+    let filtered = schedules;
 
-    // If user can only schedule cashiers (manager), filter to cashier schedules only
-    if (canScheduleCashiers) {
-      const cashierSchedules = schedules.filter((schedule) => {
+    // RBAC filtering
+    if (canScheduleAll) {
+      filtered = schedules;
+    } else if (canScheduleCashiers) {
+      filtered = schedules.filter((schedule) => {
         const staffMember = allStaff.find((s) => s.id === schedule.staffId);
         if (!staffMember) {
           logger.warn(
@@ -1222,19 +1257,46 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
           return false;
         }
         const staffRoleName = getUserRoleName(staffMember);
-        // Only show cashier schedules for managers
         return staffRoleName === "cashier";
       });
-
-      logger.info(
-        `[filteredSchedules] Manager view: Filtered ${schedules.length} total schedules to ${cashierSchedules.length} cashier schedules`,
-      );
-      return cashierSchedules;
+    } else {
+      filtered = [];
     }
 
-    // No permission - return empty array
-    return [];
-  }, [schedules, allStaff, canScheduleAll, canScheduleCashiers]);
+    // Search filter
+    if (searchTerm) {
+      filtered = filtered.filter((schedule) => {
+        const staffMember = allStaff.find((s) => s.id === schedule.staffId);
+        if (!staffMember) return false;
+        const staffName =
+          `${staffMember.firstName} ${staffMember.lastName}`.toLowerCase();
+        return staffName.includes(searchTerm.toLowerCase());
+      });
+    }
+
+    // Status filter
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(
+        (schedule) => schedule.status === statusFilter,
+      );
+    }
+
+    return filtered;
+  }, [
+    schedules,
+    allStaff,
+    canScheduleAll,
+    canScheduleCashiers,
+    searchTerm,
+    statusFilter,
+  ]);
+
+  const totalItems = filteredSchedules.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [totalItems]);
 
   // Memoized function to get schedules for a date
   const getSchedulesForDate = useCallback(
@@ -1255,107 +1317,172 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
   );
 
   return (
-    <div className="w-full min-h-screen p-2 sm:p-3 md:p-4 lg:p-6 pb-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header Section - Optimized for narrow screens */}
-        <div className="flex flex-col gap-3 sm:gap-4 mb-4 sm:mb-6 lg:mb-8">
-          <div className="flex items-start gap-2 sm:gap-3">
-            <Button
-              onClick={onBack}
-              variant="ghost"
-              size="sm"
-              className="p-1.5 sm:p-2 shrink-0"
-              aria-label="Go back to previous page"
-            >
-              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-            </Button>
-            <div className="min-w-0 flex-1">
-              <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-slate-900 mb-0.5 sm:mb-1 lg:mb-2 break-word">
-                Staff Shifts
-              </h1>
-              <p className="text-xs sm:text-sm md:text-base text-slate-600 line-clamp-2">
-                Manage POS staff schedules and shifts.
-              </p>
-            </div>
-          </div>
+    <div className="container mx-auto p-1 max-w-[1600px] flex flex-col flex-1 min-h-0 gap-4 sm:gap-6">
+      <div ref={safeFocusRef} tabIndex={-1} className="sr-only" />
 
-          <div className="w-full">
-            <Drawer
-              open={isDrawerOpen}
-              onOpenChange={(open) => {
-                if (open) {
-                  setupDrawerForm();
-                  setIsDrawerOpen(true);
+      {/* Drawer for creating/editing schedules */}
+      <Drawer
+        open={isDrawerOpen}
+        onOpenChange={(open) => {
+          if (open) {
+            setupDrawerForm();
+            setIsDrawerOpen(true);
+          } else {
+            closeDrawer();
+          }
+        }}
+        direction="right"
+      >
+        <DrawerContent className="h-full w-[95%] sm:w-[600px] md:w-[700px] lg:w-[800px] sm:max-w-none mt-0 rounded-none fixed right-0 top-0 overflow-hidden">
+          <DrawerHeader className="border-b shrink-0">
+            <DrawerTitle>
+              {editingSchedule ? "Edit Staff Schedule" : "Create New Schedule"}
+            </DrawerTitle>
+            <DrawerDescription>
+              {editingSchedule
+                ? "Edit the staff schedule details below"
+                : "Fill in the form below to create a new staff schedule"}
+            </DrawerDescription>
+          </DrawerHeader>
+
+          <div className="flex-1 min-h-0">
+            <ScheduleFormContent
+              editingSchedule={editingSchedule}
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+              isDatePickerOpen={isDatePickerOpen}
+              setIsDatePickerOpen={setIsDatePickerOpen}
+              cashiers={cashiers}
+              isLoadingCashiers={isLoadingCashiers}
+              businessId={businessId}
+              checkShiftOverlap={checkShiftOverlap}
+              canScheduleAll={canScheduleAll}
+              canScheduleCashiers={canScheduleCashiers}
+              onClose={closeDrawer}
+              isOpen={isDrawerOpen}
+              showButtons={false}
+              onSuccess={(schedule) => {
+                if (editingSchedule) {
+                  setSchedules(
+                    schedules.map((s) =>
+                      s.id === editingSchedule.id ? schedule : s,
+                    ),
+                  );
                 } else {
-                  closeDrawer();
+                  setSchedules([...schedules, schedule]);
                 }
               }}
-              direction="right"
-            >
-              <DrawerTrigger asChild>
-                <Button
-                  className="w-full sm:w-auto shadow-sm"
-                  size="sm"
-                  aria-label="Schedule Shift"
-                >
-                  <Plus
-                    className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2 shrink-0"
-                    aria-hidden="true"
-                  />
-                  <span className="hidden sm:inline text-xs sm:text-sm md:text-base whitespace-nowrap">
-                    Schedule Shift
-                  </span>
-                </Button>
-              </DrawerTrigger>
-
-              <DrawerContent className="h-full w-[95%] sm:w-[600px] md:w-[700px] lg:w-[800px] sm:max-w-none mt-0 rounded-none fixed right-0 top-0 overflow-hidden">
-                <DrawerHeader className="border-b shrink-0">
-                  <DrawerTitle>
-                    {editingSchedule ? "Edit Staff Schedule" : "Create New Schedule"}
-                  </DrawerTitle>
-                  <DrawerDescription>
-                    {editingSchedule
-                      ? "Edit the staff schedule details below"
-                      : "Fill in the form below to create a new staff schedule"}
-                  </DrawerDescription>
-                </DrawerHeader>
-
-                <div className="flex-1 min-h-0">
-                  <ScheduleFormContent
-                    editingSchedule={editingSchedule}
-                    selectedDate={selectedDate}
-                    setSelectedDate={setSelectedDate}
-                    isDatePickerOpen={isDatePickerOpen}
-                    setIsDatePickerOpen={setIsDatePickerOpen}
-                    cashiers={cashiers}
-                    isLoadingCashiers={isLoadingCashiers}
-                    businessId={businessId}
-                    checkShiftOverlap={checkShiftOverlap}
-                    canScheduleAll={canScheduleAll}
-                    canScheduleCashiers={canScheduleCashiers}
-                    onClose={closeDrawer}
-                    isOpen={isDrawerOpen}
-                    showButtons={false}
-                    onSuccess={(schedule) => {
-                      if (editingSchedule) {
-                        setSchedules(
-                          schedules.map((s) =>
-                            s.id === editingSchedule.id ? schedule : s,
-                          ),
-                        );
-                      } else {
-                        setSchedules([...schedules, schedule]);
-                      }
-                    }}
-                  />
-                </div>
-              </DrawerContent>
-            </Drawer>
+            />
           </div>
-        </div>
+        </DrawerContent>
+      </Drawer>
 
-        {/* Calendar View Toggle */}
-        <div className="bg-white rounded-lg shadow-lg p-2 sm:p-3 md:p-4 lg:p-6 mb-3 sm:mb-4 md:mb-6">
+      {/* MiniBar with filters and pagination */}
+      <MiniBar
+        title="Staff Schedules"
+        onBack={onBack}
+        action={{
+          label: "New Schedule",
+          onClick: () => openDrawer(),
+          icon: <Plus className="h-4 w-4" />,
+        }}
+        center={
+          <ScheduleFilters
+            variant="miniBar"
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+          />
+        }
+        right={
+          <div className="flex items-center gap-2">
+            {/* View mode toggle */}
+            <div className="flex items-center gap-1 border rounded-md p-0.5">
+              <Button
+                variant={viewMode === "table" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("table")}
+                className="h-7 px-2"
+              >
+                <TableIcon className="h-4 w-4 mr-1" />
+                Table
+              </Button>
+              <Button
+                variant={viewMode === "calendar" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("calendar")}
+                className="h-7 px-2"
+              >
+                <LayoutGrid className="h-4 w-4 mr-1" />
+                Calendar
+              </Button>
+            </div>
+
+            {viewMode === "table" && (
+              <>
+                {/* Pagination info */}
+                <span className="text-sm text-muted-foreground whitespace-nowrap">
+                  {(currentPage - 1) * pageSize + 1}-
+                  {Math.min(currentPage * pageSize, totalItems)} of {totalItems}
+                </span>
+
+                {/* Pagination controls */}
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage(Math.min(totalPages, currentPage + 1))
+                    }
+                    disabled={currentPage >= totalPages}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        }
+      />
+
+      {/* Main content - Table or Calendar view */}
+      {viewMode === "table" ? (
+        <ScheduleTable
+          schedules={filteredSchedules}
+          allStaff={allStaff}
+          isLoading={isLoadingSchedules || isLoadingCashiers}
+          searchTerm={searchTerm}
+          statusFilter={statusFilter}
+          onResetFilters={() => {
+            setSearchTerm("");
+            setStatusFilter("all");
+          }}
+          onViewSchedule={handleViewSchedule}
+          onEditSchedule={openDrawer}
+          onDeleteSchedule={handleDeleteClick}
+          onAddSchedule={() => openDrawer()}
+          onToggleCalendarView={() => setViewMode("calendar")}
+          pagination={{
+            currentPage,
+            pageSize,
+            onPageChange: setCurrentPage,
+            onPageSizeChange: setPageSize,
+          }}
+        />
+      ) : (
+        /* Calendar View - Keep existing calendar functionality */
+        <div className="bg-white rounded-lg shadow-lg p-2 sm:p-3 md:p-4 lg:p-6">
           <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:justify-between lg:items-center mb-3 sm:mb-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 sm:gap-x-4">
               <Button
@@ -1404,15 +1531,15 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
             </div>
             <div className="flex gap-2">
               <Button
-                variant={viewMode === "week" ? "default" : "outline"}
-                onClick={() => setViewMode("week")}
+                variant={calendarViewMode === "week" ? "default" : "outline"}
+                onClick={() => setCalendarViewMode("week")}
                 className="flex-1 sm:flex-none text-xs sm:text-sm md:text-base"
               >
                 Week View
               </Button>
               <Button
-                variant={viewMode === "day" ? "default" : "outline"}
-                onClick={() => setViewMode("day")}
+                variant={calendarViewMode === "day" ? "default" : "outline"}
+                onClick={() => setCalendarViewMode("day")}
                 className="flex-1 sm:flex-none text-xs sm:text-sm md:text-base"
               >
                 Day View
@@ -1483,195 +1610,198 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
               </PopoverContent>
             </Popover>
           </div>
-        </div>
 
-        {isLoadingSchedules ? (
-          <div className="text-center py-8 sm:py-12 md:py-16">
-            <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-b-2 border-slate-600 mx-auto mb-3 sm:mb-4"></div>
-            <p className="text-sm sm:text-base text-slate-500">
-              Loading schedules...
-            </p>
-          </div>
-        ) : filteredSchedules.length === 0 ? (
-          <div className="text-center py-8 sm:py-12 md:py-16 animate-fade-in bg-white rounded-lg shadow">
-            <div className="text-slate-400 mb-3 sm:mb-4">
-              <CreditCard className="w-12 h-12 sm:w-16 sm:h-16 mx-auto" />
+          {/* Schedules Content */}
+          {isLoadingSchedules ? (
+            <div className="text-center py-8 sm:py-12 md:py-16">
+              <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-b-2 border-slate-600 mx-auto mb-3 sm:mb-4"></div>
+              <p className="text-sm sm:text-base text-slate-500">
+                Loading schedules...
+              </p>
             </div>
-            <h3 className="text-lg sm:text-xl font-semibold text-slate-600 mb-2 px-2">
-              No shifts scheduled
-            </h3>
-            <p className="text-sm sm:text-base text-slate-500 px-2">
-              Click "Schedule Shift" to create your first cashier shift.
-            </p>
-          </div>
-        ) : (
-          /* Shifts for Selected Date */
-          <div className="w-full mb-3 sm:mb-4 md:mb-6">
-            <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-slate-800 mb-2 sm:mb-3 md:mb-4 break-word">
-              Shifts for {format(selectedDate, "MMMM d, yyyy")}
-            </h3>
-
-            <Button
-              onClick={() => openDrawer(undefined, selectedDate)}
-              variant="outline"
-              className="mb-3 sm:mb-4 w-full sm:w-auto text-xs sm:text-sm md:text-base"
-              size="sm"
-            >
-              <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              <span className="hidden xs:inline">Add Shift for This Date</span>
-              <span className="xs:hidden">Add Shift</span>
-            </Button>
-
-            {schedulesForSelectedDate.length === 0 ? (
-              <div className="text-center py-6 sm:py-8 bg-white rounded-lg shadow">
-                <CalendarIcon className="w-10 h-10 sm:w-12 sm:h-12 text-slate-300 mx-auto mb-3 sm:mb-4" />
-                <p className="text-sm sm:text-base text-slate-500 px-2">
-                  No shifts scheduled for this date.
-                </p>
+          ) : filteredSchedules.length === 0 ? (
+            <div className="text-center py-8 sm:py-12 md:py-16 animate-fade-in bg-white rounded-lg shadow">
+              <div className="text-slate-400 mb-3 sm:mb-4">
+                <CreditCard className="w-12 h-12 sm:w-16 sm:h-16 mx-auto" />
               </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-4 lg:gap-6">
-                {schedulesForSelectedDate.map((schedule, index) => {
-                  const scheduleStatus = getScheduleStatus(
-                    schedule.startTime,
-                    schedule.endTime,
-                  );
-                  const duration = getShiftDuration(
-                    schedule.startTime,
-                    schedule.endTime,
-                  );
+              <h3 className="text-lg sm:text-xl font-semibold text-slate-600 mb-2 px-2">
+                No shifts scheduled
+              </h3>
+              <p className="text-sm sm:text-base text-slate-500 px-2">
+                Click "Schedule Shift" to create your first cashier shift.
+              </p>
+            </div>
+          ) : (
+            /* Shifts for Selected Date */
+            <div className="w-full mb-3 sm:mb-4 md:mb-6">
+              <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-slate-800 mb-2 sm:mb-3 md:mb-4 break-word">
+                Shifts for {format(selectedDate, "MMMM d, yyyy")}
+              </h3>
 
-                  // Find staff member details - use allStaff for display (not filtered by permissions)
-                  const staffMember = allStaff.find(
-                    (c) => c.id === schedule.staffId,
-                  );
+              <Button
+                onClick={() => openDrawer(undefined, selectedDate)}
+                variant="outline"
+                className="mb-3 sm:mb-4 w-full sm:w-auto text-xs sm:text-sm md:text-base"
+                size="sm"
+              >
+                <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="hidden xs:inline">
+                  Add Shift for This Date
+                </span>
+                <span className="xs:hidden">Add Shift</span>
+              </Button>
 
-                  // Defensive fallback: log missing staff member for debugging
-                  if (!staffMember) {
-                    logger.warn(
-                      `[StaffSchedules] Staff member not found for schedule ${schedule.id}, staffId: ${schedule.staffId}. Available allStaff: ${allStaff.length} users`,
+              {schedulesForSelectedDate.length === 0 ? (
+                <div className="text-center py-6 sm:py-8 bg-white rounded-lg shadow">
+                  <CalendarIcon className="w-10 h-10 sm:w-12 sm:h-12 text-slate-300 mx-auto mb-3 sm:mb-4" />
+                  <p className="text-sm sm:text-base text-slate-500 px-2">
+                    No shifts scheduled for this date.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-4 lg:gap-6">
+                  {schedulesForSelectedDate.map((schedule, index) => {
+                    const scheduleStatus = getScheduleStatus(
+                      schedule.startTime,
+                      schedule.endTime,
                     );
-                  }
+                    const duration = getShiftDuration(
+                      schedule.startTime,
+                      schedule.endTime,
+                    );
 
-                  const staffName = staffMember
-                    ? `${staffMember.firstName} ${staffMember.lastName}`
-                    : `Unknown Staff (ID: ${schedule.staffId?.slice(0, 8)}...)`;
+                    // Find staff member details - use allStaff for display (not filtered by permissions)
+                    const staffMember = allStaff.find(
+                      (c) => c.id === schedule.staffId,
+                    );
 
-                  return (
-                    <div
-                      key={schedule.id}
-                      style={{ animationDelay: `${index * 0.05}s` }}
-                      className="transform transition-all duration-200 animate-slide-up hover:-translate-y-1"
-                    >
-                      <Card className="h-full bg-white shadow-lg hover:shadow-xl border-0 overflow-hidden">
-                        <CardHeader className="pb-3 sm:pb-4">
-                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
-                            <div className="space-y-1 min-w-0 flex-1">
-                              <CardTitle className="text-base sm:text-xl text-slate-900 flex items-center gap-2">
-                                <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600 shrink-0" />
-                                <span className="truncate">{staffName}</span>
-                              </CardTitle>
-                              <p className="text-xs sm:text-sm text-slate-600 truncate">
-                                {staffMember
-                                  ? getUserRoleDisplayName(staffMember)
-                                  : "Staff"}{" "}
-                                •{" "}
-                                {schedule.assignedRegister ||
-                                  "No register assigned"}
-                              </p>
-                            </div>
-                            <Badge
-                              className={`${scheduleStatus.color} text-xs whitespace-nowrap`}
-                            >
-                              {scheduleStatus.status}
-                            </Badge>
-                          </div>
-                        </CardHeader>
+                    // Defensive fallback: log missing staff member for debugging
+                    if (!staffMember) {
+                      logger.warn(
+                        `[StaffSchedules] Staff member not found for schedule ${schedule.id}, staffId: ${schedule.staffId}. Available allStaff: ${allStaff.length} users`,
+                      );
+                    }
 
-                        <CardContent className="space-y-3 sm:space-y-4">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
-                            <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-600">
-                              <CalendarIcon className="w-3 h-3 sm:w-4 sm:h-4 text-slate-500 shrink-0" />
-                              <span className="truncate">
-                                {format(
-                                  new Date(schedule.startTime),
-                                  "MMM dd, yyyy",
-                                )}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-600">
-                              <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-slate-500 shrink-0" />
-                              <span>{duration}</span>
-                            </div>
-                          </div>
+                    const staffName = staffMember
+                      ? `${staffMember.firstName} ${staffMember.lastName}`
+                      : `Unknown Staff (ID: ${schedule.staffId?.slice(0, 8)}...)`;
 
-                          <div className="bg-slate-50 rounded-lg p-2 sm:p-3 text-xs sm:text-sm">
-                            <div className="flex justify-between items-center">
-                              <span className="font-medium">
-                                Schedule Time:
-                              </span>
-                            </div>
-                            <div className="text-slate-700 mt-1">
-                              {format(new Date(schedule.startTime), "h:mm a")} -{" "}
-                              {format(new Date(schedule.endTime), "h:mm a")}
-                            </div>
-                          </div>
-
-                          {schedule.notes && (
-                            <div className="flex items-start gap-2 p-2 sm:p-3 bg-amber-50 rounded-lg">
-                              <StickyNote className="w-3 h-3 sm:w-4 sm:h-4 text-amber-600 mt-0.5 shrink-0" />
-                              <div className="min-w-0 flex-1">
-                                <p className="text-xs sm:text-sm font-medium text-amber-800 mb-1">
-                                  Notes:
-                                </p>
-                                <p className="text-xs sm:text-sm text-amber-700 overflow-wrap-break-word">
-                                  {schedule.notes}
+                    return (
+                      <div
+                        key={schedule.id}
+                        style={{ animationDelay: `${index * 0.05}s` }}
+                        className="transform transition-all duration-200 animate-slide-up hover:-translate-y-1"
+                      >
+                        <Card className="h-full bg-white shadow-lg hover:shadow-xl border-0 overflow-hidden">
+                          <CardHeader className="pb-3 sm:pb-4">
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                              <div className="space-y-1 min-w-0 flex-1">
+                                <CardTitle className="text-base sm:text-xl text-slate-900 flex items-center gap-2">
+                                  <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600 shrink-0" />
+                                  <span className="truncate">{staffName}</span>
+                                </CardTitle>
+                                <p className="text-xs sm:text-sm text-slate-600 truncate">
+                                  {staffMember
+                                    ? getUserRoleDisplayName(staffMember)
+                                    : "Staff"}{" "}
+                                  •{" "}
+                                  {schedule.assignedRegister ||
+                                    "No register assigned"}
                                 </p>
                               </div>
+                              <Badge
+                                className={`${scheduleStatus.color} text-xs whitespace-nowrap`}
+                              >
+                                {scheduleStatus.status}
+                              </Badge>
                             </div>
-                          )}
+                          </CardHeader>
 
-                          <div className="pt-2 border-t border-slate-100">
-                            <div className="flex gap-2">
-                              <Button
-                                onClick={() => openDrawer(schedule)}
-                                size="sm"
-                                variant="outline"
-                                className="flex-1 text-xs sm:text-sm"
-                                aria-label={`Edit schedule for ${staffName}`}
-                              >
-                                <Edit2
-                                  className="w-3 h-3 sm:w-4 sm:h-4 mr-1"
-                                  aria-hidden="true"
-                                />
-                                Edit
-                              </Button>
-                              <Button
-                                onClick={() => handleDeleteClick(schedule)}
-                                size="sm"
-                                variant="outline"
-                                disabled={isDeleting}
-                                className="flex-1 hover:bg-red-50 hover:border-red-300 hover:text-red-600 text-xs sm:text-sm"
-                                aria-label={`Delete schedule for ${staffName}`}
-                              >
-                                <Trash2
-                                  className="w-3 h-3 sm:w-4 sm:h-4 mr-1"
-                                  aria-hidden="true"
-                                />
-                                Delete
-                              </Button>
+                          <CardContent className="space-y-3 sm:space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+                              <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-600">
+                                <CalendarIcon className="w-3 h-3 sm:w-4 sm:h-4 text-slate-500 shrink-0" />
+                                <span className="truncate">
+                                  {format(
+                                    new Date(schedule.startTime),
+                                    "MMM dd, yyyy",
+                                  )}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-600">
+                                <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-slate-500 shrink-0" />
+                                <span>{duration}</span>
+                              </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+
+                            <div className="bg-slate-50 rounded-lg p-2 sm:p-3 text-xs sm:text-sm">
+                              <div className="flex justify-between items-center">
+                                <span className="font-medium">
+                                  Schedule Time:
+                                </span>
+                              </div>
+                              <div className="text-slate-700 mt-1">
+                                {format(new Date(schedule.startTime), "h:mm a")}{" "}
+                                - {format(new Date(schedule.endTime), "h:mm a")}
+                              </div>
+                            </div>
+
+                            {schedule.notes && (
+                              <div className="flex items-start gap-2 p-2 sm:p-3 bg-amber-50 rounded-lg">
+                                <StickyNote className="w-3 h-3 sm:w-4 sm:h-4 text-amber-600 mt-0.5 shrink-0" />
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-xs sm:text-sm font-medium text-amber-800 mb-1">
+                                    Notes:
+                                  </p>
+                                  <p className="text-xs sm:text-sm text-amber-700 overflow-wrap-break-word">
+                                    {schedule.notes}
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="pt-2 border-t border-slate-100">
+                              <div className="flex gap-2">
+                                <Button
+                                  onClick={() => openDrawer(schedule)}
+                                  size="sm"
+                                  variant="outline"
+                                  className="flex-1 text-xs sm:text-sm"
+                                  aria-label={`Edit schedule for ${staffName}`}
+                                >
+                                  <Edit2
+                                    className="w-3 h-3 sm:w-4 sm:h-4 mr-1"
+                                    aria-hidden="true"
+                                  />
+                                  Edit
+                                </Button>
+                                <Button
+                                  onClick={() => handleDeleteClick(schedule)}
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={isDeleting}
+                                  className="flex-1 hover:bg-red-50 hover:border-red-300 hover:text-red-600 text-xs sm:text-sm"
+                                  aria-label={`Delete schedule for ${staffName}`}
+                                >
+                                  <Trash2
+                                    className="w-3 h-3 sm:w-4 sm:h-4 mr-1"
+                                    aria-hidden="true"
+                                  />
+                                  Delete
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

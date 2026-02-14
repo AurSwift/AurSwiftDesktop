@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import type { UserUpdateFormData } from "../schemas/user-schema";
+import type { GetRolesAPIResponse, RawRoleData } from "../schemas/api-types";
 import { useAuth } from "@/shared/hooks";
 
 import { getLogger } from "@/shared/utils/logger";
@@ -28,21 +29,21 @@ export function useUpdateUser() {
       let roleId: string | null = null;
       if (data.role) {
         // Get all roles for the business
-        const rolesResponse = await window.rbacAPI.roles.list(
+        const rolesResponse = (await window.rbacAPI.roles.list(
           sessionToken,
-          user.businessId
-        );
+          user.businessId,
+        )) as GetRolesAPIResponse;
 
         if (rolesResponse.success && Array.isArray(rolesResponse.data)) {
-          const role = (rolesResponse.data as any[]).find(
-            (r) => r.name === data.role
+          const role = rolesResponse.data.find(
+            (r: RawRoleData) => r.name === data.role,
           );
           if (role) {
             roleId = role.id;
             logger.info(`Found roleId ${roleId} for role name ${data.role}`);
           } else {
             logger.warn(
-              `Role ${data.role} not found for business ${user.businessId}`
+              `Role ${data.role} not found for business ${user.businessId}`,
             );
           }
         }
@@ -53,13 +54,13 @@ export function useUpdateUser() {
             await window.rbacAPI.userRoles.setPrimaryRole(
               sessionToken,
               data.id,
-              roleId
+              roleId,
             );
 
           if (!primaryRoleResponse.success) {
             logger.error(
               "Failed to update primary role:",
-              primaryRoleResponse.message
+              primaryRoleResponse.message,
             );
             // Continue with other updates even if role update fails
           } else {
@@ -70,7 +71,7 @@ export function useUpdateUser() {
           const assignResponse = await window.rbacAPI.userRoles.assign(
             sessionToken,
             data.id,
-            roleId
+            roleId,
           );
 
           if (!assignResponse.success) {
@@ -96,7 +97,7 @@ export function useUpdateUser() {
       const response = await window.authAPI.updateUser(
         sessionToken,
         data.id,
-        updates
+        updates,
       );
 
       if (response.success) {

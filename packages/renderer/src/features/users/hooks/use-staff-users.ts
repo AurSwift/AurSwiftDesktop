@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import type { StaffUser } from "../schemas/types";
+import type { GetUsersAPIResponse, RawUserData } from "../schemas/api-types";
 import { useAuth } from "@/shared/hooks/use-auth";
 import { getUserRoleName } from "@/shared/utils/rbac-helpers";
 
@@ -26,39 +27,16 @@ export function useStaffUsers() {
         throw new Error("Not authenticated");
       }
 
-      const response = await window.authAPI.getUsersByBusiness(
+      const response = (await window.authAPI.getUsersByBusiness(
         sessionToken,
-        user.businessId
-      );
+        user.businessId,
+      )) as GetUsersAPIResponse;
 
       if (response.success && response.users) {
         // Filter out admin users and convert to StaffUser format
-        const staffUsers: StaffUser[] = (
-          response.users as Array<{
-            id: string;
-            username?: string;
-            email?: string;
-            firstName: string;
-            lastName: string;
-            businessName: string;
-            businessId: string;
-            avatar?: string;
-            address?: string;
-            createdAt?: string;
-            isActive?: boolean;
-            primaryRoleId?: string;
-            roleName?: string;
-            primaryRole?: {
-              id: string;
-              name: string;
-              displayName: string;
-              description?: string;
-              permissions?: unknown[];
-            };
-          }>
-        )
-          .filter((u) => getUserRoleName(u) !== "admin")
-          .map((u) => ({
+        const staffUsers: StaffUser[] = response.users
+          .filter((u: RawUserData) => getUserRoleName(u) !== "admin")
+          .map((u: RawUserData) => ({
             id: u.id,
             username: u.username || "",
             email: u.email || "",

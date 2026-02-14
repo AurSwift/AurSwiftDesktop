@@ -492,13 +492,13 @@ export default function CashierManagementView({
                     <TableHead className="min-w-[200px] hidden sm:table-cell">
                       Email
                     </TableHead>
-                    <TableHead className="min-w-[80px] hidden md:table-cell">
+                    <TableHead className="min-w-20 hidden md:table-cell">
                       Role
                     </TableHead>
                     <TableHead className="min-w-[100px] hidden lg:table-cell">
                       Created
                     </TableHead>
-                    <TableHead className="min-w-[80px]">Status</TableHead>
+                    <TableHead className="min-w-20">Status</TableHead>
                     <TableHead className="text-right min-w-[120px]">
                       Actions
                     </TableHead>

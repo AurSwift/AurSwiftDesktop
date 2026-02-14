@@ -1,6 +1,10 @@
 import { OperationsOverview } from "@/features/dashboard/components/operations-overview";
 
-const ManagerDashboardView = () => {
+interface ManagerDashboardViewProps {
+  onActionClick?: (featureId: string, actionId: string) => void;
+}
+
+const ManagerDashboardView = (_props: ManagerDashboardViewProps) => {
   return (
     <div className="max-w-7xl mx-auto">
       <OperationsOverview />

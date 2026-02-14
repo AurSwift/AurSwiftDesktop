@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Plus, UserCog } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useAuth } from "@/shared/hooks/use-auth";
+import { MiniBar } from "@/components/mini-bar";
 import {
   Card,
   CardContent,
@@ -48,7 +49,7 @@ export default function UserRoleAssignmentView({
           setIsAssignDialogOpen(false);
           refetchUserRoles();
         },
-      }
+      },
     );
   };
 
@@ -62,31 +63,20 @@ export default function UserRoleAssignmentView({
         onSuccess: () => {
           refetchUserRoles();
         },
-      }
+      },
     );
   };
 
   const selectedUser = staffUsers?.find((u) => u.id === selectedUserId);
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-[1600px] space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={onBack}>
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
-              <UserCog className="h-7 w-7" />
-              User Role Assignment
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Assign and manage roles for users
-            </p>
-          </div>
-        </div>
-      </div>
+    <div className="container mx-auto p-1 max-w-[1600px] flex flex-col flex-1 min-h-0 gap-4 sm:gap-6">
+      <MiniBar
+        className="shrink-0"
+        title="User Role Assignment"
+        onBack={onBack}
+        backAriaLabel="Back to Dashboard"
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* User Selection */}

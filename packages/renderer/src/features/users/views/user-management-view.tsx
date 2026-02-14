@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Plus, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/shared/hooks/use-auth";
@@ -8,13 +8,23 @@ import { MiniBar } from "@/components/mini-bar";
 
 import { getLogger } from "@/shared/utils/logger";
 const logger = getLogger("user-management-view");
-import {
-  UserFilters,
-  UserTable,
-  AddUserDrawer,
-  EditUserDrawer,
-  ViewUserDrawer,
-} from "../components";
+import { UserFilters, UserTable } from "../components";
+
+// Lazy load modal components for better performance
+const AddUserModal = lazy(() =>
+  import("../components").then((mod) => ({ default: mod.AddUserModal })),
+);
+const EditUserModal = lazy(() =>
+  import("../components").then((mod) => ({ default: mod.EditUserModal })),
+);
+const ViewUserModal = lazy(() =>
+  import("../components").then((mod) => ({ default: mod.ViewUserModal })),
+);
+const DeleteConfirmationDialog = lazy(() =>
+  import("../components").then((mod) => ({
+    default: mod.DeleteConfirmationDialog,
+  })),
+);
 import {
   useStaffUsers,
   useUserFilters,
@@ -55,7 +65,7 @@ export default function UserManagementView({ onBack }: { onBack: () => void }) {
   } = useUserDialogs();
   const { createStaffUser, isLoading: isCreating } = useCreateUser();
   const { updateStaffUser, isLoading: isUpdating } = useUpdateUser();
-  const { deleteStaffUser } = useDeleteUser();
+  const { deleteStaffUser, isLoading: isDeleting } = useDeleteUser();
 
   const canManageUsers = hasPermission(PERMISSIONS.USERS_MANAGE);
 
@@ -63,6 +73,13 @@ export default function UserManagementView({ onBack }: { onBack: () => void }) {
   const [pageSize, setPageSize] = useState(10);
   const totalItems = filteredUsers.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+
+  // Delete confirmation dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -135,19 +152,21 @@ export default function UserManagementView({ onBack }: { onBack: () => void }) {
     }
   };
 
-  // Handle delete user with confirmation
-  const handleDeleteUser = async (userId: string, userName: string) => {
-    if (
-      !confirm(
-        `Are you sure you want to delete ${userName}? This action cannot be undone.`,
-      )
-    ) {
-      return;
-    }
+  // Handle delete user - now with proper confirmation dialog
+  const handleDeleteUser = (userId: string, userName: string) => {
+    setUserToDelete({ id: userId, name: userName });
+    setDeleteDialogOpen(true);
+  };
 
-    const result = await deleteStaffUser(userId, userName);
+  // Confirm delete action
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+
+    const result = await deleteStaffUser(userToDelete.id, userToDelete.name);
     if (result.success) {
       await refetch();
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
     }
   };
 
@@ -177,8 +196,6 @@ export default function UserManagementView({ onBack }: { onBack: () => void }) {
               variant="miniBar"
               searchTerm={searchTerm}
               onSearchChange={setSearchTerm}
-              filterRole={filterRole}
-              onRoleFilterChange={setFilterRole}
             />
           </div>
         }
@@ -240,36 +257,58 @@ export default function UserManagementView({ onBack }: { onBack: () => void }) {
         />
       </div>
 
-      {/* Add User Drawer */}
-      <AddUserDrawer
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        onSubmit={handleCreateUser}
-        isLoading={isCreating}
-      />
-
-      {/* Edit User Drawer */}
-      {selectedUser && (
-        <EditUserDrawer
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          user={selectedUser}
-          onSubmit={handleUpdateUser}
-          isLoading={isUpdating}
+      {/* Add User Modal (Drawer variant) */}
+      <Suspense fallback={null}>
+        <AddUserModal
+          variant="drawer"
+          open={isAddDialogOpen}
+          onOpenChange={setIsAddDialogOpen}
+          onSubmit={handleCreateUser}
+          isLoading={isCreating}
         />
+      </Suspense>
+
+      {/* Edit User Modal (Drawer variant) */}
+      {selectedUser && (
+        <Suspense fallback={null}>
+          <EditUserModal
+            variant="drawer"
+            open={isEditDialogOpen}
+            onOpenChange={setIsEditDialogOpen}
+            user={selectedUser}
+            onSubmit={handleUpdateUser}
+            isLoading={isUpdating}
+          />
+        </Suspense>
       )}
 
-      {/* View User Drawer */}
+      {/* View User Modal (Drawer variant) */}
       {selectedUser && (
-        <ViewUserDrawer
-          open={isViewDialogOpen}
-          onOpenChange={setIsViewDialogOpen}
-          user={selectedUser}
-          onEdit={() => {
-            closeViewDialog();
-            openEditDialog(selectedUser);
-          }}
-        />
+        <Suspense fallback={null}>
+          <ViewUserModal
+            variant="drawer"
+            open={isViewDialogOpen}
+            onOpenChange={setIsViewDialogOpen}
+            user={selectedUser}
+            onEdit={() => {
+              closeViewDialog();
+              openEditDialog(selectedUser);
+            }}
+          />
+        </Suspense>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {userToDelete && (
+        <Suspense fallback={null}>
+          <DeleteConfirmationDialog
+            open={deleteDialogOpen}
+            onOpenChange={setDeleteDialogOpen}
+            userName={userToDelete.name}
+            onConfirm={confirmDelete}
+            isLoading={isDeleting}
+          />
+        </Suspense>
       )}
     </div>
   );

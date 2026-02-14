@@ -1,35 +1,28 @@
 import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-
 import { Search } from "lucide-react";
 import { AdaptiveKeyboard } from "@/features/adaptive-keyboard/adaptive-keyboard";
 import { cn } from "@/shared/utils/cn";
 
-interface UserFiltersProps {
+interface RoleFiltersProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
   variant?: "card" | "miniBar";
 }
 
-export function UserFilters({
+export function RoleFilters({
   searchTerm,
   onSearchChange,
   variant = "card",
-}: UserFiltersProps) {
+}: RoleFiltersProps) {
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const keyboardContainerRef = useRef<HTMLDivElement>(null);
 
   // Add padding to body when keyboard is visible to allow content scrolling
-  // FIXED: Use CSS custom property instead of direct style manipulation for better React patterns
   useEffect(() => {
-    if (!keyboardVisible) {
-      document.documentElement.style.removeProperty("--keyboard-height");
+    if (!keyboardVisible || !keyboardContainerRef.current) {
       document.body.style.paddingBottom = "";
-      return;
-    }
-
-    if (!keyboardContainerRef.current) {
       return;
     }
 
@@ -37,11 +30,6 @@ export function UserFilters({
       const keyboard = keyboardContainerRef.current;
       if (keyboard) {
         const height = keyboard.offsetHeight;
-        // Use CSS custom property for better encapsulation
-        document.documentElement.style.setProperty(
-          "--keyboard-height",
-          `${height}px`,
-        );
         document.body.style.paddingBottom = `${height}px`;
       }
     };
@@ -56,7 +44,6 @@ export function UserFilters({
     return () => {
       clearTimeout(timeoutId);
       window.removeEventListener("resize", updatePadding);
-      document.documentElement.style.removeProperty("--keyboard-height");
       document.body.style.paddingBottom = "";
     };
   }, [keyboardVisible]);
@@ -114,7 +101,7 @@ export function UserFilters({
           <Search className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
           <Input
             ref={searchInputRef}
-            placeholder="Search staff by name or email..."
+            placeholder="Search roles by name or description..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
             onFocus={handleSearchFocus}
@@ -164,7 +151,7 @@ export function UserFilters({
             inputType="text"
             visible={keyboardVisible}
             onClose={() => setKeyboardVisible(false)}
-            className="rounded-none!"
+            className="!rounded-none"
           />
         </div>
       )}

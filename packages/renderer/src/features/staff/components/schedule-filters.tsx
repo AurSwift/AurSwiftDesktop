@@ -1,35 +1,55 @@
 import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-
-import { Search } from "lucide-react";
+import { Search, Calendar as CalendarIcon } from "lucide-react";
 import { AdaptiveKeyboard } from "@/features/adaptive-keyboard/adaptive-keyboard";
 import { cn } from "@/shared/utils/cn";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import type { DateRange } from "react-day-picker";
 
-interface UserFiltersProps {
+interface ScheduleFiltersProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
+  statusFilter: "all" | "upcoming" | "active" | "completed" | "missed";
+  onStatusFilterChange: (
+    value: "all" | "upcoming" | "active" | "completed" | "missed",
+  ) => void;
+  dateRange?: DateRange;
+  onDateRangeChange?: (range: DateRange | undefined) => void;
   variant?: "card" | "miniBar";
 }
 
-export function UserFilters({
+export function ScheduleFilters({
   searchTerm,
   onSearchChange,
+  statusFilter,
+  onStatusFilterChange,
+  dateRange,
+  onDateRangeChange,
   variant = "card",
-}: UserFiltersProps) {
+}: ScheduleFiltersProps) {
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const keyboardContainerRef = useRef<HTMLDivElement>(null);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   // Add padding to body when keyboard is visible to allow content scrolling
-  // FIXED: Use CSS custom property instead of direct style manipulation for better React patterns
   useEffect(() => {
-    if (!keyboardVisible) {
-      document.documentElement.style.removeProperty("--keyboard-height");
+    if (!keyboardVisible || !keyboardContainerRef.current) {
       document.body.style.paddingBottom = "";
-      return;
-    }
-
-    if (!keyboardContainerRef.current) {
       return;
     }
 
@@ -37,26 +57,17 @@ export function UserFilters({
       const keyboard = keyboardContainerRef.current;
       if (keyboard) {
         const height = keyboard.offsetHeight;
-        // Use CSS custom property for better encapsulation
-        document.documentElement.style.setProperty(
-          "--keyboard-height",
-          `${height}px`,
-        );
         document.body.style.paddingBottom = `${height}px`;
       }
     };
 
-    // Small delay to ensure keyboard is rendered and measured
     const timeoutId = setTimeout(updatePadding, 100);
     updatePadding();
-
-    // Update on resize in case keyboard height changes
     window.addEventListener("resize", updatePadding);
 
     return () => {
       clearTimeout(timeoutId);
       window.removeEventListener("resize", updatePadding);
-      document.documentElement.style.removeProperty("--keyboard-height");
       document.body.style.paddingBottom = "";
     };
   }, [keyboardVisible]);
@@ -114,7 +125,7 @@ export function UserFilters({
           <Search className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
           <Input
             ref={searchInputRef}
-            placeholder="Search staff by name or email..."
+            placeholder="Search by staff name..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
             onFocus={handleSearchFocus}
@@ -125,6 +136,61 @@ export function UserFilters({
           />
         </div>
       </div>
+
+      {variant !== "miniBar" && (
+        <div className="flex gap-2">
+          <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+            <SelectTrigger className="w-[140px] h-8 sm:h-9 md:h-10">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="upcoming">Upcoming</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="missed">Missed</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {onDateRangeChange && (
+            <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "h-8 sm:h-9 md:h-10 justify-start text-left font-normal",
+                    !dateRange && "text-muted-foreground",
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateRange?.from ? (
+                    dateRange.to ? (
+                      <>
+                        {format(dateRange.from, "LLL dd")} -{" "}
+                        {format(dateRange.to, "LLL dd, yyyy")}
+                      </>
+                    ) : (
+                      format(dateRange.from, "LLL dd, yyyy")
+                    )
+                  ) : (
+                    <span>Pick a date range</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={dateRange?.from}
+                  selected={dateRange}
+                  onSelect={onDateRangeChange}
+                  numberOfMonths={2}
+                />
+              </PopoverContent>
+            </Popover>
+          )}
+        </div>
+      )}
     </div>
   );
 
@@ -164,7 +230,7 @@ export function UserFilters({
             inputType="text"
             visible={keyboardVisible}
             onClose={() => setKeyboardVisible(false)}
-            className="rounded-none!"
+            className="!rounded-none"
           />
         </div>
       )}
