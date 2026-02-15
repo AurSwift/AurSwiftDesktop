@@ -7,5 +7,6 @@
 export { QuickSellPageTabs } from "./page-tabs";
 export { QuickSellButtonGrid } from "./button-grid";
 export { ButtonEditorModal } from "./button-editor-modal";
+export { QuickSellToolbar, filterButtons, sortButtonsForExport } from "./quick-sell-toolbar";
 export { ProductSearchCombobox } from "./product-search-combobox";
 export { CategorySearchCombobox } from "./category-search-combobox";

@@ -175,6 +175,16 @@ export interface ButtonEditorState {
   mode: "create" | "edit";
 }
 
+/** Link type filter for toolbar (all = no filter) */
+export type QuickSellLinkTypeFilter =
+  | "all"
+  | "product"
+  | "category"
+  | "unassigned";
+
+/** Sort key for current page buttons */
+export type QuickSellSortKey = "position" | "label";
+
 /**
  * Preset colors for button customization
  */
