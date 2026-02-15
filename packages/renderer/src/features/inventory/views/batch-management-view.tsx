@@ -12,6 +12,7 @@ import {
   Plus,
   Search,
   ChevronLeft,
+  ChevronRight,
   AlertTriangle,
   Info,
   Package,
@@ -19,7 +20,7 @@ import {
 import { AdaptiveKeyboard } from "@/features/adaptive-keyboard/adaptive-keyboard";
 import { cn } from "@/shared/utils/cn";
 import { useAuth } from "@/shared/hooks/use-auth";
-import { Pagination } from "@/components/ui/pagination";
+import { MiniBar } from "@/components/mini-bar";
 import { useExpiryAlerts } from "@/features/inventory/hooks/use-expiry-alerts";
 import { useNestedNavigation } from "@/navigation/hooks/use-nested-navigation";
 import { getNestedViews } from "@/navigation/registry/view-registry";
@@ -613,68 +614,228 @@ const BatchManagementView: React.FC<BatchManagementViewProps> = ({
   if (!user?.businessId) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <p className="text-gray-600">Please log in to manage batches</p>
+        <p className="text-muted-foreground">Please log in to manage batches</p>
       </div>
     );
   }
 
+  const batchListFilters = (
+    <div className="w-full max-w-2xl flex flex-wrap items-center gap-2">
+      <div className="relative flex-1 min-w-[100px]">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <input
+          type="text"
+          placeholder="Search..."
+          value={searchValue}
+          readOnly
+          onFocus={handleSearchFocus}
+          className={cn(
+            "flex h-8 w-full rounded-md border border-input bg-background pl-8 pr-2 text-sm",
+            "placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            showSearchKeyboard && "ring-2 ring-primary border-primary"
+          )}
+        />
+      </div>
+      <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <SelectTrigger className="h-8 w-[100px]">
+          <SelectValue placeholder="Status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Status</SelectItem>
+          <SelectItem value="ACTIVE">Active</SelectItem>
+          <SelectItem value="EXPIRED">Expired</SelectItem>
+          <SelectItem value="SOLD_OUT">Sold Out</SelectItem>
+          <SelectItem value="REMOVED">Removed</SelectItem>
+        </SelectContent>
+      </Select>
+      <Select value={expiryFilter} onValueChange={setExpiryFilter}>
+        <SelectTrigger className="h-8 w-[90px]">
+          <SelectValue placeholder="Expiry" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Expiry</SelectItem>
+          <SelectItem value="expired">Expired</SelectItem>
+          <SelectItem value="critical">Critical</SelectItem>
+          <SelectItem value="warning">Warning</SelectItem>
+          <SelectItem value="info">Info</SelectItem>
+        </SelectContent>
+      </Select>
+      <Select
+        value={selectedProduct?.id || "all"}
+        onValueChange={(value) => {
+          if (value === "all") setSelectedProduct(null);
+          else {
+            const product = productLookup.find((p) => p.id === value);
+            if (product)
+              setSelectedProduct({
+                id: product.id,
+                name: product.name,
+                sku: product.sku || "",
+              } as Product);
+            else setSelectedProduct(null);
+          }
+        }}
+        disabled={!productLookupLoaded}
+      >
+        <SelectTrigger className="h-8 w-[120px]">
+          <SelectValue
+            placeholder={
+              productLookupLoaded ? "Product" : "Loading..."
+            }
+          />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Products</SelectItem>
+          {productLookup.slice(0, 100).map((product) => (
+            <SelectItem key={product.id} value={product.id}>
+              {product.name}
+            </SelectItem>
+          ))}
+          {productLookup.length > 100 && (
+            <div className="px-2 py-1.5 text-xs text-muted-foreground text-center border-t">
+              +{productLookup.length - 100} more
+            </div>
+          )}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+
+  const listPaginationRight = (
+    <div className="flex items-center gap-1 sm:gap-2">
+      <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
+        {totalItems === 0
+          ? "0 / 0"
+          : `${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, totalItems)} / ${totalItems}`}
+      </span>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8"
+        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+        disabled={currentPage <= 1 || totalPages <= 1}
+        aria-label="Previous page"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8"
+        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+        disabled={currentPage >= totalPages || totalPages <= 1}
+        aria-label="Next page"
+      >
+        <ChevronRight className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+
   return (
     <>
       {currentView === "dashboard" && (
-        <ExpiryDashboardView
-          batches={allBatches}
-          expirySettings={expirySettings}
-          businessId={user.businessId}
-          batchStats={batchStats}
-          onViewBatches={() => {
-            navigateTo(INVENTORY_ROUTES.BATCH_LIST);
-          }}
-          onReceiveBatch={() => {
-            handleCreateBatch();
-          }}
-          onGenerateReport={() => {
-            toast.info("Report generation coming soon");
-          }}
-          onCreatePromotion={() => {
-            toast.info("Promotion creation coming soon");
-          }}
-        />
+        <div className="container mx-auto p-1 max-w-[1600px] flex flex-col flex-1 min-h-0 gap-4 sm:gap-6 overflow-hidden">
+          <MiniBar
+            className="shrink-0"
+            title="Batch Management"
+            onBack={onBack}
+            backAriaLabel="Back to Dashboard"
+            action={{
+              label: "Create Batch",
+              onClick: handleCreateBatch,
+              icon: <Plus className="h-4 w-4" />,
+              ariaLabel: "Create batch",
+            }}
+            right={
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => navigateTo(INVENTORY_ROUTES.EXPIRY_ALERTS)}
+                >
+                  <AlertTriangle className="w-4 h-4 mr-1.5" />
+                  Alerts ({criticalAlerts.length + warningAlerts.length})
+                </Button>
+              </div>
+            }
+          />
+          <div className="min-h-0 overflow-auto">
+            <ExpiryDashboardView
+              batches={allBatches}
+              expirySettings={expirySettings}
+              businessId={user.businessId}
+              batchStats={batchStats}
+              onViewBatches={() => navigateTo(INVENTORY_ROUTES.BATCH_LIST)}
+              onReceiveBatch={handleCreateBatch}
+              onGenerateReport={() => toast.info("Report generation coming soon")}
+              onCreatePromotion={() => toast.info("Promotion creation coming soon")}
+            />
+          </div>
+        </div>
       )}
 
       {currentView === "alerts" && (
-        <ExpiryAlertCenter
-          criticalAlerts={criticalAlerts}
-          warningAlerts={warningAlerts}
-          infoAlerts={infoAlerts}
-          onAcknowledge={(_alert) => {
-            toast.info("Acknowledgment coming soon");
-          }}
-          onCreatePromotion={(_alert) => {
-            toast.info("Promotion creation coming soon");
-          }}
-          onAdjustStock={(alert) => {
-            handleAdjustBatch(alert.batch);
-          }}
-          onMarkAsWaste={(alert) => {
-            updateBatch(alert.batch.id, { status: "REMOVED" });
-            toast.success("Batch marked as waste");
-            loadBatches();
-          }}
-        />
+        <div className="container mx-auto p-1 max-w-[1600px] flex flex-col flex-1 min-h-0 gap-4 sm:gap-6 overflow-hidden">
+          <MiniBar
+            className="shrink-0"
+            title="Expiry Alerts"
+            onBack={() => navigateTo(INVENTORY_ROUTES.BATCH_DASHBOARD)}
+            backAriaLabel="Back to Batch Management"
+            right={
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8"
+                onClick={() => navigateTo(INVENTORY_ROUTES.BATCH_LIST)}
+              >
+                <Package className="w-4 h-4 mr-1.5" />
+                View Batches
+              </Button>
+            }
+          />
+          <div className="min-h-0 overflow-auto">
+            <ExpiryAlertCenter
+              criticalAlerts={criticalAlerts}
+              warningAlerts={warningAlerts}
+              infoAlerts={infoAlerts}
+              onAcknowledge={() => toast.info("Acknowledgment coming soon")}
+              onCreatePromotion={() => toast.info("Promotion creation coming soon")}
+              onAdjustStock={(alert) => handleAdjustBatch(alert.batch)}
+              onMarkAsWaste={(alert) => {
+                updateBatch(alert.batch.id, { status: "REMOVED" });
+                toast.success("Batch marked as waste");
+                loadBatches();
+              }}
+            />
+          </div>
+        </div>
       )}
 
       {currentView === "list" && (
-        <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
-          {/* Context Alert - Show when filtered by product */}
+        <div className="container mx-auto p-1 max-w-[1600px] flex flex-col flex-1 min-h-0 gap-4 sm:gap-6 overflow-hidden">
+          <MiniBar
+            className="shrink-0"
+            title="Batch Management"
+            onBack={() => navigateTo(INVENTORY_ROUTES.BATCH_DASHBOARD)}
+            backAriaLabel="Back to Batch dashboard"
+            action={{
+              label: "Create Batch",
+              onClick: handleCreateBatch,
+              icon: <Plus className="h-4 w-4" />,
+              ariaLabel: "Create batch",
+            }}
+            center={batchListFilters}
+            right={listPaginationRight}
+          />
+
           {selectedProduct && (
-            <Alert>
-              <Info className="w-4 h-4" />
+            <Alert className="shrink-0">
+              <Info className="h-4 w-4" />
               <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <span className="text-sm">
                   Viewing batches for:{" "}
-                  <strong className="font-semibold">
-                    {selectedProduct.name}
-                  </strong>
+                  <strong className="font-semibold">{selectedProduct.name}</strong>
                   {selectedProduct.sku && (
                     <span className="text-muted-foreground ml-2">
                       (SKU: {selectedProduct.sku})
@@ -693,172 +854,26 @@ const BatchManagementView: React.FC<BatchManagementViewProps> = ({
             </Alert>
           )}
 
-          {/* Header */}
-          <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
-            <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigateTo(INVENTORY_ROUTES.BATCH_DASHBOARD)}
-                className="w-fit"
-              >
-                <ChevronLeft className="w-4 h-4 mr-2" />
-                Back
-              </Button>
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                  Batch Management
-                </h1>
-                <p className="text-sm sm:text-base text-gray-600 mt-1">
-                  Manage product batches and expiry tracking
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-              <Button
-                onClick={onBack}
-                variant="outline"
-                className="w-full sm:w-auto"
-              >
-                Dashboard
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => navigateTo(INVENTORY_ROUTES.EXPIRY_ALERTS)}
-                className="w-full sm:w-auto"
-              >
-                <AlertTriangle className="w-4 h-4 mr-2" />
-                Alerts ({criticalAlerts.length + warningAlerts.length})
-              </Button>
-              <Button onClick={handleCreateBatch} className="w-full sm:w-auto">
-                <Plus className="w-4 h-4 mr-2" />
-                Create Batch
-              </Button>
-            </div>
-          </div>
-
-          {/* Filters */}
-          <div className="bg-white p-3 sm:p-4 rounded-lg shadow-sm border">
-            <div className="flex flex-col space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="relative sm:col-span-2 lg:col-span-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Search batches, products, SKU..."
-                      value={searchValue}
-                      readOnly
-                      onFocus={handleSearchFocus}
-                      className={cn(
-                        "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
-                        "pl-10",
-                        "ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium",
-                        "placeholder:text-muted-foreground",
-                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                        "disabled:cursor-not-allowed disabled:opacity-50",
-                        showSearchKeyboard &&
-                          "ring-2 ring-primary border-primary",
-                      )}
-                    />
-                  </div>
-                </div>
-
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="All Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="ACTIVE">Active</SelectItem>
-                    <SelectItem value="EXPIRED">Expired</SelectItem>
-                    <SelectItem value="SOLD_OUT">Sold Out</SelectItem>
-                    <SelectItem value="REMOVED">Removed</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={expiryFilter} onValueChange={setExpiryFilter}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="All Expiry" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Expiry</SelectItem>
-                    <SelectItem value="expired">Expired</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
-                    <SelectItem value="warning">Warning</SelectItem>
-                    <SelectItem value="info">Info</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select
-                  value={selectedProduct?.id || "all"}
-                  onValueChange={(value) => {
-                    if (value === "all") {
-                      setSelectedProduct(null);
-                    } else {
-                      const product = productLookup.find((p) => p.id === value);
-                      if (product) {
-                        setSelectedProduct({
-                          id: product.id,
-                          name: product.name,
-                          sku: product.sku || "",
-                        } as Product);
-                      } else {
-                        setSelectedProduct(null);
-                      }
-                    }
-                  }}
-                  disabled={!productLookupLoaded}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue
-                      placeholder={
-                        productLookupLoaded
-                          ? "All Products"
-                          : "Loading products..."
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Products</SelectItem>
-                    {/* Show first 100 products for performance - use search for more */}
-                    {productLookup.slice(0, 100).map((product) => (
-                      <SelectItem key={product.id} value={product.id}>
-                        {product.name}
-                      </SelectItem>
-                    ))}
-                    {productLookup.length > 100 && (
-                      <div className="px-2 py-1.5 text-xs text-gray-500 text-center border-t">
-                        Showing first 100 of {productLookup.length} products
-                      </div>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          {/* Batch List */}
-          <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+          <div className="flex-1 min-h-0 flex flex-col overflow-hidden rounded-lg border bg-background">
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                  <p className="text-gray-600">Loading batches...</p>
+                <div className="flex flex-col items-center gap-2">
+                  <div className="animate-spin rounded-full h-10 w-10 border-2 border-primary border-t-transparent" />
+                  <p className="text-sm text-muted-foreground">Loading batches...</p>
                 </div>
               </div>
             ) : batches.length === 0 ? (
               <div className="p-12 text-center">
-                <Package className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <Package className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+                <h3 className="text-base font-semibold text-foreground mb-2">
                   No batches found
                 </h3>
-                <p className="text-gray-600 mb-4">
+                <p className="text-sm text-muted-foreground mb-4">
                   {totalItems === 0
                     ? "Get started by creating your first batch."
                     : "Try adjusting your search criteria or filters."}
                 </p>
-                <Button onClick={handleCreateBatch}>
+                <Button size="sm" onClick={handleCreateBatch}>
                   <Plus className="w-4 h-4 mr-2" />
                   Create Batch
                 </Button>
@@ -875,28 +890,11 @@ const BatchManagementView: React.FC<BatchManagementViewProps> = ({
                     setIsBatchFormOpen(true);
                   }}
                   onAdjustStock={handleAdjustBatch}
-                  onCreatePromotion={(_batch) => {
-                    toast.info("Promotion creation coming soon");
-                  }}
+                  onCreatePromotion={() => toast.info("Promotion creation coming soon")}
                   onMarkAsWaste={(batch) => {
                     updateBatch(batch.id, { status: "REMOVED" });
                     toast.success("Batch marked as waste");
                   }}
-                />
-
-                {/* Pagination */}
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  pageSize={pageSize}
-                  totalItems={totalItems}
-                  onPageChange={setCurrentPage}
-                  onPageSizeChange={(size) => {
-                    setPageSize(size);
-                    setCurrentPage(1);
-                  }}
-                  showPageSizeSelector={true}
-                  showPageInfo={true}
                 />
               </>
             )}

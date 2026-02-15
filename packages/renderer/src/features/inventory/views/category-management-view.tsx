@@ -1,12 +1,13 @@
 import React, { useState, useCallback, useEffect, useMemo } from "react";
 import {
   Plus,
-  ChevronLeft,
   Tag,
   Settings,
   FileSpreadsheet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MiniBar } from "@/components/mini-bar";
+import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Tooltip,
@@ -385,149 +386,122 @@ const ManageCategoriesView: React.FC<ManageCategoriesViewProps> = ({
 
   return (
     <>
-      <div className="flex flex-col h-screen p-3 sm:p-4 md:p-6 gap-4 sm:gap-6 overflow-hidden">
-        {/* Header */}
-        <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
-          <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
+      <div className="container mx-auto p-1 max-w-[1600px] flex flex-col flex-1 min-h-0 gap-4 sm:gap-6 overflow-hidden">
+        <MiniBar
+          className="shrink-0"
+          title="Category Management"
+          onBack={onBack}
+          backAriaLabel="Back to Dashboard"
+          action={{
+            label: "New",
+            onClick: () => {
+              setEditingCategory(null);
+              setIsDrawerOpen(true);
+            },
+            icon: <Plus className="h-4 w-4" />,
+            ariaLabel: "Add category",
+          }}
+          right={
             <Button
               variant="outline"
               size="sm"
-              onClick={onBack}
-              className="w-fit"
-            >
-              <ChevronLeft className="w-4 h-4 mr-2" />
-              Back to Products
-            </Button>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                Category Management
-              </h1>
-              <p className="text-sm sm:text-base text-gray-600 mt-1">
-                Organize your products with categories
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Button
-              variant="outline"
+              className="h-8"
               onClick={() => setImportModalOpen(true)}
-              className="w-full sm:w-auto"
             >
-              <FileSpreadsheet className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Import from Booker</span>
-              <span className="sm:hidden">Import</span>
+              <FileSpreadsheet className="w-4 h-4 mr-1.5" />
+              Import
             </Button>
-            <Button
-              onClick={() => {
-                setEditingCategory(null);
-                setIsDrawerOpen(true);
-              }}
-              className="w-full sm:w-auto"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Category
-            </Button>
-          </div>
-        </div>
+          }
+        />
 
-        {/* Alert for no categories */}
         {categories.length === 0 && !loading && (
-          <Alert className="border-blue-200 bg-blue-50">
-            <Tag className="h-4 w-4 text-blue-600" />
-            <AlertDescription className="text-blue-800">
+          <Alert className="shrink-0">
+            <Tag className="h-4 w-4" />
+            <AlertDescription>
               You don't have any categories yet. Create your first category to
               organize your products.
             </AlertDescription>
           </Alert>
         )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm text-gray-600">
-                  Total Categories
-                </p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">
-                  {categoryStats.totalCategories}
-                </p>
-                <p className="text-xs sm:text-sm text-green-600 mt-1">
-                  {categoryStats.activeCategories} active
-                </p>
-              </div>
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Tag className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center justify-between">
-              <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm text-gray-600">Most Recent</p>
-                {categoryStats.mostRecentCategory ? (
-                  (() => {
-                    const categoryName = categoryStats.mostRecentCategory.name;
-                    const shouldTruncate = categoryName.length > 25;
-
-                    return shouldTruncate ? (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <p className="text-base sm:text-lg font-bold text-gray-900 truncate cursor-help">
-                            {categoryName}
-                          </p>
-                        </TooltipTrigger>
-                        <TooltipContent
-                          side="top"
-                          className="max-w-xs bg-gray-900 text-white"
-                        >
-                          <p className="whitespace-normal">{categoryName}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    ) : (
-                      <p className="text-base sm:text-lg font-bold text-gray-900 truncate">
-                        {categoryName}
-                      </p>
-                    );
-                  })()
-                ) : (
-                  <p className="text-base sm:text-lg font-bold text-gray-900">
-                    None
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 shrink-0">
+          <Card className="p-3">
+            <CardContent className="p-0">
+              <div className="flex items-center justify-between">
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground">Total Categories</p>
+                  <p className="text-lg font-semibold text-foreground truncate">
+                    {categoryStats.totalCategories}
                   </p>
-                )}
-                <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                  {categoryStats.mostRecentCategory
-                    ? new Date(
-                        categoryStats.mostRecentCategory.createdAt
-                      ).toLocaleDateString()
-                    : ""}
-                </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {categoryStats.activeCategories} active
+                  </p>
+                </div>
+                <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                  <Tag className="w-4 h-4 text-muted-foreground" />
+                </div>
               </div>
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center shrink-0 ml-2">
-                <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+            </CardContent>
+          </Card>
+
+          <Card className="p-3">
+            <CardContent className="p-0">
+              <div className="flex items-center justify-between">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-muted-foreground">Most Recent</p>
+                  {categoryStats.mostRecentCategory ? (
+                    (() => {
+                      const categoryName = categoryStats.mostRecentCategory.name;
+                      const shouldTruncate = categoryName.length > 25;
+                      return shouldTruncate ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <p className="text-sm font-semibold text-foreground truncate cursor-help">
+                              {categoryName}
+                            </p>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                            <p className="whitespace-normal">{categoryName}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        <p className="text-sm font-semibold text-foreground truncate">
+                          {categoryName}
+                        </p>
+                      );
+                    })()
+                  ) : (
+                    <p className="text-sm font-semibold text-foreground">None</p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {categoryStats.mostRecentCategory
+                      ? new Date(
+                          categoryStats.mostRecentCategory.createdAt
+                        ).toLocaleDateString()
+                      : ""}
+                  </p>
+                </div>
+                <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0 ml-2">
+                  <Settings className="w-4 h-4 text-muted-foreground" />
+                </div>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Categories List */}
-        <div className="flex flex-col flex-1 min-h-0 bg-white rounded-lg shadow-sm border overflow-hidden">
-          <div className="p-3 sm:p-4 border-b bg-gray-50 shrink-0">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900">
-              Categories
-            </h3>
-            <p className="text-xs sm:text-sm text-gray-600 mt-1">
-              Click ▶ to expand/collapse subcategories
+        <div className="flex flex-col flex-1 min-h-0 rounded-lg border bg-background overflow-hidden">
+          <div className="p-3 border-b bg-muted/30 shrink-0">
+            <h3 className="text-sm font-semibold text-foreground">Categories</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Click to expand/collapse subcategories
             </p>
           </div>
 
           {loading ? (
             <div className="flex items-center justify-center flex-1 p-8">
-              <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="ml-2 text-gray-600">
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
+                <span className="text-sm text-muted-foreground">
                   Loading categories...
                 </span>
               </div>
@@ -535,14 +509,15 @@ const ManageCategoriesView: React.FC<ManageCategoriesViewProps> = ({
           ) : categories.length === 0 ? (
             <div className="flex items-center justify-center flex-1 p-12">
               <div className="text-center">
-                <Tag className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <Tag className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+                <h3 className="text-base font-semibold text-foreground mb-2">
                   No categories found
                 </h3>
-                <p className="text-gray-600 mb-4">
+                <p className="text-sm text-muted-foreground mb-4">
                   Create your first category to organize your products.
                 </p>
                 <Button
+                  size="sm"
                   onClick={() => {
                     setEditingCategory(null);
                     setIsDrawerOpen(true);
@@ -554,7 +529,7 @@ const ManageCategoriesView: React.FC<ManageCategoriesViewProps> = ({
               </div>
             </div>
           ) : (
-            <div className="flex-1 min-h-0 overflow-y-auto divide-y divide-gray-200">
+            <div className="flex-1 min-h-0 overflow-y-auto divide-y divide-border">
               {categoryTree.map((category) => (
                 <CategoryRow
                   key={category.id}

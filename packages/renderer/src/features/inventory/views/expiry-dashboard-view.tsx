@@ -89,170 +89,134 @@ const ExpiryDashboard: React.FC<ExpiryDashboardProps> = ({
     batchStats?.expiringThisWeek ?? expiringThisWeek.length;
 
   return (
-    <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Product Expiry Management
-          </h1>
-          <p className="text-sm sm:text-base text-gray-600 mt-1">
-            Track and manage product batches and expiry dates
-          </p>
-        </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          {onViewBatches && (
-            <Button
-              variant="outline"
-              onClick={onViewBatches}
-              className="w-full sm:w-auto"
-            >
-              View All Batches
-            </Button>
-          )}
-          {onReceiveBatch && (
-            <Button onClick={onReceiveBatch} className="w-full sm:w-auto">
-              <Package className="w-4 h-4 mr-2" />
-              Receive New Batch
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Critical Alerts */}
+    <div className="space-y-3">
       {(criticalAlerts.length > 0 || expiredBatches.length > 0) && (
-        <Card className="border-red-200 bg-red-50">
-          <CardHeader>
-            <CardTitle className="flex items-center text-red-900 text-base sm:text-lg">
-              <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardHeader className="p-3 pb-1">
+            <CardTitle className="flex items-center text-sm font-semibold text-foreground">
+              <AlertTriangle className="w-4 h-4 mr-2 text-destructive" />
               Critical Alerts
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {expiredBatches.length > 0 && (
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 bg-red-100 rounded">
-                  <div>
-                    <p className="font-semibold text-red-900 text-sm sm:text-base">
-                      {expiredBatches.length} Expired Batch
-                      {expiredBatches.length !== 1 ? "es" : ""}
-                    </p>
-                    <p className="text-xs sm:text-sm text-red-700">
-                      {expiredBatches.reduce(
-                        (sum, b) => sum + b.currentQuantity,
-                        0,
-                      )}{" "}
-                      units need immediate attention
-                    </p>
-                  </div>
-                  <Badge variant="destructive" className="w-fit">
-                    Expired
-                  </Badge>
+          <CardContent className="p-3 pt-1 space-y-2">
+            {expiredBatches.length > 0 && (
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-2 rounded-md bg-destructive/10">
+                <div>
+                  <p className="font-semibold text-foreground text-sm">
+                    {expiredBatches.length} Expired Batch
+                    {expiredBatches.length !== 1 ? "es" : ""}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {expiredBatches.reduce(
+                      (sum, b) => sum + b.currentQuantity,
+                      0,
+                    )}{" "}
+                    units need immediate attention
+                  </p>
                 </div>
-              )}
-              {criticalAlerts.length > 0 && (
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 bg-orange-100 rounded">
-                  <div>
-                    <p className="font-semibold text-orange-900 text-sm sm:text-base">
-                      {criticalAlerts.length} Critical Alert
-                      {criticalAlerts.length !== 1 ? "s" : ""}
-                    </p>
-                    <p className="text-xs sm:text-sm text-orange-700">
-                      Batches expiring within{" "}
-                      {expirySettings?.criticalAlertDays || 3} days
-                    </p>
-                  </div>
-                  <Badge variant="destructive" className="w-fit">
-                    Critical
-                  </Badge>
+                <Badge variant="destructive" className="w-fit">
+                  Expired
+                </Badge>
+              </div>
+            )}
+            {criticalAlerts.length > 0 && (
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-2 rounded-md bg-amber-500/10 dark:bg-amber-500/20">
+                <div>
+                  <p className="font-semibold text-foreground text-sm">
+                    {criticalAlerts.length} Critical Alert
+                    {criticalAlerts.length !== 1 ? "s" : ""}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Batches expiring within{" "}
+                    {expirySettings?.criticalAlertDays || 3} days
+                  </p>
                 </div>
-              )}
-            </div>
+                <Badge variant="destructive" className="w-fit">
+                  Critical
+                </Badge>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <Card className="p-3">
+          <CardHeader className="p-0 pb-1.5">
+            <CardTitle className="text-xs font-medium text-muted-foreground flex items-center justify-between">
               Total Batches
+              <Package className="w-4 h-4 text-muted-foreground" />
             </CardTitle>
-            <Package className="w-4 h-4 text-gray-500" />
           </CardHeader>
-          <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">{totalBatches}</div>
-            <p className="text-xs text-gray-500 mt-1">
+          <CardContent className="p-0">
+            <div className="text-lg font-semibold text-foreground">{totalBatches}</div>
+            <p className="text-xs text-muted-foreground mt-0.5">
               {activeBatches} active, {expiredCount} expired
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">
+        <Card className="p-3">
+          <CardHeader className="p-0 pb-1.5">
+            <CardTitle className="text-xs font-medium text-muted-foreground flex items-center justify-between">
               Expiring This Week
+              <Calendar className="w-4 h-4 text-muted-foreground" />
             </CardTitle>
-            <Calendar className="w-4 h-4 text-orange-500" />
           </CardHeader>
-          <CardContent>
-            <div className="text-xl sm:text-2xl font-bold text-orange-600">
+          <CardContent className="p-0">
+            <div className="text-lg font-semibold text-amber-600 dark:text-amber-400">
               {expiringThisWeekCount}
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              {expiringThisWeek.reduce((sum, b) => sum + b.currentQuantity, 0)}{" "}
-              units (from loaded batches)
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {expiringThisWeek.reduce((sum, b) => sum + b.currentQuantity, 0)} units
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">
+        <Card className="p-3">
+          <CardHeader className="p-0 pb-1.5">
+            <CardTitle className="text-xs font-medium text-muted-foreground flex items-center justify-between">
               Value at Risk
+              <DollarSign className="w-4 h-4 text-muted-foreground" />
             </CardTitle>
-            <DollarSign className="w-4 h-4 text-red-500" />
           </CardHeader>
-          <CardContent>
-            <div className="text-xl sm:text-2xl font-bold text-red-600">
+          <CardContent className="p-0">
+            <div className="text-lg font-semibold text-destructive">
               £{valueAtRisk.toFixed(2)}
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Expiring in next 7 days
-            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">Expiring in next 7 days</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">
+        <Card className="p-3">
+          <CardHeader className="p-0 pb-1.5">
+            <CardTitle className="text-xs font-medium text-muted-foreground flex items-center justify-between">
               Waste Value
+              <TrendingDown className="w-4 h-4 text-muted-foreground" />
             </CardTitle>
-            <TrendingDown className="w-4 h-4 text-gray-500" />
           </CardHeader>
-          <CardContent>
-            <div className="text-xl sm:text-2xl font-bold text-gray-600">
+          <CardContent className="p-0">
+            <div className="text-lg font-semibold text-foreground">
               £{wasteValue.toFixed(2)}
             </div>
-            <p className="text-xs text-gray-500 mt-1">From expired batches</p>
+            <p className="text-xs text-muted-foreground mt-0.5">From expired batches</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base sm:text-lg">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <Card className="p-3">
+          <CardHeader className="p-0 pb-2">
+            <CardTitle className="text-sm font-semibold text-foreground">
               Quick Actions
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="p-0 space-y-1.5">
             {onReceiveBatch && (
               <Button
                 variant="outline"
-                className="w-full justify-start text-sm sm:text-base"
+                size="sm"
+                className="w-full justify-start h-8"
                 onClick={onReceiveBatch}
               >
                 <Package className="w-4 h-4 mr-2" />
@@ -262,7 +226,8 @@ const ExpiryDashboard: React.FC<ExpiryDashboardProps> = ({
             {onViewBatches && (
               <Button
                 variant="outline"
-                className="w-full justify-start text-sm sm:text-base"
+                size="sm"
+                className="w-full justify-start h-8"
                 onClick={onViewBatches}
               >
                 <BarChart3 className="w-4 h-4 mr-2" />
@@ -272,13 +237,12 @@ const ExpiryDashboard: React.FC<ExpiryDashboardProps> = ({
             {onGenerateReport && (
               <Button
                 variant="outline"
-                className="w-full justify-start text-sm sm:text-base"
+                size="sm"
+                className="w-full justify-start h-8"
                 onClick={(e) => {
                   const target = e.currentTarget;
                   target.blur();
-                  requestAnimationFrame(() => {
-                    onGenerateReport();
-                  });
+                  requestAnimationFrame(() => onGenerateReport?.());
                 }}
               >
                 <BarChart3 className="w-4 h-4 mr-2" />
@@ -288,13 +252,12 @@ const ExpiryDashboard: React.FC<ExpiryDashboardProps> = ({
             {onCreatePromotion && criticalCount > 0 && (
               <Button
                 variant="outline"
-                className="w-full justify-start text-sm sm:text-base"
+                size="sm"
+                className="w-full justify-start h-8"
                 onClick={(e) => {
                   const target = e.currentTarget;
                   target.blur();
-                  requestAnimationFrame(() => {
-                    onCreatePromotion();
-                  });
+                  requestAnimationFrame(() => onCreatePromotion?.());
                 }}
               >
                 <AlertTriangle className="w-4 h-4 mr-2" />
@@ -304,29 +267,29 @@ const ExpiryDashboard: React.FC<ExpiryDashboardProps> = ({
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base sm:text-lg">
+        <Card className="p-3">
+          <CardHeader className="p-0 pb-2">
+            <CardTitle className="text-sm font-semibold text-foreground">
               Upcoming Expiry
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             {expiringNext30Days.length === 0 ? (
-              <p className="text-gray-500 text-xs sm:text-sm">
+              <p className="text-xs text-muted-foreground">
                 No batches expiring in the next 30 days
               </p>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {expiringNext30Days.slice(0, 5).map((batch) => (
                   <div
                     key={batch.id}
-                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-2 bg-gray-50 rounded"
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 p-2 rounded-md bg-muted/50"
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs sm:text-sm font-medium truncate">
+                      <p className="text-xs font-medium text-foreground truncate">
                         {batch.product?.name || "Unknown"}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         {formatExpiryDate(batch.expiryDate, false)} •{" "}
                         {batch.currentQuantity} units
                       </p>
@@ -337,7 +300,7 @@ const ExpiryDashboard: React.FC<ExpiryDashboardProps> = ({
                   </div>
                 ))}
                 {expiringNext30Days.length > 5 && (
-                  <p className="text-xs sm:text-sm text-gray-500 text-center pt-2">
+                  <p className="text-xs text-muted-foreground text-center pt-1">
                     +{expiringNext30Days.length - 5} more batches
                   </p>
                 )}

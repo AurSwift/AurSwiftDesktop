@@ -8,18 +8,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { MiniBar } from "@/components/mini-bar";
+import { Card, CardContent } from "@/components/ui/card";
 import {
-  ChevronLeft,
   Search,
   Filter,
   Download,
   TrendingUp,
   TrendingDown,
   Package,
-  Calendar,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/shared/hooks/use-auth";
+import { cn } from "@/shared/utils/cn";
 
 import { getLogger } from "@/shared/utils/logger";
 const logger = getLogger("stock-movement-history-view");
@@ -169,17 +170,17 @@ const StockMovementHistoryView: React.FC<StockMovementHistoryViewProps> = ({
   const getMovementTypeColor = (type: string) => {
     switch (type) {
       case "INBOUND":
-        return "bg-green-100 text-green-800";
+        return "bg-primary/10 text-primary";
       case "OUTBOUND":
-        return "bg-red-100 text-red-800";
+        return "bg-destructive/10 text-destructive";
       case "WASTE":
-        return "bg-orange-100 text-orange-800";
+        return "bg-amber-500/10 text-amber-700 dark:text-amber-400";
       case "ADJUSTMENT":
-        return "bg-blue-100 text-blue-800";
+        return "bg-muted text-foreground";
       case "TRANSFER":
-        return "bg-purple-100 text-purple-800";
+        return "bg-muted text-foreground";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-muted-foreground";
     }
   };
 
@@ -196,105 +197,32 @@ const StockMovementHistoryView: React.FC<StockMovementHistoryViewProps> = ({
   };
 
   return (
-    <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
-        <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onBack}
-            className="w-fit"
-          >
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
-          </Button>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              Stock Movement History
-            </h1>
-            <p className="text-sm sm:text-base text-gray-600 mt-1">
-              Complete audit trail of all stock changes
-            </p>
-          </div>
-        </div>
-
-        <Button variant="outline" className="w-full sm:w-auto">
-          <Download className="w-4 h-4 mr-2" />
-          Export Report
-        </Button>
-      </div>
-
-      {/* Summary Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-lg shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total Inbound</p>
-              <p className="text-2xl font-bold text-green-600">
-                {stats.totalInbound}
-              </p>
-            </div>
-            <TrendingUp className="w-8 h-8 text-green-600" />
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-lg shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total Outbound</p>
-              <p className="text-2xl font-bold text-red-600">
-                {stats.totalOutbound}
-              </p>
-            </div>
-            <TrendingDown className="w-8 h-8 text-red-600" />
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-lg shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Waste</p>
-              <p className="text-2xl font-bold text-orange-600">
-                {stats.totalWaste}
-              </p>
-            </div>
-            <Package className="w-8 h-8 text-orange-600" />
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-lg shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Adjustments</p>
-              <p className="text-2xl font-bold text-blue-600">
-                {stats.totalAdjustments}
-              </p>
-            </div>
-            <Filter className="w-8 h-8 text-blue-600" />
-          </div>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white p-3 sm:p-4 rounded-lg shadow-sm border">
-        <div className="flex flex-col space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            {/* Search */}
-            <div className="relative lg:col-span-2">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+    <div className="container mx-auto p-1 max-w-[1600px] flex flex-col flex-1 min-h-0 gap-4 sm:gap-6 overflow-hidden">
+      <MiniBar
+        className="shrink-0"
+        title="Stock Movement History"
+        onBack={onBack}
+        backAriaLabel="Back to Dashboard"
+        action={{
+          label: "Export",
+          onClick: () => toast.info("Export coming soon"),
+          icon: <Download className="h-4 w-4" />,
+          ariaLabel: "Export report",
+        }}
+        center={
+          <div className="w-full max-w-2xl flex flex-wrap items-center gap-2">
+            <div className="relative flex-1 min-w-[120px]">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by product, reason, or reference..."
+                placeholder="Search..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-full"
+                className="pl-8 h-8 text-sm"
               />
             </div>
-
-            {/* Product Filter */}
             <Select value={filterProduct} onValueChange={setFilterProduct}>
-              <SelectTrigger>
-                <SelectValue placeholder="All Products" />
+              <SelectTrigger className="h-8 w-[130px]">
+                <SelectValue placeholder="Product" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Products</SelectItem>
@@ -305,11 +233,9 @@ const StockMovementHistoryView: React.FC<StockMovementHistoryViewProps> = ({
                 ))}
               </SelectContent>
             </Select>
-
-            {/* Type Filter */}
             <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger>
-                <SelectValue placeholder="All Types" />
+              <SelectTrigger className="h-8 w-[100px]">
+                <SelectValue placeholder="Type" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
@@ -320,124 +246,164 @@ const StockMovementHistoryView: React.FC<StockMovementHistoryViewProps> = ({
                 <SelectItem value="TRANSFER">Transfer</SelectItem>
               </SelectContent>
             </Select>
+            <Input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="h-8 w-[130px] text-sm"
+              placeholder="Start"
+            />
+            <Input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="h-8 w-[130px] text-sm"
+              placeholder="End"
+            />
           </div>
+        }
+      />
 
-          {/* Date Filters */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm text-gray-600 mb-1 block">
-                <Calendar className="w-4 h-4 inline mr-1" />
-                Start Date
-              </label>
-              <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 shrink-0">
+        <Card className="p-2">
+          <CardContent className="p-0 flex items-center justify-between">
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">Inbound</p>
+              <p className="text-lg font-semibold text-foreground truncate">
+                {stats.totalInbound}
+              </p>
             </div>
-            <div>
-              <label className="text-sm text-gray-600 mb-1 block">
-                <Calendar className="w-4 h-4 inline mr-1" />
-                End Date
-              </label>
-              <Input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
+            <TrendingUp className="w-6 h-6 text-muted-foreground shrink-0" />
+          </CardContent>
+        </Card>
+        <Card className="p-2">
+          <CardContent className="p-0 flex items-center justify-between">
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">Outbound</p>
+              <p className="text-lg font-semibold text-destructive truncate">
+                {stats.totalOutbound}
+              </p>
             </div>
-          </div>
-        </div>
+            <TrendingDown className="w-6 h-6 text-muted-foreground shrink-0" />
+          </CardContent>
+        </Card>
+        <Card className="p-2">
+          <CardContent className="p-0 flex items-center justify-between">
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">Waste</p>
+              <p className="text-lg font-semibold text-foreground truncate">
+                {stats.totalWaste}
+              </p>
+            </div>
+            <Package className="w-6 h-6 text-muted-foreground shrink-0" />
+          </CardContent>
+        </Card>
+        <Card className="p-2">
+          <CardContent className="p-0 flex items-center justify-between">
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">Adjustments</p>
+              <p className="text-lg font-semibold text-foreground truncate">
+                {stats.totalAdjustments}
+              </p>
+            </div>
+            <Filter className="w-6 h-6 text-muted-foreground shrink-0" />
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Movements Table */}
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden rounded-lg border bg-background">
         {loading ? (
-          <div className="p-12 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading movements...</p>
+          <div className="flex items-center justify-center flex-1 p-12">
+            <div className="flex flex-col items-center gap-2">
+              <div className="animate-spin rounded-full h-10 w-10 border-2 border-primary border-t-transparent" />
+              <p className="text-sm text-muted-foreground">Loading movements...</p>
+            </div>
           </div>
         ) : filteredMovements.length === 0 ? (
-          <div className="p-12 text-center">
-            <Package className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              No movements found
-            </h3>
-            <p className="text-gray-600">
-              Try adjusting your filters or date range.
-            </p>
+          <div className="flex items-center justify-center flex-1 p-12">
+            <div className="text-center">
+              <Package className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+              <h3 className="text-base font-semibold text-foreground mb-2">
+                No movements found
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Try adjusting your filters or date range.
+              </p>
+            </div>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="flex-1 min-h-0 overflow-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b">
+              <thead className="bg-muted/50 border-b sticky top-0 z-10">
                 <tr>
-                  <th className="text-left p-4 font-semibold text-gray-900">
+                  <th className="text-left p-3 font-semibold text-foreground text-sm">
                     Date & Time
                   </th>
-                  <th className="text-left p-4 font-semibold text-gray-900">
+                  <th className="text-left p-3 font-semibold text-foreground text-sm">
                     Product
                   </th>
-                  <th className="text-left p-4 font-semibold text-gray-900">
+                  <th className="text-left p-3 font-semibold text-foreground text-sm">
                     Type
                   </th>
-                  <th className="text-left p-4 font-semibold text-gray-900">
+                  <th className="text-left p-3 font-semibold text-foreground text-sm">
                     Quantity
                   </th>
-                  <th className="text-left p-4 font-semibold text-gray-900">
+                  <th className="text-left p-3 font-semibold text-foreground text-sm">
                     Reason
                   </th>
-                  <th className="text-left p-4 font-semibold text-gray-900">
+                  <th className="text-left p-3 font-semibold text-foreground text-sm">
                     Reference
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-border">
                 {filteredMovements.map((movement) => {
                   const product = products.find(
                     (p) => p.id === movement.productId
                   );
                   return (
-                    <tr key={movement.id} className="hover:bg-gray-50">
-                      <td className="p-4 text-sm text-gray-600">
+                    <tr key={movement.id} className="hover:bg-muted/30">
+                      <td className="p-3 text-sm text-muted-foreground">
                         {new Date(movement.createdAt).toLocaleString()}
                       </td>
-                      <td className="p-4">
+                      <td className="p-3">
                         <div>
-                          <div className="font-medium text-gray-900">
+                          <div className="font-medium text-foreground text-sm">
                             {product?.name || "Unknown Product"}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-xs text-muted-foreground">
                             {product?.sku}
                           </div>
                         </div>
                       </td>
-                      <td className="p-4">
+                      <td className="p-3">
                         <span
-                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getMovementTypeColor(
-                            movement.movementType
-                          )}`}
+                          className={cn(
+                            "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium",
+                            getMovementTypeColor(movement.movementType)
+                          )}
                         >
                           {getMovementTypeIcon(movement.movementType)}
                           {movement.movementType}
                         </span>
                       </td>
-                      <td className="p-4">
+                      <td className="p-3">
                         <span
-                          className={`font-semibold ${
+                          className={cn(
+                            "font-semibold text-sm",
                             movement.movementType === "INBOUND"
-                              ? "text-green-600"
-                              : "text-red-600"
-                          }`}
+                              ? "text-primary"
+                              : "text-destructive"
+                          )}
                         >
                           {movement.movementType === "INBOUND" ? "+" : "-"}
                           {movement.quantity}
                         </span>
                       </td>
-                      <td className="p-4 text-sm text-gray-600">
+                      <td className="p-3 text-sm text-muted-foreground">
                         {movement.reason || "-"}
                       </td>
-                      <td className="p-4 text-sm text-gray-600 font-mono">
+                      <td className="p-3 text-sm text-muted-foreground font-mono">
                         {movement.reference || "-"}
                       </td>
                     </tr>
