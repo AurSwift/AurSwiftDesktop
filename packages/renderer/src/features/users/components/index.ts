@@ -1,7 +1,6 @@
 export * from "./user-stats-cards";
 export * from "./user-filters";
-export * from "./user-table";
-export * from "./user-table-row";
+export * from "./user-data-table";
 export * from "./empty-state";
 
 // Modal Container

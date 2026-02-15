@@ -56,7 +56,13 @@ export function AddUserModal({
     >
       <UserForm
         mode="create"
-        onSubmit={handleSubmit as (data: UserCreateFormData | import("@/features/users/schemas/user-schema").UserUpdateFormData) => Promise<void>}
+        onSubmit={
+          handleSubmit as (
+            data:
+              | UserCreateFormData
+              | import("@/features/users/schemas/user-schema").UserUpdateFormData,
+          ) => Promise<void>
+        }
         onCancel={() => onOpenChange(false)}
         isLoading={isLoading}
         isOpen={open}

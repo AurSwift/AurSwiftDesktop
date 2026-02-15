@@ -263,12 +263,18 @@ export function UserForm({
 
   // Helper to safely get field value from form
   const getFieldValue = (field: string): string => {
-    const value = keyboard.formValues[field as keyof typeof keyboard.formValues];
+    const value =
+      keyboard.formValues[field as keyof typeof keyboard.formValues];
     return typeof value === "string" ? value : "";
   };
 
   // Get current keyboard mode based on active field
-  const currentKeyboardMode: "qwerty" | "numeric" | "symbols" = (keyboard.activeFieldConfig as { keyboardMode?: "qwerty" | "numeric" | "symbols" } | null)?.keyboardMode || "qwerty";
+  const currentKeyboardMode: "qwerty" | "numeric" | "symbols" =
+    (
+      keyboard.activeFieldConfig as {
+        keyboardMode?: "qwerty" | "numeric" | "symbols";
+      } | null
+    )?.keyboardMode || "qwerty";
 
   return (
     <>
@@ -358,7 +364,9 @@ export function UserForm({
                               ? (form.formState.errors as any).username?.message
                               : undefined
                           }
-                          onFocus={() => keyboard.handleFieldFocus("username" as any)}
+                          onFocus={() =>
+                            keyboard.handleFieldFocus("username" as any)
+                          }
                           placeholder="Choose a username"
                           className={cn(
                             "text-xs sm:text-sm md:text-base",
@@ -392,7 +400,9 @@ export function UserForm({
                               ? (form.formState.errors as any).pin?.message
                               : undefined
                           }
-                          onFocus={() => keyboard.handleFieldFocus("pin" as any)}
+                          onFocus={() =>
+                            keyboard.handleFieldFocus("pin" as any)
+                          }
                           placeholder="Enter 4-digit PIN"
                           className={cn(
                             "text-xs sm:text-sm md:text-base",

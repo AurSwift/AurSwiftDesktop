@@ -8,7 +8,7 @@ import { MiniBar } from "@/components/mini-bar";
 
 import { getLogger } from "@/shared/utils/logger";
 const logger = getLogger("user-management-view");
-import { UserFilters, UserTable } from "../components";
+import { UserFilters, UserDataTable } from "../components";
 
 // Lazy load modal components for better performance
 const AddUserModal = lazy(() =>
@@ -45,7 +45,6 @@ export default function UserManagementView({ onBack }: { onBack: () => void }) {
     searchTerm,
     setSearchTerm,
     filterRole,
-    setFilterRole,
     filteredUsers,
   } = useUserFilters(staffUsers);
   const {
@@ -73,6 +72,14 @@ export default function UserManagementView({ onBack }: { onBack: () => void }) {
   const [pageSize, setPageSize] = useState(10);
   const totalItems = filteredUsers.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+
+  // Role options for filter
+  const roleOptions = [
+    { label: "Admin", value: "admin" },
+    { label: "Manager", value: "manager" },
+    { label: "Cashier", value: "cashier" },
+    { label: "Staff", value: "staff" },
+  ];
 
   // Delete confirmation dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -232,24 +239,21 @@ export default function UserManagementView({ onBack }: { onBack: () => void }) {
 
       {/* Staff Table - fills remaining height */}
       <div className="flex-1 min-h-0 flex flex-col">
-        <UserTable
+        <UserDataTable
           users={filteredUsers}
           isLoading={isLoadingUsers}
           searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
           filterRole={filterRole}
-          onResetFilters={() => {
-            setSearchTerm("");
-            setFilterRole("all");
-          }}
+          roleOptions={roleOptions}
           onViewUser={openViewDialog}
           onEditUser={openEditDialog}
           onDeleteUser={handleDeleteUser}
-          onAddUser={openAddDialog}
           pagination={{
             currentPage,
             pageSize,
             onPageChange: setCurrentPage,
-            onPageSizeChange: (size) => {
+            onPageSizeChange: (size: number) => {
               setPageSize(size);
               setCurrentPage(1);
             },

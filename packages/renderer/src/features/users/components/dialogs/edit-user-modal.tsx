@@ -57,7 +57,13 @@ export function EditUserModal({
       <UserForm
         mode="edit"
         user={user}
-        onSubmit={handleSubmit as (data: import("@/features/users/schemas/user-schema").UserCreateFormData | UserUpdateFormData) => Promise<void>}
+        onSubmit={
+          handleSubmit as (
+            data:
+              | import("@/features/users/schemas/user-schema").UserCreateFormData
+              | UserUpdateFormData,
+          ) => Promise<void>
+        }
         onCancel={() => onOpenChange(false)}
         isLoading={isLoading}
         isOpen={open}
