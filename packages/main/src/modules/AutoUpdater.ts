@@ -8,6 +8,7 @@ import electronUpdater, {
 } from "electron-updater";
 import { app, dialog, Notification, shell, BrowserWindow } from "electron";
 import Store from "electron-store";
+import { GITHUB_REPO_URL, GITHUB_RELEASES_URL } from "@app/shared";
 
 import { getLogger } from "../utils/logger.js";
 const logger = getLogger("AutoUpdater");
@@ -48,8 +49,7 @@ export class AutoUpdater implements AppModule {
   readonly #REMIND_LATER_INTERVAL = 2 * 60 * 60 * 1000;
   readonly #MAX_POSTPONE_COUNT = 3;
   readonly #MAX_UPDATE_CHECK_ERROR_NOTIFICATIONS = 3; // Max times to show update check failed notification
-  readonly #GITHUB_REPO_URL = "https://github.com/AurSwift/AurSwift";
-  readonly #GITHUB_RELEASES_URL = `${this.#GITHUB_REPO_URL}/releases`;
+  readonly #GITHUB_RELEASES_URL = GITHUB_RELEASES_URL;
   // Customer-facing release notes URL (web app)
   readonly #WEB_APP_URL =
     process.env.AURSWIFT_WEB_URL || "https://aurswift.vercel.app";

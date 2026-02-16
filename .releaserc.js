@@ -1,6 +1,11 @@
+import pkg from "./package.json" with { type: "json" };
+
+// Centralized GitHub config from package.json
+const { owner, repo } = pkg.github;
+
 export default {
   branches: ["main"],
-  repositoryUrl: "https://github.com/AurSwift/AurSwift.git",
+  repositoryUrl: `https://github.com/${owner}/${repo}.git`,
   plugins: [
     [
       "@semantic-release/commit-analyzer",
@@ -56,7 +61,7 @@ export default {
               let cleanSubject = subject
                 .replace(
                   /^(feat|fix|perf|refactor|revert|build|ci|chore|docs|style|test)(\([^)]+\))?:\s*/i,
-                  ""
+                  "",
                 )
                 .trim();
 

@@ -12,6 +12,7 @@ import type { AppInitConfig } from "../AppInitConfig.js";
 import type { UpdateCheckResult } from "electron-updater";
 import electronUpdater from "electron-updater";
 import { getAutoUpdaterInstance } from "../index.js";
+import { GITHUB_REPO_URL, GITHUB_RELEASES_URL } from "@app/shared";
 
 const { autoUpdater } = electronUpdater;
 import { join } from "node:path";
@@ -76,9 +77,7 @@ class WindowManager implements AppModule {
           {
             label: "View Release Notes",
             click: () => {
-              shell.openExternal(
-                "https://github.com/AurSwift/AurSwift/releases"
-              );
+              shell.openExternal(GITHUB_RELEASES_URL);
             },
           },
           { type: "separator" as const },
@@ -91,12 +90,12 @@ class WindowManager implements AppModule {
                   type: "info",
                   title: "About aurswift",
                   message: `aurswift POS System`,
-                  detail: `Version: ${electronApp.getVersion()}\n\nA modern point-of-sale system for retail businesses.\n\n© 2025 Sameer Shahi\n\nGitHub: github.com/AurSwift/AurSwift`,
+                  detail: `Version: ${electronApp.getVersion()}\n\nA modern point-of-sale system for retail businesses.\n\n© 2025 Sameer Shahi\n\nGitHub: ${GITHUB_REPO_URL.replace("https://", "")}`,
                   buttons: ["OK", "Visit GitHub"],
                 })
                 .then((result: { response: number }) => {
                   if (result.response === 1) {
-                    shell.openExternal("https://github.com/AurSwift/AurSwift");
+                    shell.openExternal(GITHUB_REPO_URL);
                   }
                 });
             },
@@ -203,7 +202,7 @@ class WindowManager implements AppModule {
           } catch (error) {
             if (attempt < maxRetries) {
               logger.warn(
-                `⚠️  Dev server check failed (attempt ${attempt}/${maxRetries}), retrying in ${retryDelay}ms...`
+                `⚠️  Dev server check failed (attempt ${attempt}/${maxRetries}), retrying in ${retryDelay}ms...`,
               );
               await new Promise((resolve) => setTimeout(resolve, retryDelay));
               continue;
@@ -225,7 +224,7 @@ class WindowManager implements AppModule {
             `The frontend development server is not running.\n\n` +
               `Please start it with:\n` +
               `npm run dev --workspace @app/renderer\n\n` +
-              `Then restart the app.`
+              `Then restart the app.`,
           );
 
           electronApp.quit();
@@ -246,7 +245,7 @@ class WindowManager implements AppModule {
         notifications.forEach(
           (notification: { type: string; message: string }) => {
             browserWindow.webContents.send("system:notification", notification);
-          }
+          },
         );
       } catch (error) {
         // Ignore if function not available

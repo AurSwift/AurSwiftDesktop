@@ -3,6 +3,9 @@ import mapWorkspaces from "@npmcli/map-workspaces";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
+// Centralized GitHub config from package.json
+const { owner, repo } = pkg.github;
+
 export default /** @type import('electron-builder').Configuration */
 ({
   directories: {
@@ -14,8 +17,8 @@ export default /** @type import('electron-builder').Configuration */
   // in electron-builder 26.x. No explicit configuration needed.
   publish: {
     provider: "github",
-    owner: "AurSwift",
-    repo: "AurSwift",
+    owner,
+    repo,
     releaseType: "release",
     channel: "latest", // Explicitly set channel to 'latest' to generate latest.yml
   },
@@ -54,7 +57,7 @@ export default /** @type import('electron-builder').Configuration */
   squirrelWindows: {
     // iconUrl is required for Squirrel - must be a public URL
     iconUrl:
-      "https://raw.githubusercontent.com/AurSwift/AurSwift/main/buildResources/icon.ico",
+      `https://raw.githubusercontent.com/${owner}/${repo}/main/buildResources/icon.ico`,
     // Optional: Add a loading GIF during installation
     // loadingGif: 'buildResources/install-spinner.gif'
   },

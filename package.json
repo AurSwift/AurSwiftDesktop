@@ -11,7 +11,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/AurSwift/AurSwift.git"
+    "url": "https://github.com/AurSwift/AurSwiftDesktop.git"
+  },
+  "github": {
+    "owner": "AurSwift",
+    "repo": "AurSwiftDesktop"
   },
   "main": "packages/entry-point.mjs",
   "workspaces": [
