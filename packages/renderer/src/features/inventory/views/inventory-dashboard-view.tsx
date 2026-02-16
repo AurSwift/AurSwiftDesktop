@@ -49,12 +49,17 @@ const ProductDashboardView: React.FC<ProductDashboardViewProps> = ({
       handler();
       timeoutRef.current = setTimeout(() => setNavigating(false), 300);
     },
-    [navigating]
+    [navigating],
   );
 
-  const debouncedOnBack = useCallback(() => handleNavigate(onBack), [handleNavigate, onBack]);
-  const debouncedOnManageProducts = useCallback(() => handleNavigate(onManageProducts), [handleNavigate, onManageProducts]);
-  const debouncedOnManageCategories = useCallback(() => handleNavigate(onManageCategories), [handleNavigate, onManageCategories]);
+  const debouncedOnManageProducts = useCallback(
+    () => handleNavigate(onManageProducts),
+    [handleNavigate, onManageProducts],
+  );
+  const debouncedOnManageCategories = useCallback(
+    () => handleNavigate(onManageCategories),
+    [handleNavigate, onManageCategories],
+  );
   const debouncedOnManageBatches = useCallback(() => {
     if (onManageBatches) handleNavigate(onManageBatches);
   }, [handleNavigate, onManageBatches]);
@@ -72,7 +77,8 @@ const ProductDashboardView: React.FC<ProductDashboardViewProps> = ({
         <Alert variant="destructive" className="shrink-0">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            {productStats.lowStockCount} product(s) are running low on stock and need attention.
+            {productStats.lowStockCount} product(s) are running low on stock and
+            need attention.
           </AlertDescription>
         </Alert>
       )}
@@ -102,8 +108,12 @@ const ProductDashboardView: React.FC<ProductDashboardViewProps> = ({
             <div className="flex items-center justify-between">
               <div className="min-w-0">
                 <p className="text-xs text-muted-foreground">Categories</p>
-                <p className="text-lg font-semibold text-foreground truncate">{categoryCount}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Menu categories</p>
+                <p className="text-lg font-semibold text-foreground truncate">
+                  {categoryCount}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Menu categories
+                </p>
               </div>
               <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
                 <MenuSquare className="w-4 h-4 text-muted-foreground" />
@@ -120,7 +130,9 @@ const ProductDashboardView: React.FC<ProductDashboardViewProps> = ({
                 <p className="text-lg font-semibold text-foreground truncate">
                   {productStats.lowStockCount}
                 </p>
-                <p className="text-xs text-muted-foreground mt-0.5">Need restocking</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Need restocking
+                </p>
               </div>
               <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
                 <TrendingDown className="w-4 h-4 text-muted-foreground" />
@@ -137,7 +149,9 @@ const ProductDashboardView: React.FC<ProductDashboardViewProps> = ({
                 <p className="text-lg font-semibold text-foreground truncate">
                   £{productStats.totalInventoryValue.toFixed(2)}
                 </p>
-                <p className="text-xs text-muted-foreground mt-0.5">Total stock value</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Total stock value
+                </p>
               </div>
               <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
                 <DollarSign className="w-4 h-4 text-muted-foreground" />
@@ -196,7 +210,9 @@ const ProductDashboardView: React.FC<ProductDashboardViewProps> = ({
           </CardHeader>
           <CardContent className="p-0">
             {productStats.lowStockCount === 0 ? (
-              <p className="text-xs text-muted-foreground">All products are well stocked!</p>
+              <p className="text-xs text-muted-foreground">
+                All products are well stocked!
+              </p>
             ) : (
               <div className="space-y-2">
                 <div className="flex items-center gap-2 p-2 rounded-md bg-muted">

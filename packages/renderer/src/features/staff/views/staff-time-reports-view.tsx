@@ -14,7 +14,11 @@ import { TimeReportsLayout } from "../components/time-reports-layout";
 import { cn } from "@/shared/utils/cn";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -44,7 +48,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { useAuth } from "@/shared/hooks/use-auth";
 import { getLogger } from "@/shared/utils/logger";
@@ -119,7 +129,7 @@ function toDateTimeLocalValue(value?: string | number | Date | null): string {
   if (isNaN(d.getTime())) return "";
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
-    d.getHours()
+    d.getHours(),
   )}:${pad(d.getMinutes())}`;
 }
 
@@ -137,13 +147,13 @@ export default function StaffTimeReportsView({
   }, []);
 
   const [activeTab, setActiveTab] = useState<TimeReportsTabId>(
-    (tab as TimeReportsTabId) || "reports"
+    (tab as TimeReportsTabId) || "reports",
   );
   const [range, setRange] = useState<DateRange>(defaultRange);
 
   // Filters (reports tab)
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "ended">(
-    "all"
+    "all",
   );
   const [complianceOnly, setComplianceOnly] = useState(false);
   const [staffQuery, setStaffQuery] = useState("");
@@ -188,7 +198,7 @@ export default function StaffTimeReportsView({
 
   // Keep tab in sync with navigation param
   useEffect(() => {
-    if (tab && tab !== activeTab) setActiveTab(tab);
+    if (tab && tab !== activeTab) setActiveTab(tab as TimeReportsTabId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
@@ -235,26 +245,42 @@ export default function StaffTimeReportsView({
     const totalShifts = rows.length;
     const totalBreakSeconds = rows.reduce(
       (sum, r) => sum + (r.breaksSummary?.totalBreakSeconds || 0),
-      0
+      0,
     );
-    const violations = rows.filter((r) => r.breaksSummary?.complianceIssue).length;
+    const violations = rows.filter(
+      (r) => r.breaksSummary?.complianceIssue,
+    ).length;
     const totalHours = rows.reduce(
-      (sum, r) => sum + (typeof r.shift?.total_hours === "number" ? r.shift.total_hours : 0),
-      0
+      (sum, r) =>
+        sum +
+        (typeof r.shift?.total_hours === "number" ? r.shift.total_hours : 0),
+      0,
     );
     const overtimeHours = rows.reduce(
-      (sum, r) => sum + (typeof r.shift?.overtime_hours === "number" ? r.shift.overtime_hours : 0),
-      0
+      (sum, r) =>
+        sum +
+        (typeof r.shift?.overtime_hours === "number"
+          ? r.shift.overtime_hours
+          : 0),
+      0,
     );
-    return { totalShifts, totalBreakSeconds, violations, totalHours, overtimeHours };
+    return {
+      totalShifts,
+      totalBreakSeconds,
+      violations,
+      totalHours,
+      overtimeHours,
+    };
   }, [rows]);
 
   const filteredRows = useMemo(() => {
     const q = staffQuery.trim().toLowerCase();
     return rows.filter((r) => {
-      if (selectedStaffId !== "all" && r.user?.id !== selectedStaffId) return false;
+      if (selectedStaffId !== "all" && r.user?.id !== selectedStaffId)
+        return false;
       if (q) {
-        const name = `${r.user?.firstName || ""} ${r.user?.lastName || ""}`.toLowerCase();
+        const name =
+          `${r.user?.firstName || ""} ${r.user?.lastName || ""}`.toLowerCase();
         if (!name.includes(q)) return false;
       }
       return true;
@@ -279,7 +305,10 @@ export default function StaffTimeReportsView({
         setRows((resp.data || []) as ShiftsReportRow[]);
       } else {
         toast.error("Failed to load shifts", {
-          description: sanitizeUserFacingMessage(resp.message, "Please try again"),
+          description: sanitizeUserFacingMessage(
+            resp.message,
+            "Please try again",
+          ),
         });
       }
     } catch (error) {
@@ -305,7 +334,10 @@ export default function StaffTimeReportsView({
         setComplianceRows(resp.data || []);
       } else {
         toast.error("Failed to load compliance report", {
-          description: sanitizeUserFacingMessage(resp.message, "Please try again"),
+          description: sanitizeUserFacingMessage(
+            resp.message,
+            "Please try again",
+          ),
         });
       }
     } catch (error) {
@@ -331,7 +363,10 @@ export default function StaffTimeReportsView({
         setPayrollRows(resp.data || []);
       } else {
         toast.error("Failed to load payroll summary", {
-          description: sanitizeUserFacingMessage(resp.message, "Please try again"),
+          description: sanitizeUserFacingMessage(
+            resp.message,
+            "Please try again",
+          ),
         });
       }
     } catch (error) {
@@ -348,12 +383,16 @@ export default function StaffTimeReportsView({
     if (!businessId) return;
     setIsLoading(true);
     try {
-      const resp = await window.timeTrackingAPI.getRealTimeDashboard(businessId);
+      const resp =
+        await window.timeTrackingAPI.getRealTimeDashboard(businessId);
       if (resp.success) {
         setLiveData(resp.data);
       } else {
         toast.error("Failed to load live dashboard", {
-          description: sanitizeUserFacingMessage(resp.message, "Please try again"),
+          description: sanitizeUserFacingMessage(
+            resp.message,
+            "Please try again",
+          ),
         });
       }
     } catch (error) {
@@ -373,7 +412,15 @@ export default function StaffTimeReportsView({
     if (activeTab === "payroll") void loadPayroll();
     if (activeTab === "live") void loadLive();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, businessId, startDateISO, endDateISO, statusFilter, complianceOnly, selectedStaffId]);
+  }, [
+    activeTab,
+    businessId,
+    startDateISO,
+    endDateISO,
+    statusFilter,
+    complianceOnly,
+    selectedStaffId,
+  ]);
 
   const openShiftDetails = async (shiftId: string) => {
     setIsDetailsOpen(true);
@@ -386,7 +433,10 @@ export default function StaffTimeReportsView({
         setDetails(resp.data as ShiftDetails);
       } else {
         toast.error("Failed to load shift details", {
-          description: sanitizeUserFacingMessage(resp.message, "Please try again"),
+          description: sanitizeUserFacingMessage(
+            resp.message,
+            "Please try again",
+          ),
         });
       }
     } catch (error) {
@@ -443,7 +493,10 @@ export default function StaffTimeReportsView({
         await loadReports();
       } else {
         toast.error("Failed to force clock-out", {
-          description: sanitizeUserFacingMessage(resp.message, "Please try again"),
+          description: sanitizeUserFacingMessage(
+            resp.message,
+            "Please try again",
+          ),
         });
       }
     } catch (error) {
@@ -484,7 +537,8 @@ export default function StaffTimeReportsView({
         isPaid: editIsPaid,
         notes: editNotes,
       };
-      if (editStartTime) patch.startTime = new Date(editStartTime).toISOString();
+      if (editStartTime)
+        patch.startTime = new Date(editStartTime).toISOString();
       if (editEndTime) patch.endTime = new Date(editEndTime).toISOString();
 
       const resp = await window.timeTrackingAPI.updateBreak({
@@ -502,7 +556,10 @@ export default function StaffTimeReportsView({
         await loadReports();
       } else {
         toast.error("Failed to update break", {
-          description: sanitizeUserFacingMessage(resp.message, "Please try again"),
+          description: sanitizeUserFacingMessage(
+            resp.message,
+            "Please try again",
+          ),
         });
       }
     } catch (error) {
@@ -535,7 +592,8 @@ export default function StaffTimeReportsView({
             <CalendarIcon className="mr-2 h-4 w-4" />
             {range.from && range.to ? (
               <span>
-                {format(range.from, "MMM d, yyyy")} – {format(range.to, "MMM d, yyyy")}
+                {format(range.from, "MMM d, yyyy")} –{" "}
+                {format(range.to, "MMM d, yyyy")}
               </span>
             ) : (
               <span>Select date range</span>
@@ -562,8 +620,8 @@ export default function StaffTimeReportsView({
       toolbar={toolbar}
     >
       <div className="max-w-7xl mx-auto space-y-4">
-      {activeTab === "reports" && (
-        <div className="space-y-4">
+        {activeTab === "reports" && (
+          <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <Card>
                 <CardHeader className="pb-2">
@@ -609,13 +667,13 @@ export default function StaffTimeReportsView({
 
             <Card className="bg-white border-slate-200 shadow-sm">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base sm:text-lg">
-                  Filters
-                </CardTitle>
+                <CardTitle className="text-base sm:text-lg">Filters</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-foreground">Staff</Label>
+                  <Label className="text-sm font-medium text-foreground">
+                    Staff
+                  </Label>
                   <Select
                     value={selectedStaffId}
                     onValueChange={(v) => setSelectedStaffId(v)}
@@ -623,7 +681,7 @@ export default function StaffTimeReportsView({
                     <SelectTrigger
                       className={cn(
                         "h-9 sm:h-10 bg-transparent border-0 border-b-2 rounded-none shadow-none px-0 focus-visible:ring-0",
-                        "border-input focus-visible:border-primary data-placeholder:text-muted-foreground"
+                        "border-input focus-visible:border-primary data-placeholder:text-muted-foreground",
                       )}
                     >
                       <SelectValue placeholder="All staff" />
@@ -640,20 +698,24 @@ export default function StaffTimeReportsView({
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-foreground">Search</Label>
+                  <Label className="text-sm font-medium text-foreground">
+                    Search
+                  </Label>
                   <Input
                     value={staffQuery}
                     onChange={(e) => setStaffQuery(e.target.value)}
                     placeholder="Search staff name…"
                     className={cn(
                       "h-9 sm:h-10 bg-transparent border-0 border-b-2 rounded-none shadow-none px-0 focus-visible:ring-0",
-                      "border-input focus-visible:border-primary placeholder:text-muted-foreground"
+                      "border-input focus-visible:border-primary placeholder:text-muted-foreground",
                     )}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-foreground">Status</Label>
+                  <Label className="text-sm font-medium text-foreground">
+                    Status
+                  </Label>
                   <Select
                     value={statusFilter}
                     onValueChange={(v) =>
@@ -663,7 +725,7 @@ export default function StaffTimeReportsView({
                     <SelectTrigger
                       className={cn(
                         "h-9 sm:h-10 bg-transparent border-0 border-b-2 rounded-none shadow-none px-0 focus-visible:ring-0",
-                        "border-input focus-visible:border-primary data-placeholder:text-muted-foreground"
+                        "border-input focus-visible:border-primary data-placeholder:text-muted-foreground",
                       )}
                     >
                       <SelectValue placeholder="All" />
@@ -694,9 +756,7 @@ export default function StaffTimeReportsView({
 
             <Card className="bg-white border-slate-200 shadow-sm">
               <CardHeader className="pb-3 flex-row items-center justify-between">
-                <CardTitle className="text-base sm:text-lg">
-                  Shifts
-                </CardTitle>
+                <CardTitle className="text-base sm:text-lg">Shifts</CardTitle>
                 <Button
                   variant="outline"
                   size="sm"
@@ -749,10 +809,14 @@ export default function StaffTimeReportsView({
                                 "—"}
                             </div>
                           </TableCell>
-                          <TableCell>{fmtDateTime(r.shift?.clockInEvent?.timestamp)}</TableCell>
+                          <TableCell>
+                            {fmtDateTime(r.shift?.clockInEvent?.timestamp)}
+                          </TableCell>
                           <TableCell>
                             {r.shift?.clockOutEvent?.timestamp ? (
-                              <span>{fmtDateTime(r.shift.clockOutEvent.timestamp)}</span>
+                              <span>
+                                {fmtDateTime(r.shift.clockOutEvent.timestamp)}
+                              </span>
                             ) : (
                               <Badge variant="secondary">Active</Badge>
                             )}
@@ -805,11 +869,11 @@ export default function StaffTimeReportsView({
                 )}
               </CardContent>
             </Card>
-        </div>
-      )}
+          </div>
+        )}
 
-      {activeTab === "compliance" && (
-        <div className="space-y-4">
+        {activeTab === "compliance" && (
+          <div className="space-y-4">
             <Card className="bg-white border-slate-200 shadow-sm">
               <CardHeader className="pb-3 flex-row items-center justify-between">
                 <CardTitle className="text-base sm:text-lg">
@@ -866,11 +930,11 @@ export default function StaffTimeReportsView({
                 )}
               </CardContent>
             </Card>
-        </div>
-      )}
+          </div>
+        )}
 
-      {activeTab === "payroll" && (
-        <div className="space-y-4">
+        {activeTab === "payroll" && (
+          <div className="space-y-4">
             <Card className="bg-white border-slate-200 shadow-sm">
               <CardHeader className="pb-3 flex-row items-center justify-between">
                 <CardTitle className="text-base sm:text-lg">
@@ -920,10 +984,18 @@ export default function StaffTimeReportsView({
                           </TableCell>
                           <TableCell>{r.role}</TableCell>
                           <TableCell>{r.totalShifts}</TableCell>
-                          <TableCell>{Number(r.regularHours || 0).toFixed(2)}</TableCell>
-                          <TableCell>{Number(r.overtimeHours || 0).toFixed(2)}</TableCell>
-                          <TableCell>{Number(r.totalHours || 0).toFixed(2)}</TableCell>
-                          <TableCell>{Math.round(Number(r.totalBreakMinutes || 0))}</TableCell>
+                          <TableCell>
+                            {Number(r.regularHours || 0).toFixed(2)}
+                          </TableCell>
+                          <TableCell>
+                            {Number(r.overtimeHours || 0).toFixed(2)}
+                          </TableCell>
+                          <TableCell>
+                            {Number(r.totalHours || 0).toFixed(2)}
+                          </TableCell>
+                          <TableCell>
+                            {Math.round(Number(r.totalBreakMinutes || 0))}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -931,11 +1003,11 @@ export default function StaffTimeReportsView({
                 )}
               </CardContent>
             </Card>
-        </div>
-      )}
+          </div>
+        )}
 
-      {activeTab === "live" && (
-        <div className="space-y-4">
+        {activeTab === "live" && (
+          <div className="space-y-4">
             <Card className="bg-white border-slate-200 shadow-sm">
               <CardHeader className="pb-3 flex-row items-center justify-between">
                 <CardTitle className="text-base sm:text-lg">
@@ -1010,8 +1082,8 @@ export default function StaffTimeReportsView({
                 )}
               </CardContent>
             </Card>
-        </div>
-      )}
+          </div>
+        )}
       </div>
 
       {/* Shift Details Sheet */}
@@ -1157,7 +1229,10 @@ export default function StaffTimeReportsView({
                               )}
                               {b.is_short && (
                                 <span className="ml-2">
-                                  <Badge variant="destructive" className="text-xs">
+                                  <Badge
+                                    variant="destructive"
+                                    className="text-xs"
+                                  >
                                     Short
                                   </Badge>
                                 </span>
@@ -1285,7 +1360,10 @@ export default function StaffTimeReportsView({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Type</Label>
-              <Select value={editType} onValueChange={(v) => setEditType(v as any)}>
+              <Select
+                value={editType}
+                onValueChange={(v) => setEditType(v as any)}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -1377,4 +1455,3 @@ export default function StaffTimeReportsView({
     </TimeReportsLayout>
   );
 }
-

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -83,16 +82,15 @@ const StockMovementHistoryView: React.FC<StockMovementHistoryViewProps> = ({
     try {
       // If filtering by specific product
       if (filterProduct !== "all") {
-        const response = await window.stockMovementsAPI.getByProduct(
-          filterProduct
-        );
+        const response =
+          await window.stockMovementsAPI.getByProduct(filterProduct);
         if (response.success && response.movements) {
           setMovements(response.movements);
         }
       } else {
         // Load all movements for business
         const response = await window.stockMovementsAPI.getByBusiness(
-          user.businessId
+          user.businessId,
         );
         if (response.success && response.movements) {
           setMovements(response.movements);
@@ -163,7 +161,7 @@ const StockMovementHistoryView: React.FC<StockMovementHistoryViewProps> = ({
       .filter((m) => m.movementType === "WASTE")
       .reduce((sum, m) => sum + m.quantity, 0),
     totalAdjustments: filteredMovements.filter(
-      (m) => m.movementType === "ADJUSTMENT"
+      (m) => m.movementType === "ADJUSTMENT",
     ).length,
   };
 
@@ -316,7 +314,9 @@ const StockMovementHistoryView: React.FC<StockMovementHistoryViewProps> = ({
           <div className="flex items-center justify-center flex-1 p-12">
             <div className="flex flex-col items-center gap-2">
               <div className="animate-spin rounded-full h-10 w-10 border-2 border-primary border-t-transparent" />
-              <p className="text-sm text-muted-foreground">Loading movements...</p>
+              <p className="text-sm text-muted-foreground">
+                Loading movements...
+              </p>
             </div>
           </div>
         ) : filteredMovements.length === 0 ? (
@@ -359,7 +359,7 @@ const StockMovementHistoryView: React.FC<StockMovementHistoryViewProps> = ({
               <tbody className="divide-y divide-border">
                 {filteredMovements.map((movement) => {
                   const product = products.find(
-                    (p) => p.id === movement.productId
+                    (p) => p.id === movement.productId,
                   );
                   return (
                     <tr key={movement.id} className="hover:bg-muted/30">
@@ -380,7 +380,7 @@ const StockMovementHistoryView: React.FC<StockMovementHistoryViewProps> = ({
                         <span
                           className={cn(
                             "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium",
-                            getMovementTypeColor(movement.movementType)
+                            getMovementTypeColor(movement.movementType),
                           )}
                         >
                           {getMovementTypeIcon(movement.movementType)}
@@ -393,7 +393,7 @@ const StockMovementHistoryView: React.FC<StockMovementHistoryViewProps> = ({
                             "font-semibold text-sm",
                             movement.movementType === "INBOUND"
                               ? "text-primary"
-                              : "text-destructive"
+                              : "text-destructive",
                           )}
                         >
                           {movement.movementType === "INBOUND" ? "+" : "-"}

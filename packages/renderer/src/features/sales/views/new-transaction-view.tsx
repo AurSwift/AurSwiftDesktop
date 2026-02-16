@@ -129,7 +129,6 @@ interface NewTransactionViewProps {
 }
 
 export function NewTransactionView({
-  onBack,
   embeddedInDashboard = false,
 }: NewTransactionViewProps) {
   const { user, logout } = useAuth();

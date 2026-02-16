@@ -84,7 +84,7 @@ interface ProductDetailsViewProps {
  */
 const getCategoryPath = (
   categoryId: string | null | undefined,
-  categories: Category[]
+  categories: Category[],
 ): string | null => {
   if (!categoryId) return null;
 
@@ -130,11 +130,10 @@ const ProductDetailsView: React.FC<ProductDetailsViewProps> = ({
   onStatusFilterChange,
   onShowFieldsChange,
   onPageChange,
-  onPageSizeChange,
   onProductsImported,
 }) => {
   const [importModalOpen, setImportModalOpen] = useState(false);
-  
+
   // Keyboard state for search field
   const [showSearchKeyboard, setShowSearchKeyboard] = useState(false);
   const [searchValue, setSearchValue] = useState(searchTerm);
@@ -144,13 +143,16 @@ const ProductDetailsView: React.FC<ProductDetailsViewProps> = ({
     setSearchValue(searchTerm);
   }, [searchTerm]);
 
-  const handleSearchInput = useCallback((char: string) => {
-    setSearchValue((prev) => {
-      const newValue = prev + char;
-      onSearchChange(newValue);
-      return newValue;
-    });
-  }, [onSearchChange]);
+  const handleSearchInput = useCallback(
+    (char: string) => {
+      setSearchValue((prev) => {
+        const newValue = prev + char;
+        onSearchChange(newValue);
+        return newValue;
+      });
+    },
+    [onSearchChange],
+  );
 
   const handleSearchBackspace = useCallback(() => {
     setSearchValue((prev) => {
@@ -199,11 +201,14 @@ const ProductDetailsView: React.FC<ProductDetailsViewProps> = ({
                 className={cn(
                   "flex h-8 w-full rounded-md border border-input bg-background pl-8 pr-2 text-sm",
                   "placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  showSearchKeyboard && "ring-2 ring-primary border-primary"
+                  showSearchKeyboard && "ring-2 ring-primary border-primary",
                 )}
               />
             </div>
-            <Select value={filterCategory} onValueChange={onCategoryFilterChange}>
+            <Select
+              value={filterCategory}
+              onValueChange={onCategoryFilterChange}
+            >
               <SelectTrigger className="h-8 w-[130px]">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
@@ -260,7 +265,9 @@ const ProductDetailsView: React.FC<ProductDetailsViewProps> = ({
               variant="ghost"
               size="icon"
               className="h-8 w-8"
-              onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+              onClick={() =>
+                onPageChange(Math.min(totalPages, currentPage + 1))
+              }
               disabled={currentPage >= totalPages || totalPages <= 1}
               aria-label="Next page"
             >
@@ -434,8 +441,13 @@ const ProductDetailsView: React.FC<ProductDetailsViewProps> = ({
                                           {product.name}
                                         </div>
                                       </TooltipTrigger>
-                                      <TooltipContent side="top" className="max-w-xs">
-                                        <p className="whitespace-normal">{product.name}</p>
+                                      <TooltipContent
+                                        side="top"
+                                        className="max-w-xs"
+                                      >
+                                        <p className="whitespace-normal">
+                                          {product.name}
+                                        </p>
                                       </TooltipContent>
                                     </Tooltip>
                                     {product.description && (
@@ -445,7 +457,10 @@ const ProductDetailsView: React.FC<ProductDetailsViewProps> = ({
                                             {product.description}
                                           </div>
                                         </TooltipTrigger>
-                                        <TooltipContent side="top" className="max-w-xs">
+                                        <TooltipContent
+                                          side="top"
+                                          className="max-w-xs"
+                                        >
                                           <p className="whitespace-normal">
                                             {product.description}
                                           </p>
@@ -459,11 +474,11 @@ const ProductDetailsView: React.FC<ProductDetailsViewProps> = ({
                                 (() => {
                                   const categoryPath = getCategoryPath(
                                     categoryId,
-                                    categories
+                                    categories,
                                   );
                                   const categoryName = categoryId
                                     ? categories.find(
-                                        (cat) => cat.id === categoryId
+                                        (cat) => cat.id === categoryId,
                                       )?.name || "Uncategorized"
                                     : "Uncategorized";
 
@@ -475,7 +490,10 @@ const ProductDetailsView: React.FC<ProductDetailsViewProps> = ({
                                             {categoryName}
                                           </span>
                                         </TooltipTrigger>
-                                        <TooltipContent side="top" className="max-w-xs">
+                                        <TooltipContent
+                                          side="top"
+                                          className="max-w-xs"
+                                        >
                                           <p className="whitespace-normal">
                                             {categoryPath || categoryName}
                                           </p>
@@ -516,12 +534,13 @@ const ProductDetailsView: React.FC<ProductDetailsViewProps> = ({
                                     <span
                                       className={cn(
                                         "font-medium text-sm",
-                                        (product.stockLevel || 0) <= (product.minStockLevel || 0)
+                                        (product.stockLevel || 0) <=
+                                          (product.minStockLevel || 0)
                                           ? "text-destructive"
                                           : (product.stockLevel || 0) <=
                                               (product.minStockLevel || 0) * 2
                                             ? "text-amber-600 dark:text-amber-400"
-                                            : "text-foreground"
+                                            : "text-foreground",
                                       )}
                                     >
                                       {product.stockLevel || 0}
@@ -535,7 +554,8 @@ const ProductDetailsView: React.FC<ProductDetailsViewProps> = ({
                                       Adjust
                                     </Button>
                                   </div>
-                                  {(product.stockLevel || 0) <= (product.minStockLevel || 0) && (
+                                  {(product.stockLevel || 0) <=
+                                    (product.minStockLevel || 0) && (
                                     <div className="text-xs text-destructive mt-0.5">
                                       Low Stock!
                                     </div>
@@ -551,8 +571,13 @@ const ProductDetailsView: React.FC<ProductDetailsViewProps> = ({
                                           {product.sku}
                                         </div>
                                       </TooltipTrigger>
-                                      <TooltipContent side="top" className="max-w-xs font-mono">
-                                        <p className="whitespace-normal">{product.sku}</p>
+                                      <TooltipContent
+                                        side="top"
+                                        className="max-w-xs font-mono"
+                                      >
+                                        <p className="whitespace-normal">
+                                          {product.sku}
+                                        </p>
                                       </TooltipContent>
                                     </Tooltip>
                                   ) : (
@@ -569,7 +594,7 @@ const ProductDetailsView: React.FC<ProductDetailsViewProps> = ({
                                       "px-2 py-0.5 rounded-md text-xs font-medium",
                                       product.isActive
                                         ? "bg-primary/10 text-primary"
-                                        : "bg-destructive/10 text-destructive"
+                                        : "bg-destructive/10 text-destructive",
                                     )}
                                   >
                                     {product.isActive ? "Active" : "Inactive"}
