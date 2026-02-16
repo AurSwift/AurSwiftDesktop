@@ -2,6 +2,45 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.43.0](https://github.com/AurSwift/AurSwiftDesktop/compare/v1.42.0...v1.43.0) (2026-02-16)
+
+
+### chore
+
+* **users:** refactor folder structure pattern ([](https://github.com/AurSwift/AurSwiftDesktop/commit/4a3ac1731f69f1c9b231a8b0034baf83a7e5b6c6))
+* **docs:** remove outdated database documentation files ([](https://github.com/AurSwift/AurSwiftDesktop/commit/ed8b9739b254f5f7a6d7645a9fefe086dec5d107))
+* **docs:** remove outdated Skills.md document ([](https://github.com/AurSwift/AurSwiftDesktop/commit/eda961e87e7804040cc85933a562283a2431e28b))
+* **docs:** remove outdated subscription feature gating and findings documentation ([](https://github.com/AurSwift/AurSwiftDesktop/commit/7f4205241eb68c1a3dd07e81ddcf78a821b31a9d))
+* **docs:** remove React Hook Form integration guide for adaptive keyboard ([](https://github.com/AurSwift/AurSwiftDesktop/commit/db11c742a294c537496e644daf1e3204776fa382))
+* **deps:** update dependencies in package.json and package-lock.json ([](https://github.com/AurSwift/AurSwiftDesktop/commit/b8fa62bbad9e3bbda4c41ba0bb146d3afd76ca3e))
+* **readme:** update README for AuraSwift Desktop POS with enhanced architecture and technology details ([](https://github.com/AurSwift/AurSwiftDesktop/commit/1ac8bf453d72d1cb3104fc2137035598ea82fb63))
+
+
+### feat
+
+* **quick-sell-config:** add QuickSellToolbar and related hooks for enhanced button management ([](https://github.com/AurSwift/AurSwiftDesktop/commit/3401f1214d2cd77ee1bf74038cf6ef70f096bce4))
+* **audio-feedback:** add success audio feedback for category and product creation ([](https://github.com/AurSwift/AurSwiftDesktop/commit/130b1dcbb9fa5a46ce6fc179e1531c42c613ba70))
+* **adaptive-keyboard:** add variant prop to AdaptiveTextarea for styling options ([](https://github.com/AurSwift/AurSwiftDesktop/commit/f0a2ea5a845da62ac8e91885eff66570000c4bb7))
+* **setup:** add Windows development setup guide and update configuration files ([](https://github.com/AurSwift/AurSwiftDesktop/commit/d655d59b0a1fbecc12eb2036e0f3f5c583160e33))
+* **inventory:** enhance inventory views with MiniBar component and improved filtering ([](https://github.com/AurSwift/AurSwiftDesktop/commit/0cb9fdc66be5b82479e19268ad6293486e24a6ce))
+* **sales-reports:** enhance transaction detail handling and UI components ([](https://github.com/AurSwift/AurSwiftDesktop/commit/6be31395bb18385b95a561bf0b5e14c329736435))
+* **break-policy:** implement BreakPolicyLayout and TimeReportsLayout components ([](https://github.com/AurSwift/AurSwiftDesktop/commit/a8f2e33ece3a281f165a618484032182ba583619))
+* **data-table:** implement reusable data table components and context ([](https://github.com/AurSwift/AurSwiftDesktop/commit/b937ece7be770f0e0ebdcef908060daec616b9b4))
+* **audio-feedback:** implement success audio feedback for cart actions ([](https://github.com/AurSwift/AurSwiftDesktop/commit/0341022e78f4476b899c2734fea7e708f45f9d3a))
+* **validation:** remove validate-feature script as part of codebase cleanup ([](https://github.com/AurSwift/AurSwiftDesktop/commit/4765ca8ad3a93d92ad8b65382df48173e6150822))
+* **user-management:** replace UserTable with UserDataTable for enhanced user data display ([](https://github.com/AurSwift/AurSwiftDesktop/commit/ca601f3c76730c086c065fae8a1ed629a538ae5d))
+
+
+### fix
+
+* **github-config:** centralize GitHub configuration and update repository URLs ([](https://github.com/AurSwift/AurSwiftDesktop/commit/f781e070b771d2150c35b8b96e98908e8d6d6533))
+
+
+### refactor
+
+* **inventory-views:** enhance code readability and structure ([](https://github.com/AurSwift/AurSwiftDesktop/commit/933d67c7b49292d3a0c194b529fc0ba6bc890b02))
+* **new-transaction-view:** improve code readability and structure ([](https://github.com/AurSwift/AurSwiftDesktop/commit/85cc605dde00080aa80896ee8ae11a1bca661954))
+
 # [1.42.0](https://github.com/AurSwift/AurSwift/compare/v1.41.2...v1.42.0) (2026-02-11)
 
 
