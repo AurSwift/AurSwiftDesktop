@@ -1,25 +1,39 @@
-# aurswift POS
+# AuraSwift Desktop POS
 
-Modern window based POS software for supermarket built using electron-vite-builder boilderplate.
+Modern Electron-based Point of Sale system for supermarkets with integrated hardware support, real-time synchronization, and automated updates.
 
-## 🏗️ Application Architecture Overview
+## 🏗️ Architecture Overview
 
 ### Technology Stack
 
-**Electron Multi-Process Architecture:**
+**Core Framework:**
+- **Electron** 38.1.2 (Multi-process architecture)
+- **React** 18 with TypeScript 5.9.2
+- **Node.js** ≥22.12.0
 
-- **Main Process:** Node.js with TypeScript
-- **Renderer Process:** React 18 + Redux Toolkit + TanStack Query
-- **Preload:** Secure IPC bridge with contextBridge
+**Build & Development:**
+- **Vite** 7.1.6 (Build tool)
+- **electron-builder** 26.0.12 (Packaging & distribution)
+- **Playwright** 1.55.0 (E2E testing)
 
-**Key Technologies:**
+**UI & Styling:**
+- **Radix UI** (Component library)
+- **Tailwind CSS** 4.1.13
+- **Framer Motion** (Animations)
 
-- **Framework:** Electron 38.1.2, React 18, TypeScript 5.9.2
-- **Build Tools:** Vite 7.1.6, electron-builder 26.0.12
-- **UI:** Radix UI, Tailwind CSS 4.1.13, Framer Motion
-- **Database:** better-sqlite3 (SQLite)
-- **Hardware:** node-hid, serialport, usb, node-thermal-printer
-- **Payments:** Stripe Terminal (@stripe/stripe-js, @stripe/terminal-js)
+**Database:**
+- **SQLite** via better-sqlite3 12.5.0
+- **Drizzle ORM** (Schema management & migrations)
+
+**Hardware Integration:**
+- **Thermal Printers:** node-thermal-printer (ESC/POS protocol)
+- **Card Readers:** Viva Wallet integration
+- **Barcode Scanners:** USB HID device support
+- **Digital Scales:** Serial port communication
+
+**State Management:**
+- **Redux Toolkit** (Global state)
+- **TanStack Query** (Server state & caching)
 
 ---
 
@@ -27,44 +41,47 @@ Modern window based POS software for supermarket built using electron-vite-build
 
 ```
 packages/
-├── main/                    # Electron main process
+├── main/                    # Electron main process (Node.js)
 │   ├── src/
-│   │   ├── index.ts        # App entry point
-│   │   ├── database.ts     # SQLite database layer (3200+ lines)
-│   │   ├── services/
-│   │   │   ├── paymentService.ts      # BBPOS WisePad 3 + Stripe
-│   │   │   └── thermalPrinterService.ts # ESC/POS printer
-│   │   └── modules/
-│   │       ├── WindowManager.ts
-│   │       ├── AutoUpdater.ts
-│   │       └── ...
-│   └── package.json        # Dependencies: better-sqlite3, node-thermal-printer
+│   │   ├── index.ts        # Application entry point
+│   │   ├── database/       # SQLite database layer
+│   │   │   ├── schema.ts   # Database schema (105KB)
+│   │   │   ├── db-manager.ts
+│   │   │   ├── drizzle-migrator.ts
+│   │   │   └── managers/   # Business logic managers
+│   │   ├── services/       # Hardware & external services
+│   │   │   ├── thermalPrinterService.ts
+│   │   │   ├── paymentService.ts
+│   │   │   ├── scaleService.ts
+│   │   │   ├── licenseService.ts
+│   │   │   └── subscriptionEventClient.ts
+│   │   ├── modules/        # Core application modules
+│   │   │   ├── WindowManager.ts
+│   │   │   ├── AutoUpdater.ts
+│   │   │   └── SingleInstanceApp.ts
+│   │   └── ipc/            # IPC handlers
+│   └── package.json
 │
-├── renderer/                # React UI
+├── renderer/                # React UI (Browser context)
 │   ├── src/
-│   │   ├── main.tsx        # React app entry
-│   │   ├── app/            # App providers
-│   │   ├── components/     # UI components
-│   │   │   ├── payment/    # Stripe Terminal UI
-│   │   │   ├── printer/    # Printer status UI
-│   │   │   └── scanner/    # Barcode scanner UI
-│   │   ├── features/       # Business logic
+│   │   ├── main.tsx        # React entry point
+│   │   ├── features/       # Feature modules
 │   │   │   ├── auth/
 │   │   │   ├── inventory/
 │   │   │   ├── sales/
 │   │   │   └── user-management/
-│   │   ├── hooks/
-│   │   │   ├── useStripeTerminal.ts   # Card reader integration
-│   │   │   ├── useThermalPrinter.ts   # Printer integration
-│   │   │   └── useProductionScanner.ts # Barcode scanner
+│   │   ├── hooks/          # Custom React hooks
+│   │   │   ├── useThermalPrinter.ts
+│   │   │   ├── useProductionScanner.ts
+│   │   │   └── useOfficePrinter.ts
 │   │   └── pages/
 │   │       └── dashboard/
-│   │           └── cashier/
-│   │               └── features/
-│   │                   └── new-transaction-view.tsx # Main POS UI
-│   └── package.json        # 94 lines, 50+ dependencies
+│   │           ├── cashier/
+│   │           ├── manager/
+│   │           └── admin/
+│   └── package.json
 │
-└── preload/                 # IPC bridge
+└── preload/                 # IPC bridge (Secure context)
     ├── src/
     │   ├── index.ts        # Exposes APIs to renderer
     │   └── exposed.ts      # Type definitions
@@ -73,236 +90,306 @@ packages/
 
 ---
 
-## 🔌 Hardware Integration Architecture
+## 💾 Database Architecture
 
-### 1. **Thermal Receipt Printer** (ESC/POS Protocol)
+**Database Engine:** SQLite (better-sqlite3)  
+**ORM:** Drizzle ORM with TypeScript schema  
+**Schema Size:** 105KB (comprehensive business logic)
 
+### Core Tables
+
+**User Management:**
+- `users` - Authentication, roles, permissions
+- `businesses` - Multi-tenant support
+- `attendance_reports` - Staff clock-in/out tracking
+- `pos_shift_reports` - Cashier shift management
+
+**Inventory:**
+- `products` - Product catalog with modifiers
+- `categories` - Product categorization
+- `stock_adjustments` - Inventory change tracking
+- `suppliers` - Supplier management
+
+**Sales & Transactions:**
+- `transactions` - Sales records
+- `transaction_items` - Line items with modifiers
+- `payment_methods` - Payment type configuration
+- `cash_drawer_counts` - Cash reconciliation
+
+**Audit & Compliance:**
+- `audit_logs` - Comprehensive activity tracking
+- `licenses` - Software licensing
+- `subscriptions` - Subscription management
+
+### Key Features
+
+- **RBAC:** Role-based access control with granular permissions
+- **Multi-tenant:** Support for multiple business entities
+- **Audit Trail:** Comprehensive logging of all operations
+- **Migrations:** Automated schema migrations via Drizzle
+- **Backup & Restore:** Built-in database management tools
+
+### Database Location
+
+- **Development:** `./data/pos_system.db`
+- **Production:** OS-specific user data directory
+  - macOS: `~/Library/Application Support/aurswift/pos_system.db`
+  - Windows: `%APPDATA%/aurswift/pos_system.db`
+
+### Database Commands
+
+```bash
+npm run db:dev:clean      # Remove development database
+npm run db:dev:backup     # Create timestamped backup
+npm run db:generate       # Generate migration files
+npm run db:push           # Push schema changes
+npm run db:studio         # Open Drizzle Studio
+```
+
+---
+
+## 🔌 Hardware Integration
+
+### 1. Thermal Receipt Printers
+
+**Protocol:** ESC/POS  
 **Service:** `packages/main/src/services/thermalPrinterService.ts`
 
-**Supported Hardware:**
-
+**Supported Devices:**
 - USB: Epson TM Series, Star TSP Series, Citizen CT, Bixolon SRP
 - Bluetooth: DIERI BT, Epson TM-P Series, Star SM-L Series
 
-**Key Features:**
-
+**Features:**
+- Auto-detection of USB/Bluetooth printers
 - Print queue management
-- USB/Bluetooth auto-detection
-- Receipt formatting with ESC/POS commands
-- Timeout handling (10 seconds)
-- Connection monitoring
+- Receipt formatting with custom layouts
+- Connection monitoring & timeout handling (10s)
+- Paper width support (58mm, 80mm)
 
-**IPC Handlers:**
+### 2. Payment Processing
 
-```typescript
-printer: initialize; // Connect to printer
-printer: print; // Queue and print receipt
-printer: status; // Get connection status
-printer: test; // Print test receipt
-printer: disconnect; // Disconnect printer
-printer: interfaces; // Scan for available printers
-```
+**Service:** `packages/main/src/services/paymentService.ts`  
+**Provider:** Viva Wallet
 
-**Implementation Details:**
+**Features:**
+- Card payment processing (swipe/tap/chip)
+- Payment intent creation
+- Transaction verification
+- Refund processing
+- Receipt generation
 
-- Uses `node-thermal-printer` v4.5.0
-- Supports character sets (CP437, etc.)
-- Handles paper width (58mm, 80mm)
-- Native module requiring electron-rebuild
-
----
-
-### 2. **BBPOS WisePad 3 Card Reader** (Stripe Terminal)
-
-**Service:** `packages/main/src/services/paymentService.ts` (752 lines)
-
-**Hardware:** BBPOS WisePad 3 (USB/Bluetooth)
-
-**Stripe Integration:**
-
-- Stripe API v2025-10-29.clover
-- Payment Intent creation
-- Card swipe/tap/chip processing
-- Terminal reader management
-
-**IPC Handlers:**
-
-```typescript
-payment: initialize - reader; // Connect BBPOS device
-payment: discover - readers; // Scan for readers
-payment: reader - status; // Get connection status
-payment: test - reader; // Test reader connection
-payment: create - intent; // Create payment intent
-payment: process - card; // Process card payment
-payment: cancel; // Cancel payment
-payment: connection - token; // Get Stripe Terminal token
-```
-
-**Implementation Details:**
-
-- Uses `node-hid` for USB communication
-- Stripe SDK for payment processing
-- Simulated mode for development/testing
-- Event-driven architecture
-- Battery level monitoring
-- Firmware version tracking
-
-**React Hook:** `useStripeTerminal` (500+ lines)
-
-- Auto-initialization
-- Payment flow state management
-- Error handling
-- Progress tracking
-
----
-
-### 3. **Barcode Scanner Integration**
+### 3. Barcode Scanners
 
 **Hook:** `packages/renderer/src/hooks/useProductionScanner.ts`
 
 **Features:**
-
-- Hardware scanner event listening
-- Audio feedback on successful scan
+- USB HID scanner support
 - Automatic product lookup
+- Audio feedback on scan
 - Weight-based product handling
 
-**Implementation:**
+### 4. Digital Scales
 
-- Listens for keyboard input from USB scanner
-- Validates barcode format
-- Integrates with inventory system
+**Service:** `packages/main/src/services/scaleService.ts`
 
----
-
-## 💾 Database Architecture
-
-**File:** `packages/main/src/database.ts` (3204 lines)
-
-**Database:** SQLite (better-sqlite3)
-
-**Tables:**
-
-- Users (authentication, roles, permissions)
-- Businesses (multi-tenant)
-- Products (inventory with modifiers)
-- Categories
-- Transactions (sales records)
-- TransactionItems (line items)
-- Shifts (cashier shift management)
-- CashDrawerCounts (cash reconciliation)
-- AuditLogs (comprehensive audit trail)
-- StockAdjustments (inventory changes)
-- PaymentMethods
-- Modifiers/ModifierOptions
-
-**Key Features:**
-
-- RBAC (Role-Based Access Control)
-- Multi-tenant support
-- Comprehensive audit logging
-- Automatic shift closure (30-minute intervals)
-- Transaction history
-- Inventory tracking
-- Cash drawer reconciliation
-
-**Special Product Types:**
-
-- Regular products (fixed price)
-- Weight-based products (price per unit: lb, kg, oz, g)
-- Products with modifiers
+**Features:**
+- Serial port communication
+- Real-time weight reading
+- Automatic price calculation for weight-based products
 
 ---
 
 ## 🔐 Security & Authentication
 
-**Auth Implementation:**
-
+**Authentication:**
 - bcryptjs password hashing
-- Session-based authentication
-- Token expiration
-- Role-based permissions
+- Session-based authentication with token expiration
+- Role-based access control (RBAC)
 - IPC handler protection
 
-**Files:**
+**Licensing:**
+- Machine fingerprinting
+- License activation & validation
+- Subscription management
+- Real-time sync with web platform
 
-- `packages/main/src/authApi.ts` - Authentication logic
-- `packages/main/src/authStore.ts` - Session management
-- `packages/main/src/passwordUtils.ts` - Password hashing
+**Data Security:**
+- SQLite database encryption support
+- Secure IPC communication via contextBridge
+- No remote code execution vulnerabilities
 
 ---
 
 ## 🔄 Auto-Update System
 
-**Module:** `packages/main/src/modules/AutoUpdater.ts`
+**Module:** `packages/main/src/modules/AutoUpdater.ts`  
+**Provider:** GitHub Releases  
+**Update Mechanism:** electron-updater
 
-**Features:**
+### Update Strategy
 
-- electron-updater integration
-- Automatic update checking
-- Update download and installation
-- User notification
-- Version checking
+**Smart Scheduling:**
+- Checks for updates every 4 hours
+- Skips checks if user idle >30 minutes
+- 5-second startup delay
+- 15-minute cache to avoid redundant downloads
 
-**Disabled in:**
+**Differential Updates:**
+- Uses `.blockmap` files for block-level updates
+- Downloads only changed blocks (saves bandwidth)
+- Falls back to full installer if differential not available
 
-- Test environment (`NODE_ENV=test`)
-- When `ELECTRON_UPDATER_DISABLED=1`
+**User Experience:**
+- Background download with progress tracking
+- "Install Now" / "Remind Me Later" / "Skip Version" options
+- 2-hour postpone interval (max 3 times)
+- SHA512 checksum verification
 
----
+**Supported Platforms:**
+- Windows: NSIS (one-click installer) + Squirrel (delta updates)
 
-## 🎨 UI Architecture
-
-### **Component Library:** Shadcn UI + Tailwind CSS
-
-**Key Pages:**
-
-1. **Authentication**
-
-   - Login/Register
-   - Password management
-
-2. **Dashboard**
-
-   - Cashier view (main POS interface)
-   - Inventory management
-   - Sales reporting
-   - User management
-   - Shift management
-
-3. **POS Transaction Flow**
-   - Product search/barcode scan
-   - Cart management
-   - Weight-based product handling
-   - Payment processing (cash/card)
-   - Receipt printing
-   - Shift management
-
-### **State Management:**
-
-- Redux Toolkit for global state
-- TanStack Query for server state
-- Local state with React hooks
+**Configuration:**
+```typescript
+// Update check interval: 4 hours
+// Idle threshold: 30 minutes
+// Cache duration: 15 minutes
+// Request timeout: 10 seconds
+// Max retries: 3 attempts
+```
 
 ---
 
-## 🧪 Testing Architecture
+## 📝 Build & Distribution
 
-**Framework:** Playwright 1.55.0
+### Build Process
 
-**Test Files:**
+```bash
+# 1. Install dependencies
+npm install
 
-1. `tests/e2e.spec.ts` - End-to-end tests
-2. `tests/hardware-integration.spec.ts` - Hardware API tests
+# 2. Rebuild native modules
+npm run postinstall  # Runs electron-rebuild
 
-**Test Environment:**
+# 3. Build all packages
+npm run build        # Builds renderer, main, and preload
 
-- Headless Electron
-- Mock hardware devices
-- Simulated payment processing
-- Test database
+# 4. Package application
+npm run compile      # Runs electron-builder
+```
 
-**Environment Variables:**
+### Native Modules
+
+The following native modules require compilation:
+
+- **better-sqlite3** - SQLite database
+- **node-hid** - USB device communication
+- **serialport** - Serial port communication
+- **usb** - USB device access
+
+These are automatically rebuilt via `electron-rebuild` after installation.
+
+### Build Targets
+
+**Windows (Primary):**
+- **NSIS Installer:** One-click installation to user profile (no admin required)
+- **Squirrel Package:** Delta updates via `.nupkg` files
+- **Architecture:** x64
+
+**Configuration:** `electron-builder.mjs`
+
+### Build Artifacts
+
+```
+dist/
+├── aurswift-{version}-win-x64.exe          # NSIS installer
+├── aurswift-{version}-win-x64.exe.blockmap # Differential update map
+├── squirrel-windows/
+│   ├── aurswift-{version}-win-x64.nupkg   # Squirrel package
+│   └── RELEASES                            # Squirrel manifest
+└── latest.yml                              # Auto-updater manifest
+```
+
+### Distribution
+
+**Platform:** GitHub Releases  
+**Repository:** [AurSwift/AurSwift](https://github.com/AurSwift/AurSwift)
+
+**Release Automation:**
+- Semantic versioning via `semantic-release`
+- Automated changelog generation
+- Conventional commit message parsing
+- Automatic asset upload to GitHub Releases
+
+---
+
+## 🚀 Release Workflow
+
+### Semantic Versioning
+
+The project uses **Conventional Commits** for automated versioning:
+
+| Commit Type | Example | Release Type | Version Impact |
+|------------|---------|--------------|----------------|
+| `feat` | `feat: add offline mode` | Minor | `1.0.0` → `1.1.0` |
+| `fix` | `fix: login crash` | Patch | `1.0.1` → `1.0.2` |
+| `perf` | `perf: improve startup` | Patch | `1.0.1` → `1.0.2` |
+| `refactor` | `refactor: user context` | Patch | `1.0.1` → `1.0.2` |
+| `build` | `build: update deps` | Patch | `1.0.1` → `1.0.2` |
+| `feat!` or `BREAKING CHANGE` | `feat!: drop win7 support` | Major | `1.0.0` → `2.0.0` |
+| `docs`, `style`, `test`, `chore`, `ci` | - | None | No release |
+
+### CI/CD Pipeline
+
+**Trigger:** Push to `main` branch or workflow dispatch  
+**Workflow:** `.github/workflows/ci.yml`
+
+**Pipeline Stages:**
+
+1. **Prepare** - Determine version with semantic-release (dry-run)
+2. **Typecheck** - Fast TypeScript validation
+3. **Build** - Compile Windows artifacts on `windows-2022` runner
+4. **Tests** - Run unit, integration, and E2E tests (Playwright)
+5. **Semantic Release** - Generate changelog, create GitHub release, upload assets
+
+**Optimizations:**
+- Skip Electron download when not needed (`ELECTRON_SKIP_BINARY_DOWNLOAD=1`)
+- Skip Playwright browsers when not testing (`PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`)
+- Conditional job execution based on commit types
+- Native module caching for faster builds
+
+---
+
+## 🧪 Testing
+
+### Test Framework
+
+- **Unit/Integration:** Vitest 2.1.0
+- **E2E:** Playwright 1.55.0
+- **Component Testing:** @testing-library/react
+
+### Test Commands
+
+```bash
+# Unit tests
+npm run test:unit
+
+# Integration tests
+npm run test:integration
+
+# E2E tests
+npm run test:e2e
+
+# All tests
+npm run test:all
+
+# Watch mode
+npm run test:watch
+
+# Coverage
+npm run test:coverage
+```
+
+### Test Environment
 
 ```env
 CI=true
@@ -312,548 +399,73 @@ ELECTRON_NO_SANDBOX=1
 PLAYWRIGHT_HEADLESS=1
 HARDWARE_SIMULATION_MODE=true
 MOCK_PRINTER_ENABLED=true
-MOCK_CARD_READER_ENABLED=true
-MOCK_SCANNER_ENABLED=true
 ELECTRON_UPDATER_DISABLED=1
 ```
 
 ---
 
-## 📝 Build & Distribution
+## 🛠️ Development
 
-### **Build Process:**
+### Prerequisites
 
-1. Build renderer (Vite)
-2. Build main process (Vite + TypeScript)
-3. Build preload (Vite)
-4. Run electron-rebuild for native modules
-5. Package with electron-builder
+- **Node.js:** ≥22.12.0
+- **npm:** ≥10.0.0
+- **Python:** 3.x (for native module compilation)
+- **Visual Studio Build Tools** (Windows)
 
-### **Native Modules Requiring Rebuild:**
-
-- `better-sqlite3` - Database
-- `node-hid` - USB device communication
-- `serialport` - Serial port communication
-- `usb` - USB device access
-
-### **Platforms:**
-
-- Primary: Windows (windows-latest runner)
-- Configuration: `electron-builder.mjs`
-
-### **Artifacts:**
-
-- Windows installers (.exe)
-- Portable apps
-- Auto-update manifests (latest.yml)
-
----
-
-## 📊 Dependency Analysis
-
-### **Heavy Dependencies (Build Time Impact):**
-
-1. **Electron** (38.1.2)
-
-   - Large download (~150 MB)
-   - Version-locked with native modules
-   - Skipped in semantic-release job
-
-2. **Playwright** (~300 MB with browsers)
-
-   - Only needed for testing
-   - Now conditionally installed
-
-3. **Native Modules** (compilation required)
-
-   - better-sqlite3
-   - node-hid
-   - serialport
-   - usb
-
-4. **UI Framework** (Radix UI)
-   - 20+ Radix UI packages
-   - Now grouped in dependabot
-
-### **Optimization Strategy:**
-
-- Skip Electron download when not needed
-- Skip Playwright download when not needed
-- Cache compiled native modules
-- Group related dependency updates
-
----
-
-## 🔍 Code Quality Observations
-
-### **Strengths:**
-
-✅ Well-organized monorepo structure  
-✅ Clear separation of concerns  
-✅ Comprehensive error handling  
-✅ Extensive documentation  
-✅ Type safety with TypeScript  
-✅ Hardware abstraction layers
-
-### **Areas for Future Improvement:**
-
-- Consider removing mock printer service to avoid confusion
-- Consolidate documentation across multiple files
-- Add unit tests for business logic
-- Consider splitting large database file (3200 lines)
-
----
-
-## 🎯 Future Workflow Optimization Alignment
-
-1. **Native Module Caching:**
-
-   - The app has 4 native modules requiring compilation
-   - Each rebuild: 3-5 minutes
-   - Cached: <30 seconds
-   - **Impact:** Critical for development velocity
-
-2. **Dependency Grouping:**
-
-   - 20+ Radix UI packages update frequently
-   - Grouping reduces 20 PRs → 1 PR
-   - **Impact:** Less workflow noise and cost
-
-3. **Job Consolidation:**
-
-   - Typecheck + compile shared identical setup
-   - Separate jobs wasted 5+ minutes on duplicate setup
-   - **Impact:** 40% faster builds
-
-4. **Smart Test Execution:**
-   - Playwright (300MB) not always needed
-   - Conditional installation saves time and bandwidth
-   - **Impact:** Faster builds when tests unchanged
-
----
-
-## 📈 Performance Characteristics
-
-### **App Startup:**
-
-- Database initialization
-- Hardware service initialization (printer, card reader)
-- Auto-update check
-- Shift cleanup (auto-close old shifts)
-
-### **Runtime:**
-
-- Real-time barcode scanning
-- Card payment processing
-- Receipt printing
-- Database queries
-- Audit logging
-
-### **Build Characteristics:**
-
-- TypeScript compilation: ~30 seconds
-- Vite bundling: ~1-2 minutes
-- Native module rebuild: 3-5 minutes (or cached: ~30 seconds)
-- Electron packaging: ~2 minutes
-
----
-
-## 🎓 Lessons for Workflow Design
-
-### **Key Insights:**
-
-1. **Native modules are expensive**
-
-   - Cache aggressively
-   - Rebuild only when necessary
-   - Verify builds before running tests
-
-2. **Hardware integration is complex**
-
-   - Mock/simulate for CI
-   - Test real hardware separately
-   - Document hardware requirements
-
-3. **Electron apps are large**
-
-   - Skip downloads when possible
-   - Use artifacts for distribution
-   - Cache everything feasible
-
-4. **POS systems need reliability**
-   - Comprehensive error handling
-   - Audit logging
-   - Transaction integrity
-   - Hardware failure recovery
-
----
-
-## 🗄️ Database Configuration
-
-This POS system uses **environment-aware database storage**:
-
-- **Development**: `./data/pos_system.db` (project directory)
-- **Production**: OS-specific user data directory (e.g., `~/Library/Application Support/aurswift/pos_system.db` on macOS)
-
-### Quick Commands
+### Getting Started
 
 ```bash
-npm run db:dev:clean    # Remove development database
-npm run db:dev:backup   # Create timestamped backup
-npm run db:info         # Show database information
+# Install dependencies
+npm install
+
+# Start development server
+npm start
+
+# Run in development mode with hot reload
+# Main process: Vite watch mode
+# Renderer: Vite dev server with HMR
 ```
 
-For detailed configuration, environment variables, custom paths, and migration options, see [docs/DATABASE_CONFIG.md](docs/DATABASE_CONFIG.md).
+### Project Scripts
 
-## Contribution
-
-See [Contributing Guide](CONTRIBUTING.md).
-
-[vite]: https://github.com/vitejs/vite/
-[electron]: https://github.com/electron/electron
-[electron-builder]: https://github.com/electron-userland/electron-builder
-[playwright]: https://playwright.dev
-
+```bash
+npm run build           # Build all packages
+npm run compile         # Build + package with electron-builder
+npm run typecheck       # TypeScript type checking
+npm run test            # Run all tests
+npm run db:studio       # Open Drizzle Studio
+npm start               # Start development mode
 ```
-aurswift
-├─ .editorconfig
-├─ .env
-├─ .idea
-│  ├─ codeStyles
-│  │  ├─ Project.xml
-│  │  └─ codeStyleConfig.xml
-│  ├─ deployment.xml
-│  ├─ git_toolbox_blame.xml
-│  ├─ git_toolbox_prj.xml
-│  ├─ inspectionProfiles
-│  │  └─ Project_Default.xml
-│  ├─ jsLibraryMappings.xml
-│  ├─ jsLinters
-│  │  └─ eslint.xml
-│  ├─ jsonSchemas.xml
-│  ├─ modules.xml
-│  ├─ php.xml
-│  ├─ prettier.xml
-│  ├─ runConfigurations
-│  │  └─ Attach_Debugger.xml
-│  ├─ scopes
-│  │  ├─ main.xml
-│  │  ├─ preload.xml
-│  │  └─ renderer.xml
-│  ├─ vcs.xml
-│  └─ webResources.xml
-├─ .npmrc
-├─ .releaserc.json
-├─ .versionrc.json
-├─ CHANGELOG.md
-├─ CONTRIBUTING.md
-├─ DATABASE_CONFIG.md
-├─ LICENSE
-├─ README.md
-├─ buildResources
-│  ├─ icon.icns
-│  └─ icon.ico
-├─ docs
-│  ├─ AutoUpdate
-│  │  ├─ AUTO_UPDATE_FEATURE_IN_DETAIL.md
-│  │  ├─ AUTO_UPDATE_GUIDE.md
-│  │  ├─ CLIENT_MIGRATION_COMPREHENSIVE_ANALYSIS.md
-│  │  ├─ CLIENT_MIGRATION_TESTING_GUIDE.md
-│  │  ├─ CLIENT_MIGRATION_TESTING_PLAN.md
-│  │  ├─ CLIENT_RELEASE_TESTING_GUIDE.md
-│  │  ├─ DATABASE_MIGRATION_BEST_PRACTICES.md
-│  │  ├─ DATABASE_SCHEMA_CHANGES_GUIDE.md
-│  │  ├─ FIRST_RELEASE_TEST_PLAN.md
-│  │  ├─ IN_DETAIL_UPDATE_WORKFLOW.md
-│  │  ├─ MIGRATION_REFACTOR_SUMMARY.md
-│  │  ├─ MIGRATION_SAFETY_IMPLEMENTATION.md
-│  │  ├─ QUICK_TESTING_CHECKLIST.md
-│  │  ├─ README.md
-│  │  └─ VISUAL_UPDATE_GUIDE.md
-│  ├─ CASHIER_QUICK_REFERENCE.md
-│  ├─ CASHIER_TRANSACTION_WORKFLOW.md
-│  ├─ CLOCK_IN_OUT_QUICK_REFERENCE.md
-│  ├─ CLOCK_IN_OUT_SYSTEM.md
-│  ├─ ChangeLog
-│  │  └─ CHANGELOG_GENERATION_GUIDE.md
-│  ├─ DATABASE_MIGRATION_SYSTEM.md
-│  ├─ DATABASE_SEEDING.md
-│  ├─ DISCOUNT_SYSTEM.md
-│  ├─ DRIZZLE_MIGRATION_GUIDE.md
-│  ├─ HP_LASERJET_ANALYSIS.md
-│  ├─ Hardwares
-│  │  ├─ CARD_READERD_HARDWARE_SETUP.md
-│  │  ├─ PAYMENT_ISSUES_SUMMARY.md
-│  │  ├─ PAYMENT_PRODUCTION_READINESS_ANALYSIS.md
-│  │  ├─ PAYMENT_QUICK_FIXES.md
-│  │  ├─ PCICompilanceGuide.md
-│  │  ├─ PRINTER_INTEGRATION_SUMMARY.md
-│  │  ├─ PRINTER_ISSUES_SUMMARY.md
-│  │  ├─ PRINTER_PRODUCTION_ANALYSIS.md
-│  │  ├─ PRINTER_TESTING_GUIDE.md
-│  │  ├─ README.md
-│  │  └─ SUPPORTED_PRINTERS.md
-│  ├─ InstallerTypes
-│  │  ├─ INSTALLER_TYPES_GUIDE.md
-│  │  ├─ INSTALLER_VS_PORTABLE_EXPLAINED.md
-│  │  └─ NSISANDSQUIRRELApproach.MD
-│  ├─ Issues_LifeCycle
-│  │  └─ index.md
-│  ├─ MIGRATION_WORKFLOW.md
-│  ├─ NOTES.md
-│  ├─ USER_CREATION_VALIDATION.md
-│  ├─ Validations
-│  │  └─ AUTH_FORM_VALIDATION.md
-│  ├─ WebHooks
-│  │  ├─ WebhookInDetail.md
-│  │  └─ readme.md
-│  ├─ Zod
-│  │  ├─ DRIZZLE_ZOD_VALIDATION.md
-│  │  ├─ MIGRATION_SUMMARY.md
-│  │  └─ ZOD_VALIDATION_GUIDE.md
-│  └─ new_auth_system.md
-├─ drizzle.config.ts
-├─ electron-builder.mjs
-├─ migrate-existing-db.mjs
-├─ package-lock.json
-├─ package.json
-├─ packages
-│  ├─ dev-mode.js
-│  ├─ electron-versions
-│  │  ├─ README.md
-│  │  ├─ index.js
-│  │  └─ package.json
-│  ├─ entry-point.mjs
-│  ├─ integrate-renderer
-│  │  ├─ create-renderer.js
-│  │  ├─ index.js
-│  │  └─ package.json
-│  ├─ main
-│  │  ├─ package.json
-│  │  ├─ src
-│  │  │  ├─ AppInitConfig.ts
-│  │  │  ├─ AppModule.ts
-│  │  │  ├─ ModuleContext.ts
-│  │  │  ├─ ModuleRunner.ts
-│  │  │  ├─ appApi.ts
-│  │  │  ├─ appStore.ts
-│  │  │  ├─ index.ts
-│  │  │  ├─ modules
-│  │  │  │  ├─ AbstractSecurityModule.ts
-│  │  │  │  ├─ ApplicationTerminatorOnLastWindowClose.ts
-│  │  │  │  ├─ AutoUpdater.ts
-│  │  │  │  ├─ BlockNotAllowdOrigins.ts
-│  │  │  │  ├─ ChromeDevToolsExtension.ts
-│  │  │  │  ├─ ExternalUrls.ts
-│  │  │  │  ├─ HardwareAccelerationModule.ts
-│  │  │  │  ├─ SingleInstanceApp.ts
-│  │  │  │  └─ WindowManager.ts
-│  │  │  ├─ passwordUtils.ts
-│  │  │  ├─ services
-│  │  │  │  ├─ officePrinterService.ts
-│  │  │  │  ├─ paymentService.ts
-│  │  │  │  ├─ pdfReceiptService.ts
-│  │  │  │  └─ thermalPrinterService.ts
-│  │  │  └─ thermalPrinterService.ts
-│  │  ├─ tsconfig.json
-│  │  └─ vite.config.js
-│  ├─ preload
-│  │  ├─ package.json
-│  │  ├─ src
-│  │  │  ├─ exposed.ts
-│  │  │  ├─ index.ts
-│  │  │  ├─ nodeCrypto.ts
-│  │  │  └─ versions.ts
-│  │  ├─ tsconfig.json
-│  │  └─ vite.config.js
-│  └─ renderer
-│     ├─ README.md
-│     ├─ components.json
-│     ├─ docs
-│     │  ├─ SalesVsCashDrawerCount.md
-│     │  ├─ auditLogs.md
-│     │  ├─ barcodeintegrationRoughFlow.md
-│     │  ├─ cashdrawercountlogic.md
-│     │  ├─ cashierFlow.md
-│     │  ├─ refundtransactionlogic.md
-│     │  ├─ shiftallCases.md
-│     │  ├─ shifttimeCase.md
-│     │  └─ voidtransactionlogic.md
-│     ├─ eslint.config.js
-│     ├─ index.html
-│     ├─ package.json
-│     ├─ public
-│     │  ├─ modern-retail-store-interior-with-sleek-pos-system.jpg
-│     │  └─ vite.svg
-│     ├─ src
-│     │  ├─ app
-│     │  │  ├─ App.tsx
-│     │  │  └─ providers
-│     │  │     └─ app-providers.tsx
-│     │  ├─ assets
-│     │  │  └─ react.svg
-│     │  ├─ components
-│     │  │  ├─ payment
-│     │  │  │  └─ PaymentComponents.tsx
-│     │  │  ├─ printer
-│     │  │  │  └─ ReceiptPrinterComponents.tsx
-│     │  │  ├─ scanner
-│     │  │  │  └─ ScannerStatusComponents.tsx
-│     │  │  └─ ui
-│     │  │     ├─ accordion.tsx
-│     │  │     ├─ alert-dialog.tsx
-│     │  │     ├─ alert.tsx
-│     │  │     ├─ aspect-ratio.tsx
-│     │  │     ├─ avatar.tsx
-│     │  │     ├─ badge.tsx
-│     │  │     ├─ breadcrumb.tsx
-│     │  │     ├─ button.tsx
-│     │  │     ├─ calendar.tsx
-│     │  │     ├─ card.tsx
-│     │  │     ├─ carousel.tsx
-│     │  │     ├─ chart.tsx
-│     │  │     ├─ checkbox.tsx
-│     │  │     ├─ collapsible.tsx
-│     │  │     ├─ command.tsx
-│     │  │     ├─ context-menu.tsx
-│     │  │     ├─ dialog.tsx
-│     │  │     ├─ drawer.tsx
-│     │  │     ├─ dropdown-menu.tsx
-│     │  │     ├─ form.tsx
-│     │  │     ├─ hover-card.tsx
-│     │  │     ├─ input-otp.tsx
-│     │  │     ├─ input.tsx
-│     │  │     ├─ label.tsx
-│     │  │     ├─ menubar.tsx
-│     │  │     ├─ navigation-menu.tsx
-│     │  │     ├─ pagination.tsx
-│     │  │     ├─ popover.tsx
-│     │  │     ├─ progress.tsx
-│     │  │     ├─ radio-group.tsx
-│     │  │     ├─ resizable.tsx
-│     │  │     ├─ scroll-area.tsx
-│     │  │     ├─ select.tsx
-│     │  │     ├─ separator.tsx
-│     │  │     ├─ sheet.tsx
-│     │  │     ├─ sidebar.tsx
-│     │  │     ├─ skeleton.tsx
-│     │  │     ├─ slider.tsx
-│     │  │     ├─ sonner.tsx
-│     │  │     ├─ switch.tsx
-│     │  │     ├─ table.tsx
-│     │  │     ├─ tabs.tsx
-│     │  │     ├─ textarea.tsx
-│     │  │     ├─ toggle-group.tsx
-│     │  │     ├─ toggle.tsx
-│     │  │     └─ tooltip.tsx
-│     │  ├─ features
-│     │  │  ├─ auth
-│     │  │  │  ├─ components
-│     │  │  │  │  ├─ auth-hero-section.tsx
-│     │  │  │  │  ├─ index.ts
-│     │  │  │  │  ├─ login-form.tsx
-│     │  │  │  │  └─ register-form.tsx
-│     │  │  │  ├─ context
-│     │  │  │  │  └─ auth-context.tsx
-│     │  │  │  ├─ services
-│     │  │  │  └─ types
-│     │  │  │     └─ auth.types.ts
-│     │  │  ├─ inventory
-│     │  │  ├─ sales
-│     │  │  └─ user-management
-│     │  ├─ hooks
-│     │  │  ├─ useOfficePrinter.ts
-│     │  │  ├─ useProductionScanner.ts
-│     │  │  ├─ useStripeTerminal.ts
-│     │  │  └─ useThermalPrinter.ts
-│     │  ├─ index.css
-│     │  ├─ layouts
-│     │  │  └─ dashboard-layout.tsx
-│     │  ├─ lib
-│     │  │  ├─ auth.ts
-│     │  │  └─ utils.ts
-│     │  ├─ main.tsx
-│     │  ├─ pages
-│     │  │  ├─ auth
-│     │  │  │  └─ index.tsx
-│     │  │  └─ dashboard
-│     │  │     ├─ admin
-│     │  │     │  ├─ features
-│     │  │     │  │  ├─ admin-dashboard-view.tsx
-│     │  │     │  │  └─ user-management-view.tsx
-│     │  │     │  └─ index.tsx
-│     │  │     ├─ cashier
-│     │  │     │  ├─ features
-│     │  │     │  │  ├─ cash-drawer-count-modal.tsx
-│     │  │     │  │  ├─ cashier-dashboard-view.tsx
-│     │  │     │  │  ├─ new-transaction-view.tsx
-│     │  │     │  │  ├─ refund-transaction-view.tsx
-│     │  │     │  │  └─ void-transaction-view.tsx
-│     │  │     │  └─ index.tsx
-│     │  │     ├─ index.tsx
-│     │  │     └─ manager
-│     │  │        ├─ features
-│     │  │        │  ├─ manage-cashier-view.tsx
-│     │  │        │  ├─ manage-categories-view.tsx
-│     │  │        │  ├─ manage-product-view.tsx
-│     │  │        │  ├─ manager-dashboard-view.tsx
-│     │  │        │  └─ staff-schedules-view.tsx
-│     │  │        └─ index.tsx
-│     │  ├─ redux
-│     │  │  ├─ AuthSlice.tsx
-│     │  │  └─ store.ts
-│     │  ├─ schemas
-│     │  │  ├─ category-schema.ts
-│     │  │  ├─ design1.png
-│     │  │  └─ product-schema.ts
-│     │  ├─ shared
-│     │  │  ├─ components
-│     │  │  │  ├─ avatar-upload.tsx
-│     │  │  │  ├─ index.ts
-│     │  │  │  ├─ loading-screen.tsx
-│     │  │  │  ├─ protected-route.tsx
-│     │  │  │  ├─ public-route.tsx
-│     │  │  │  └─ user-avatar.tsx
-│     │  │  ├─ constants
-│     │  │  ├─ hooks
-│     │  │  │  ├─ index.ts
-│     │  │  │  ├─ use-auth.tsx
-│     │  │  │  └─ use-mobile.ts
-│     │  │  ├─ services
-│     │  │  ├─ types
-│     │  │  │  └─ global.d.ts
-│     │  │  └─ utils
-│     │  │     ├─ auth.ts
-│     │  │     ├─ cn.ts
-│     │  │     └─ index.ts
-│     │  ├─ store
-│     │  │  └─ index.ts
-│     │  ├─ types
-│     │  │  ├─ auth-store.d.ts
-│     │  │  ├─ officePrinter.ts
-│     │  │  ├─ printer.ts
-│     │  │  └─ product.types.ts
-│     │  ├─ utils
-│     │  │  ├─ paymentFlow.ts
-│     │  │  ├─ pdfReceiptGenerator.ts
-│     │  │  ├─ receiptGenerator.ts
-│     │  │  └─ scannerAudio.ts
-│     │  └─ vite-env.d.ts
-│     ├─ tsconfig.app.json
-│     ├─ tsconfig.json
-│     ├─ tsconfig.node.json
-│     └─ vite.config.ts
-├─ scripts
-│  ├─ README.md
-│  └─ bridge-migration.mjs
-├─ test-db-path.mjs
-├─ test-payment-flow.js
-├─ test-stripe-config.js
-├─ tests
-│  ├─ e2e.spec.ts
-│  └─ hardware-integration.spec.ts
-└─ types
-   ├─ env.d.ts
-   └─ payment.d.ts
 
-```
+---
+
+## 📚 Documentation
+
+Comprehensive guides are available in the `docs/` directory:
+
+- **Auto-Update:** `docs/Guides/AutoUpdate/RELEASE_AND_UPDATE_WORKFLOW.md`
+- **Database:** `docs/DATABASE_CONFIG.md`
+- **Hardware:** `docs/Guides/Hardwares/README.md`
+- **Logging:** `docs/Guides/LOGGING_GUIDE.md`
+- **Performance:** `docs/Guides/Optimizations/PERFORMANCE_OPTIMIZATIONS.md`
+
+---
+
+## 📄 License
+
+See [LICENSE](LICENSE) file for details.
+
+---
+
+## 🤝 Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
+
+---
+
+## 📞 Support
+
+- **Email:** aurswiftassistanceteam@gmail.com
+- **Website:** [https://aurswift.vercel.app](https://aurswift.vercel.app)
+- **Repository:** [https://github.com/AurSwift/AurSwift](https://github.com/AurSwift/AurSwift)
