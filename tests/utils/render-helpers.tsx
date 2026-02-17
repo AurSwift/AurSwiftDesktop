@@ -9,6 +9,45 @@ import { render as rtlRender, RenderOptions } from "@testing-library/react";
 import { ReactElement } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthContext } from "@/features/auth/context/auth-context";
+import type { AuthContextType } from "@/types/domain/user";
+
+/**
+ * Minimal user shape for tests (RBAC hooks need id, businessId, primaryRole)
+ */
+export interface MockAuthUser {
+  id: string;
+  businessId: string;
+  primaryRole?: { name: string; displayName?: string };
+  roleName?: string;
+  role?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Create a mock AuthContext value for testing (e.g. RBAC components using useAuth)
+ */
+export function createMockAuthContext(authUser: MockAuthUser | null): AuthContextType {
+  const noop = async () => ({ success: false, message: "Not implemented" });
+  const noopVoid = async () => {};
+  return {
+    user: authUser as AuthContextType["user"],
+    sessionToken: authUser ? "test-token" : null,
+    requiresPinChange: false,
+    completeForceChangePIN: noop,
+    login: noop,
+    register: noop,
+    registerBusiness: noop,
+    createUser: noop,
+    logout: noopVoid,
+    clockIn: noop,
+    clockOut: noop,
+    getActiveShift: async () => null,
+    isLoading: false,
+    error: null,
+    isInitializing: false,
+  };
+}
 
 /**
  * Custom render options
@@ -28,6 +67,11 @@ interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
    * Additional wrapper component
    */
   additionalWrapper?: React.ComponentType<{ children: React.ReactNode }>;
+
+  /**
+   * When set, wraps with AuthContext so useAuth() returns this user (e.g. for RBAC tests)
+   */
+  authUser?: MockAuthUser | null;
 }
 
 /**
@@ -46,6 +90,7 @@ export function render(
     initialRoute = "/",
     queryClient = createTestQueryClient(),
     additionalWrapper,
+    authUser,
     ...renderOptions
   } = options;
 
@@ -55,6 +100,15 @@ export function render(
         <MemoryRouter initialEntries={[initialRoute]}>{children}</MemoryRouter>
       </QueryClientProvider>
     );
+
+    if (authUser !== undefined) {
+      const authValue = createMockAuthContext(authUser ?? null);
+      wrappedChildren = (
+        <AuthContext.Provider value={authValue}>
+          {wrappedChildren}
+        </AuthContext.Provider>
+      );
+    }
 
     if (additionalWrapper) {
       const AdditionalWrapper = additionalWrapper;

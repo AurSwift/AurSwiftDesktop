@@ -7,6 +7,17 @@ import { expect, afterEach, vi, beforeAll } from "vitest";
 import { cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
+// Polyfill for Radix UI / jsdom
+if (typeof window !== "undefined") {
+  if (!window.ResizeObserver) {
+    window.ResizeObserver = class ResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    } as any;
+  }
+}
+
 // Mock Electron APIs
 if (typeof window !== "undefined") {
   (window as any).electron = {
@@ -64,6 +75,29 @@ if (typeof window !== "undefined") {
   (window as any).databaseAPI = {
     backup: vi.fn(),
     restore: vi.fn(),
+  };
+
+  (window as any).rbacAPI = {
+    roles: {
+      list: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      getUsersByRole: vi.fn(),
+    },
+    userRoles: {
+      getUserRoles: vi.fn(),
+      assign: vi.fn(),
+      revoke: vi.fn(),
+      setPrimaryRole: vi.fn(),
+    },
+    userPermissions: { getUserPermissions: vi.fn() },
+  };
+
+  (window as any).authStore = {
+    get: vi.fn(),
+    set: vi.fn(),
+    delete: vi.fn(),
   };
 }
 
