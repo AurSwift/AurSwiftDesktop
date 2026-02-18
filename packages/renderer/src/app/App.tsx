@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   HashRouter as Router,
   Routes,
@@ -13,10 +13,18 @@ import {
   RetryableLazyRoute,
   RouteErrorBoundary,
 } from "@/components";
-import { LicenseActivationScreen, useLicenseContext } from "@/features/license";
+import {
+  StartupScreen,
+  useStartupSequence,
+  type StartupWarningCode,
+} from "@/app/startup";
+import { AuthPage } from "@/features/auth";
+import { LicenseActivationModal, useLicenseContext } from "@/features/license";
 import { ProtectedAppShell } from "@/navigation/components/protected-app-shell";
+import { useAuth } from "@/shared/hooks";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { getLogger } from "@/shared/utils/logger";
 import { sanitizeUserFacingMessage } from "@/shared/utils/user-facing-errors";
 
 const authLoader = () => import("@/features/auth/views/auth-page");
@@ -26,6 +34,20 @@ const licenseLoader = () =>
   import("@/features/license/pages/license-info-page").then((m) => ({
     default: m.LicenseInfoPage,
   }));
+const startupLogger = getLogger("startup-sequence");
+
+function getStartupWarningMessage(code: StartupWarningCode): string {
+  switch (code) {
+    case "update-timeout":
+      return "Startup continued without waiting for update check completion.";
+    case "update-failed":
+      return "Startup continued after an update check error.";
+    case "update-unavailable":
+      return "Update checks are currently unavailable. Startup continued.";
+    default:
+      return "Startup continued with a non-blocking warning.";
+  }
+}
 
 /**
  * System notification listener
@@ -144,11 +166,73 @@ function AppContent() {
  */
 function AppWithLicenseCheck() {
   const { isLoading, isActivated, refreshStatus } = useLicenseContext();
-  const [showActivation, setShowActivation] = useState(false);
+  const { user, isInitializing } = useAuth();
+  const [showActivation, setShowActivation] = useState(
+    () => !isLoading && !isActivated,
+  );
   const [testMode, setTestMode] = useState(false);
+  const startupWarningShownRef = useRef(false);
+  const prefetchedAuthRef = useRef(false);
+  const prefetchedDashboardRef = useRef(false);
 
   // Listen for system notifications
   useSystemNotifications();
+
+  const runStartupUpdateCheck = useCallback(async (): Promise<StartupWarningCode | null> => {
+    if (!window.updateAPI?.checkForUpdates) {
+      return "update-unavailable";
+    }
+
+    try {
+      await window.updateAPI.checkForUpdates();
+      return null;
+    } catch (error) {
+      startupLogger.warn("Startup update check failed", error);
+      return "update-failed";
+    }
+  }, []);
+
+  const startupState = useStartupSequence({
+    licenseLoading: isLoading,
+    authInitializing: isInitializing,
+    runUpdateCheck: runStartupUpdateCheck,
+  });
+
+  useEffect(() => {
+    if (prefetchedAuthRef.current) {
+      return;
+    }
+
+    prefetchedAuthRef.current = true;
+    void authLoader().catch((error) => {
+      startupLogger.warn("Failed to prefetch auth route", error);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!user || prefetchedDashboardRef.current) {
+      return;
+    }
+
+    prefetchedDashboardRef.current = true;
+    void dashboardLoader().catch((error) => {
+      startupLogger.warn("Failed to prefetch dashboard route", error);
+    });
+  }, [user]);
+
+  useEffect(() => {
+    if (!startupState.warning || startupWarningShownRef.current) {
+      return;
+    }
+
+    startupWarningShownRef.current = true;
+    const warningMessage = getStartupWarningMessage(startupState.warning);
+    startupLogger.warn(warningMessage);
+    toast.warning(warningMessage, {
+      id: "startup-warning",
+      duration: 5000,
+    });
+  }, [startupState.warning]);
 
   useEffect(() => {
     // Once loading is complete, determine if we need activation
@@ -157,7 +241,13 @@ function AppWithLicenseCheck() {
     }
   }, [isLoading, isActivated]);
 
-  // Show loading screen while checking license
+  // Show EPOS-style startup sequence before auth/license decision
+  if (startupState.isBlocking) {
+    return <StartupScreen state={startupState} />;
+  }
+
+  // Fallback loading state in case hard-timeout bypasses startup while license
+  // is still resolving.
   if (isLoading) {
     return <LicenseLoadingScreen />;
   }
@@ -167,16 +257,20 @@ function AppWithLicenseCheck() {
     return <AppContent />;
   }
 
-  // Show activation screen if not licensed
+  // Show auth background + activation modal if not licensed
   if (showActivation) {
     return (
-      <LicenseActivationScreen
-        onActivationSuccess={() => {
-          refreshStatus();
-          setShowActivation(false);
-        }}
-        onTestMode={() => setTestMode(true)}
-      />
+      <>
+        <AuthPage />
+        <LicenseActivationModal
+          open
+          onActivationSuccess={() => {
+            void refreshStatus();
+            setShowActivation(false);
+          }}
+          onTestMode={() => setTestMode(true)}
+        />
+      </>
     );
   }
 
