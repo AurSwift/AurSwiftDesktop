@@ -7,7 +7,6 @@ import { getLogger } from "../../utils/logger.js";
 const logger = getLogger("userManager");
 
 import {
-  registerSchema,
   pinLoginSchema,
   validateInput,
 } from "../validation/authSchemas.js";
@@ -952,94 +951,6 @@ export class UserManager {
   }
 
   // Business Logic Methods (moved from appApi.ts)
-
-  async register(data: {
-    email?: string;
-    pin: string;
-    firstName: string;
-    lastName: string;
-    businessName: string;
-    role: "cashier" | "manager" | "admin";
-    username: string;
-  }): Promise<AuthResponse> {
-    try {
-      // Validate input data using Zod schema
-      const validation = validateInput(registerSchema, data);
-
-      if (!validation.success) {
-        return {
-          success: false,
-          message: "Validation failed",
-          errors: validation.errors,
-        };
-      }
-
-      const validatedData = validation.data;
-
-      // Check if username already exists
-      if (!validatedData.username) {
-        return {
-          success: false,
-          message: "Username is required",
-        };
-      }
-      const existingUser = this.getUserByUsername(validatedData.username);
-      if (existingUser) {
-        return {
-          success: false,
-          message: "Username already exists",
-        };
-      }
-
-      // Check if email already exists (if provided)
-      if (validatedData.email) {
-        const existingEmailUser = this.getUserByEmail(validatedData.email);
-        if (existingEmailUser) {
-          return {
-            success: false,
-            message: "User with this email already exists",
-          };
-        }
-      }
-
-      // Ensure required fields are present
-      const userData = {
-        ...validatedData,
-        username: validatedData.username || `user_${Date.now()}`,
-        pin: validatedData.pin,
-      };
-
-      // Create user with validated data
-      const user = await this.createUser(userData);
-
-      // Create session using the session manager
-      if (!this.sessionManager) {
-        throw new Error("Session manager not initialized");
-      }
-      const session = this.sessionManager.createSession(user.id);
-
-      // Return user without sensitive fields
-      const {
-        passwordHash: _,
-        pinHash: __,
-        salt: ___,
-        ...userWithoutSecrets
-      } = user;
-
-      return {
-        success: true,
-        message: "User registered successfully",
-        user: userWithoutSecrets as User,
-        token: session.token,
-      };
-    } catch (error) {
-      logger.error("Registration error:", error);
-      return {
-        success: false,
-        message: "Registration failed due to server error",
-      };
-    }
-  }
 
   async login(data: {
     username: string;

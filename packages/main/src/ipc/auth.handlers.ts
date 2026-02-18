@@ -130,40 +130,6 @@ export function registerAuthHandlers() {
     }
   });
 
-  // Authentication API handlers
-  ipcMain.handle("auth:register", async (event, userData) => {
-    try {
-      const db = await getDatabase();
-      return await db.users.register(userData);
-    } catch (error) {
-      logger.error("Registration IPC error:", error);
-      return {
-        success: false,
-        message: "Registration failed due to server error",
-      };
-    }
-  });
-
-  // Register business owner (automatically sets role to admin)
-  ipcMain.handle("auth:registerBusiness", async (event, userData) => {
-    try {
-      const db = await getDatabase();
-      // Business owners are automatically admin users
-      const registrationData = {
-        ...userData,
-        role: "admin" as const,
-      };
-
-      return await db.users.register(registrationData);
-    } catch (error) {
-      logger.error("Business registration IPC error:", error);
-      return {
-        success: false,
-        message: "Business registration failed due to server error",
-      };
-    }
-  });
-
   ipcMain.handle("auth:login", async (event, credentials) => {
     try {
       const db = await getDatabase();
@@ -273,91 +239,6 @@ export function registerAuthHandlers() {
     } catch (error) {
       logger.error("Verify PIN IPC error:", error);
       return { success: false, message: "Verification failed" };
-    }
-  });
-
-  ipcMain.handle("auth:refreshToken", async (event, refreshToken) => {
-    try {
-      const db = await getDatabase();
-
-      // Validate refresh token format
-      if (
-        !refreshToken ||
-        typeof refreshToken !== "string" ||
-        refreshToken.trim().length === 0
-      ) {
-        logger.warn("[refreshToken] Invalid refresh token format provided");
-        return {
-          success: false,
-          message: "Invalid refresh token",
-          code: "INVALID_REFRESH_TOKEN",
-        };
-      }
-
-      // Get session by token (refresh tokens not used in desktop EPOS)
-      const session = db.sessions.getSessionByToken(refreshToken);
-
-      if (!session) {
-        logger.warn("[refreshToken] Invalid or expired token");
-        return {
-          success: false,
-          message: "Invalid or expired token",
-          code: "TOKEN_INVALID",
-        };
-      }
-
-      // Get user to verify they're still active
-      const user = db.users.getUserById(session.userId);
-
-      if (!user) {
-        return {
-          success: false,
-          message: "User not found",
-          code: "USER_NOT_FOUND",
-        };
-      }
-
-      if (!user.isActive) {
-        return {
-          success: false,
-          message: "User account is inactive",
-          code: "USER_INACTIVE",
-        };
-      }
-
-      if (!session) {
-        return {
-          success: false,
-          message: "Invalid or expired token",
-          code: "TOKEN_INVALID",
-        };
-      }
-
-      // Return user without sensitive fields
-      const {
-        passwordHash: _,
-        pinHash: __,
-        salt: ___,
-        ...userWithoutSecrets
-      } = user;
-
-      logger.debug(
-        `[refreshToken] Token validated successfully for user ${user.id}`
-      );
-
-      return {
-        success: true,
-        message: "Token validated successfully",
-        user: userWithoutSecrets as User,
-        token: session.token, // Return the same token
-      };
-    } catch (error) {
-      logger.error("Token refresh IPC error:", error);
-      return {
-        success: false,
-        message: "Token refresh failed",
-        code: "REFRESH_ERROR",
-      };
     }
   });
 
@@ -1054,4 +935,3 @@ export function registerAuthHandlers() {
     }
   );
 }
-

@@ -36,8 +36,6 @@ export function createMockAuthContext(authUser: MockAuthUser | null): AuthContex
     requiresPinChange: false,
     completeForceChangePIN: noop,
     login: noop,
-    register: noop,
-    registerBusiness: noop,
     createUser: noop,
     logout: noopVoid,
     clockIn: noop,

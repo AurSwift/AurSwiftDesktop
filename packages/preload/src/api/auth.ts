@@ -1,27 +1,6 @@
 import { ipcRenderer } from "electron";
 
 export const authAPI = {
-  register: (userData: {
-    email?: string;
-    firstName: string;
-    lastName: string;
-    businessName: string;
-    role: "cashier" | "manager" | "admin";
-    username: string;
-    pin: string;
-  }) => ipcRenderer.invoke("auth:register", userData),
-
-  registerBusiness: (userData: {
-    email?: string;
-    firstName: string;
-    lastName: string;
-    businessName: string;
-    username: string;
-    pin: string;
-    avatar?: string;
-    businessAvatar?: string;
-  }) => ipcRenderer.invoke("auth:registerBusiness", userData),
-
   createUser: (
     sessionToken: string,
     userData: {

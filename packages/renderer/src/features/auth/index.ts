@@ -6,15 +6,6 @@
  */
 
 // ============================================================================
-// Config
-// ============================================================================
-export { authFeature, authViews } from "./config/feature-config";
-export { AUTH_PERMISSIONS } from "./config/permissions";
-export { AUTH_ROUTES } from "./config/navigation";
-export type { AuthPermission } from "./config/permissions";
-export type { AuthRoute } from "./config/navigation";
-
-// ============================================================================
 // Components
 // ============================================================================
 export * from "./components";
@@ -27,8 +18,7 @@ export { AuthContext, AuthProvider } from "./context/auth-context";
 // ============================================================================
 // Hooks
 // ============================================================================
-export { useLoginForm } from "./hooks/use-login-form";
-export { useRegisterForm } from "./hooks/use-register-form";
+// (none - PIN auth is handled by AuthUserSelection)
 
 // ============================================================================
 // Views
@@ -38,6 +28,4 @@ export { default as AuthPage } from "./views/auth-page";
 // ============================================================================
 // Schemas
 // ============================================================================
-export * from "./schemas/login-schema";
-export * from "./schemas/register-schema";
-
+// (none - backend validates auth inputs)

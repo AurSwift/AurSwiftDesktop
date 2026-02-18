@@ -1,20 +1,29 @@
+/**
+ * Auth UI color utilities for the dark-themed login screen.
+ * Colors are hex strings used in inline styles (not Tailwind classes)
+ * to work with the dark atmospheric design.
+ */
+
 const ROLE_COLORS: Record<string, string> = {
-  admin: "bg-blue-500",
-  manager: "bg-green-500",
-  cashier: "bg-purple-500",
+  admin: "#5BA4D9",
+  manager: "#4CAF96",
+  cashier: "#7B68EE",
 };
+
+const CASHIER_COLORS = ["#7B68EE", "#E8884A", "#E06B8A", "#4ABFE8"];
 
 export const getUserColor = (role: string, index: number): string => {
-  const baseColor = ROLE_COLORS[role] || "bg-gray-500";
   if (role === "cashier") {
-    const colors = [
-      "bg-purple-500",
-      "bg-orange-500",
-      "bg-pink-500",
-      "bg-cyan-500",
-    ];
-    return colors[index % colors.length];
+    return CASHIER_COLORS[index % CASHIER_COLORS.length];
   }
-  return baseColor;
+  return ROLE_COLORS[role] || "#6B7280";
 };
 
+/**
+ * Get initials from a user's first and last name.
+ */
+export const getInitials = (firstName: string, lastName: string): string => {
+  const first = firstName?.charAt(0) || "";
+  const last = lastName?.charAt(0) || "";
+  return (first + last).toUpperCase();
+};

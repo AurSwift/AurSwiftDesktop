@@ -9,27 +9,6 @@
 import type { APIResponse } from './common';
 
 export interface AuthAPI {
-  register: (userData: {
-    email?: string;
-    username: string;
-    pin: string;
-    firstName: string;
-    lastName: string;
-    businessName: string;
-    role: 'cashier' | 'manager' | 'admin';
-  }) => Promise<APIResponse>;
-
-  registerBusiness: (userData: {
-    email?: string;
-    username: string;
-    pin: string;
-    firstName: string;
-    lastName: string;
-    businessName: string;
-    avatar?: string;
-    businessAvatar?: string;
-  }) => Promise<APIResponse>;
-
   createUser: (
     sessionToken: string,
     userData: {

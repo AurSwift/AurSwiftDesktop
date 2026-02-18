@@ -91,25 +91,6 @@ export interface AuthContextType {
     pin: string,
     rememberMe?: boolean
   ) => Promise<{ success: boolean; message: string; errors?: string[] }>;
-  register: (userData: {
-    email?: string;
-    username: string;
-    pin: string;
-    firstName: string;
-    lastName: string;
-    businessName: string;
-    role: "cashier" | "manager" | "admin";
-  }) => Promise<{ success: boolean; message: string; errors?: string[] }>;
-  registerBusiness: (userData: {
-    email?: string;
-    username: string;
-    pin: string;
-    firstName: string;
-    lastName: string;
-    businessName: string;
-    avatar?: string;
-    businessAvatar?: string;
-  }) => Promise<{ success: boolean; message: string; errors?: string[] }>;
   createUser: (userData: {
     businessId: string;
     username: string;

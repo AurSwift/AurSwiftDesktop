@@ -1,25 +1,21 @@
-
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import {
-  User,
-  ArrowLeft,
-  Delete,
-
-
-} from "lucide-react";
+import { useState, useEffect } from "react";
+import { Delete } from "lucide-react";
 import type { UserForLogin } from "@/types/domain";
 
 interface PinEntryScreenProps {
-  user: UserForLogin;
+  user: UserForLogin | null;
   pin: string;
   loginError: string;
   isLoading: boolean;
   onPinInput: (digit: string) => void;
   onDeletePin: () => void;
-  onBack: () => void;
+  onUnlock: () => void;
 }
 
+/**
+ * Right-panel PIN entry for the light-themed auth shell.
+ * Shows terminal badge, passcode dots, numpad, and Unlock button.
+ */
 export function PinEntryScreen({
   user,
   pin,
@@ -27,98 +23,183 @@ export function PinEntryScreen({
   isLoading,
   onPinInput,
   onDeletePin,
-  onBack,
 }: PinEntryScreenProps) {
+  const [shaking, setShaking] = useState(false);
 
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2, "0");
+  const mo = String(now.getMonth() + 1).padStart(2, "0");
+  const yy = now.getFullYear();
 
+  const numpadDisabled = !user || isLoading;
+
+  useEffect(() => {
+    if (loginError) {
+      setShaking(true);
+      const timer = setTimeout(() => setShaking(false), 400);
+      return () => clearTimeout(timer);
+    }
+  }, [loginError]);
 
   return (
-    <Card className="border-0 shadow-none bg-transparent rounded-3xl overflow-hidden">
-      <div className="p-4 sm:p-6">
-        <div className="text-center mb-4 sm:mb-6">
-          <div
-            className={`w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 ${user.color} rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3`}
-          >
-            <User className="w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-white" />
-          </div>
-          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
-            {user.firstName} {user.lastName}
-          </h2>
+    <div className="flex-1 flex flex-col items-center justify-center gap-0">
+      {/* Terminal badge */}
+      <div
+        className="font-mono text-[10px] tracking-[0.18em] font-normal rounded-full px-4 py-1.5 mb-8"
+        style={{
+          color: "#64748b",
+          background: "#FFFFFF",
+          border: "1px solid rgba(0,0,0,0.1)",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+        }}
+      >
+        TERMINAL <span style={{ color: "#5BA4D9" }}>1</span>
+        &nbsp;&middot;&nbsp;
+        <span>
+          {dd}/{mo}/{yy}
+        </span>
+      </div>
+
+      {/* Passcode area */}
+      <div
+        className="w-full mb-7"
+        style={{
+          animation: shaking ? "shake 0.4s ease" : undefined,
+        }}
+      >
+        <div
+          className="text-[10px] font-semibold tracking-[0.2em] uppercase text-center mb-4"
+          style={{ color: "#64748b" }}
+        >
+          Enter Passcode
         </div>
 
-        
-
-        {/* PIN Input Display */}
-        <div className="bg-gray-100 rounded-xl p-3 sm:p-4 mb-3 sm:mb-4">
-          <div className="flex items-center justify-center gap-1 mb-2">
-            <User className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600" />
-            <span className="text-gray-600 text-caption uppercase tracking-wider font-medium">
-              Enter PIN
-            </span>
-          </div>
-          <div className="flex justify-center gap-1.5 sm:gap-2">
-            {[0, 1, 2, 3].map((i) => (
+        {/* Dots */}
+        <div className="flex justify-center gap-3.5">
+          {[0, 1, 2, 3].map((i) => {
+            const filled = i < pin.length;
+            return (
               <div
                 key={i}
-                className={`w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-lg border-2 flex items-center justify-center text-lg sm:text-xl font-bold transition-all ${
-                  pin.length > i
-                    ? "bg-blue-500 border-blue-500 text-white"
-                    : "bg-white border-gray-300 text-transparent"
-                }`}
-              >
-                {pin.length > i ? "●" : "○"}
-              </div>
-            ))}
-          </div>
-          {loginError && (
-            <p className="text-red-500 text-caption text-center mt-2">
-              {loginError}
-            </p>
-          )}
+                className="w-3.5 h-3.5 rounded-full transition-all duration-200"
+                style={{
+                  border: filled
+                    ? "2px solid #5BA4D9"
+                    : "2px solid rgba(0,0,0,0.2)",
+                  background: filled ? "#5BA4D9" : "transparent",
+                  boxShadow: filled ? "0 0 12px rgba(91,164,217,0.4)" : "none",
+                  transform: filled ? "scale(1.15)" : "scale(1)",
+                }}
+              />
+            );
+          })}
         </div>
 
-        {/* Number Pad */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-4">
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-            <Button
-              key={num}
-              onClick={() => onPinInput(num.toString())}
-              disabled={isLoading || pin.length >= 4}
-              className="h-12 sm:h-14 lg:h-16 text-lg sm:text-xl lg:text-2xl font-semibold bg-gray-200 hover:bg-gray-300 active:bg-blue-400 active:text-white text-gray-900 border-0 rounded-lg transition-colors duration-150 disabled:opacity-50 touch-manipulation"
-            >
-              {num}
-            </Button>
-          ))}
-          <Button
-            onClick={() => onPinInput("0")}
-            disabled={isLoading || pin.length >= 4}
-            className="h-12 sm:h-14 lg:h-16 text-lg sm:text-xl lg:text-2xl font-semibold bg-gray-200 hover:bg-gray-300 active:bg-blue-400 active:text-white text-gray-900 border-0 rounded-lg col-span-3 disabled:opacity-50 touch-manipulation transition-colors duration-150"
-          >
-            0
-          </Button>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-2 sm:gap-3">
-          <Button
-            onClick={onBack}
-            disabled={isLoading}
-            variant="outline"
-            className="h-11 sm:h-12 text-xs sm:text-sm font-medium bg-gray-200 hover:bg-gray-300 active:bg-gray-400 active:text-white text-gray-900 border-0 rounded-lg touch-manipulation transition-colors duration-150"
-          >
-            <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-            BACK
-          </Button>
-          <Button
-            onClick={onDeletePin}
-            disabled={isLoading || pin.length === 0}
-            className="h-11 sm:h-12 text-xs sm:text-sm font-medium bg-red-100 hover:bg-red-200 active:bg-red-400 active:text-white text-red-700 border-0 rounded-lg disabled:opacity-50 touch-manipulation transition-colors duration-150"
-          >
-            <Delete className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-            DELETE
-          </Button>
+        {/* Warning message */}
+        <div
+          className="text-[11px] text-center mt-2 tracking-wide min-h-[16px]"
+          style={{ color: "#dc2626" }}
+        >
+          {loginError || (!user ? "Please select an operator first." : "")}
         </div>
       </div>
-    </Card>
+
+      {/* Numpad */}
+      <div className="grid grid-cols-3 gap-2.5 w-[280px]">
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+          <NumpadKey
+            key={num}
+            value={num.toString()}
+            disabled={numpadDisabled || pin.length >= 4}
+            onClick={() => onPinInput(num.toString())}
+          />
+        ))}
+        {/* Bottom row: empty, 0, delete */}
+        <div className="aspect-square" />
+        <NumpadKey
+          value="0"
+          disabled={numpadDisabled || pin.length >= 4}
+          onClick={() => onPinInput("0")}
+        />
+        <button
+          onClick={onDeletePin}
+          disabled={numpadDisabled || pin.length === 0}
+          className="aspect-square flex items-center justify-center rounded-2xl text-sm cursor-pointer select-none relative overflow-hidden transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+          style={{
+            border: "1px solid rgba(220,38,38,0.2)",
+            background: "rgba(254,226,226,0.8)",
+            color: "#dc2626",
+          }}
+          onMouseEnter={(e) => {
+            if (!e.currentTarget.disabled) {
+              e.currentTarget.style.background = "rgba(254,202,202,0.9)";
+              e.currentTarget.style.borderColor = "rgba(220,38,38,0.35)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(254,226,226,0.8)";
+            e.currentTarget.style.borderColor = "rgba(220,38,38,0.2)";
+          }}
+        >
+          <Delete className="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ── Individual numpad key (light theme) ── */
+
+function NumpadKey({
+  value,
+  disabled,
+  onClick,
+}: {
+  value: string;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="aspect-square flex items-center justify-center rounded-2xl text-xl font-medium cursor-pointer select-none relative overflow-hidden transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+      style={{
+        border: "1px solid rgba(0,0,0,0.1)",
+        background: "#FFFFFF",
+        color: "#1e293b",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+      }}
+      onMouseEnter={(e) => {
+        if (!e.currentTarget.disabled) {
+          e.currentTarget.style.background = "rgba(91,164,217,0.08)";
+          e.currentTarget.style.borderColor = "rgba(91,164,217,0.35)";
+          e.currentTarget.style.transform = "scale(1.04)";
+          e.currentTarget.style.boxShadow = "0 2px 8px rgba(91,164,217,0.15)";
+        }
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = "#FFFFFF";
+        e.currentTarget.style.borderColor = "rgba(0,0,0,0.1)";
+        e.currentTarget.style.transform = "scale(1)";
+        e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.06)";
+      }}
+      onMouseDown={(e) => {
+        e.currentTarget.style.transform = "scale(0.95)";
+      }}
+      onMouseUp={(e) => {
+        e.currentTarget.style.transform = "scale(1.04)";
+      }}
+    >
+      {/* Sky blue glow overlay on hover */}
+      <div
+        className="absolute inset-0 rounded-2xl opacity-0 hover:opacity-100 transition-opacity duration-200 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle at 50% 0%, rgba(91,164,217,0.12), transparent 70%)",
+        }}
+      />
+      <span className="relative z-10">{value}</span>
+    </button>
   );
 }

@@ -66,9 +66,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(response.user);
         setSessionToken(response.token);
         if (response.user.requiresPinChange) {
-            setRequiresPinChange(true);
+          setRequiresPinChange(true);
         } else {
-            setRequiresPinChange(false);
+          setRequiresPinChange(false);
         }
 
         // Clear permission cache
@@ -102,111 +102,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       logger.error("Login error:", error);
       const errorMessage = "Login failed due to network error";
-      setError(errorMessage);
-      return { success: false, message: errorMessage };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  /**
-   * Register: Create new user account
-   */
-  const register = async (userData: {
-    email?: string;
-    username: string;
-    pin: string;
-    firstName: string;
-    lastName: string;
-    businessName: string;
-    role: "cashier" | "manager" | "admin";
-  }): Promise<{ success: boolean; message: string; errors?: string[] }> => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await window.authAPI.register(userData);
-
-      if (response.success && response.user && response.token) {
-        // Store token and user in SafeStorage
-        await window.authStore.set("token", response.token);
-        await window.authStore.set("user", JSON.stringify(response.user));
-
-        // Update React context state
-        setUser(response.user);
-
-        logger.info(
-          `[Register] User ${response.user.id} registered successfully`
-        );
-        return { success: true, message: response.message };
-      } else {
-        setError(response.message);
-        return {
-          success: false,
-          message: response.message,
-          errors: response.errors,
-        };
-      }
-    } catch (error) {
-      logger.error("Registration error:", error);
-      const errorMessage = "Registration failed due to network error";
-      setError(errorMessage);
-      return { success: false, message: errorMessage };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  /**
-   * Register Business: Create business owner account
-   */
-  const registerBusiness = async (userData: {
-    email?: string;
-    username: string;
-    pin: string;
-    firstName: string;
-    lastName: string;
-    businessName: string;
-    avatar?: string;
-    businessAvatar?: string;
-  }): Promise<{ success: boolean; message: string; errors?: string[] }> => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await window.authAPI.registerBusiness(userData);
-
-      if (response.success && response.user && response.token) {
-        // Store token and user in SafeStorage
-        await window.authStore.set("token", response.token);
-        await window.authStore.set("user", JSON.stringify(response.user));
-
-        // Store business info if provided
-        if (response.business) {
-          await window.authStore.set(
-            "business",
-            JSON.stringify(response.business)
-          );
-        }
-
-        // Update React context state
-        setUser(response.user);
-
-        logger.info(
-          `[RegisterBusiness] Business owner ${response.user.id} registered successfully`
-        );
-        return { success: true, message: response.message };
-      } else {
-        setError(response.message);
-        return {
-          success: false,
-          message: response.message,
-          errors: response.errors,
-        };
-      }
-    } catch (error) {
-      logger.error("Business registration error:", error);
-      const errorMessage = "Business registration failed due to network error";
       setError(errorMessage);
       return { success: false, message: errorMessage };
     } finally {
@@ -288,8 +183,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await Promise.all([
           window.authStore.delete("user"),
           window.authStore.delete("token"),
-          window.authStore.delete("salesMode"),
-          window.authStore.delete("requiresShift"),
           window.authStore.delete("clockEvent"),
           window.authStore.delete("activeShift"),
         ]);
@@ -309,6 +202,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Clear React context state
       setUser(null);
+      setSessionToken(null);
+      setRequiresPinChange(false);
       setIsLoading(false);
 
       logger.info("[Logout] User logged out successfully");
@@ -346,9 +241,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(response.user);
             setSessionToken(token); // Restore session token
             if (response.user.requiresPinChange) {
-                setRequiresPinChange(true);
+              setRequiresPinChange(true);
             } else {
-                setRequiresPinChange(false);
+              setRequiresPinChange(false);
             }
             logger.info(
               `[ValidateSession] Session validated for user ${response.user.id}`
@@ -473,24 +368,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     newPin: string
   ): Promise<{ success: boolean; message: string }> => {
     try {
-        if (!sessionToken) throw new Error("No session");
-        
-        const result = await window.authAPI.setNewPin(sessionToken, newPin);
-        
-        if (result.success) {
-            setRequiresPinChange(false);
-            
-            // Also update the stored user object locally as requiresPinChange is now false
-            if (user) {
-                const updatedUser = { ...user, requiresPinChange: false };
-                setUser(updatedUser);
-                await window.authStore.set("user", JSON.stringify(updatedUser));
-            }
+      if (!sessionToken) throw new Error("No session");
+
+      const result = await window.authAPI.setNewPin(sessionToken, newPin);
+
+      if (result.success) {
+        setRequiresPinChange(false);
+
+        // Also update the stored user object locally as requiresPinChange is now false
+        if (user) {
+          const updatedUser = { ...user, requiresPinChange: false };
+          setUser(updatedUser);
+          await window.authStore.set("user", JSON.stringify(updatedUser));
         }
-        return result;
+      }
+      return result;
     } catch (error) {
-        logger.error("Failed to complete forced PIN change", error);
-        return { success: false, message: "Failed to update PIN" };
+      logger.error("Failed to complete forced PIN change", error);
+      return { success: false, message: "Failed to update PIN" };
     }
   };
 
@@ -502,8 +397,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         requiresPinChange,
         completeForceChangePIN,
         login,
-        register,
-        registerBusiness,
         createUser,
         logout,
         clockIn,
