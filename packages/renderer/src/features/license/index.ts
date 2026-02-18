@@ -5,7 +5,7 @@
  */
 
 // Components
-export { LicenseActivationScreen } from "./components/license-activation-screen.js";
+export { LicenseActivationModal } from "./components/activation/license-activation-modal.js";
 export { LicenseStatusBadge } from "./components/license-status-badge.js";
 export { LicenseInfoModal } from "./components/license-info-modal.js";
 export { OfflineWarningBanner } from "./components/offline-warning-banner.js";
