@@ -1,6 +1,4 @@
 import { ipcRenderer } from "electron";
-import type { CartSession, CartItem } from "@app/main/src/database/schema.js";
-
 export const cartAPI = {
   // Cart Session Operations
   createSession: (sessionData: {
@@ -78,4 +76,3 @@ export const cartAPI = {
   clearCart: (sessionId: string) =>
     ipcRenderer.invoke("cart:clearCart", sessionId),
 };
-

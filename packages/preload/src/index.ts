@@ -1,6 +1,4 @@
-import { contextBridge, ipcRenderer } from "electron";
-import { sha256sum } from "./nodeCrypto.js";
-import { versions } from "./versions.js";
+import { contextBridge } from "electron";
 
 import { authAPI, authStore, timeTrackingAPI } from "./api/auth.js";
 import { productAPI } from "./api/products.js";
@@ -34,7 +32,6 @@ import { basketAPI } from "./api/basket.js";
 import { dashboardAPI } from "./api/dashboard.js";
 import { importAPI } from "./api/import.js";
 import { rbacAPI } from "./api/rbac.js";
-import { seedAPI } from "./api/seed.js";
 import { businessAPI } from "./api/business.js";
 import { terminalsAPI } from "./api/terminals.js";
 import { licenseAPI } from "./api/license.js";
@@ -78,7 +75,6 @@ contextBridge.exposeInMainWorld("basketAPI", basketAPI);
 contextBridge.exposeInMainWorld("dashboardAPI", dashboardAPI);
 contextBridge.exposeInMainWorld("importAPI", importAPI);
 contextBridge.exposeInMainWorld("rbacAPI", rbacAPI);
-contextBridge.exposeInMainWorld("seedAPI", seedAPI);
 contextBridge.exposeInMainWorld("businessAPI", businessAPI);
 contextBridge.exposeInMainWorld("terminalsAPI", terminalsAPI);
 contextBridge.exposeInMainWorld("licenseAPI", licenseAPI);
@@ -90,9 +86,3 @@ contextBridge.exposeInMainWorld(
   "systemNotificationsAPI",
   systemNotificationsAPI,
 );
-
-// Generic IPC send function for testing and general IPC communication
-export const send = (channel: string, ...args: any[]) =>
-  ipcRenderer.invoke(channel, ...args);
-
-export { sha256sum, versions };
