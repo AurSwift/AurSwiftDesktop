@@ -3,18 +3,14 @@
  * Includes error classification, retry logic, and error message mapping
  */
 
-import { getLogger } from "../../utils/logger.js";
 import {
   ErrorCode,
   ErrorSeverity,
   VivaWalletError,
-  Terminal,
 } from "./types.js";
 
 // Re-export ErrorCode for use in other modules
 export { ErrorCode } from "./types.js";
-
-const logger = getLogger("VivaWalletErrorHandler");
 
 // =============================================================================
 // ERROR CLASSES
@@ -43,7 +39,7 @@ export class NetworkError extends Error implements VivaWalletError {
     this.name = "NetworkError";
     this.code = code;
     this.severity = this.determineSeverity(code);
-    this.retryable = options?.retryable ?? this.isRetryable(code);
+    this.retryable = options?.retryable ?? this.isRetryable();
     this.terminalId = options?.terminalId;
     this.context = options?.context;
     this.originalError = options?.originalError;
@@ -61,7 +57,7 @@ export class NetworkError extends Error implements VivaWalletError {
     return severityMap[code] || ErrorSeverity.MEDIUM;
   }
 
-  private isRetryable(code: ErrorCode): boolean {
+  private isRetryable(): boolean {
     // Network errors are generally retryable
     return true;
   }

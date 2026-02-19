@@ -20,7 +20,7 @@ export function registerBookerImportHandlers() {
    */
   ipcMain.handle(
     "import:booker:selectFile",
-    async (event, fileType: "department" | "product") => {
+    async (_event, fileType: "department" | "product") => {
       try {
         const result = await dialog.showOpenDialog({
           title: `Select Booker ${
@@ -51,7 +51,9 @@ export function registerBookerImportHandlers() {
   /**
    * Parse CSV file and return preview data
    */
-  ipcMain.handle("import:booker:parseFile", async (event, filePath: string) => {
+  ipcMain.handle(
+    "import:booker:parseFile",
+    async (_event, filePath: string) => {
     try {
       const parseResult = await bookerImportService.parseFile(filePath);
 
@@ -79,9 +81,9 @@ export function registerBookerImportHandlers() {
    */
   ipcMain.handle(
     "import:booker:validate",
-    async (event, data: any[], businessId: string) => {
+    async (_event, data: any[], _businessId: string) => {
       try {
-        const validation = bookerImportService.validateData(data, businessId);
+        const validation = bookerImportService.validateData(data);
 
         return {
           success: validation.valid,

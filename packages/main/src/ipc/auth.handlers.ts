@@ -1,5 +1,5 @@
 import { ipcMain, safeStorage } from "electron";
-import { type DatabaseManagers, getDatabase } from "../database/index.js";
+import { getDatabase } from "../database/index.js";
 import { getLogger } from "../utils/logger.js";
 import type { User } from "../database/schema.js";
 import {
@@ -36,7 +36,7 @@ const ENCRYPTED_KEYS = ["token", "user", "refreshToken"];
 // Always use getDatabase() to get the current singleton instance.
 
 export function registerAuthHandlers() {
-  ipcMain.handle("auth:set", async (event, key: string, value: string) => {
+  ipcMain.handle("auth:set", async (_event, key: string, value: string) => {
     try {
       // Always get fresh database reference to avoid stale connection issues
       const db = await getDatabase();
@@ -83,7 +83,7 @@ export function registerAuthHandlers() {
     }
   });
 
-  ipcMain.handle("auth:get", async (event, key: string) => {
+  ipcMain.handle("auth:get", async (_event, key: string) => {
     try {
       const db = await getDatabase();
 
@@ -115,7 +115,7 @@ export function registerAuthHandlers() {
     }
   });
 
-  ipcMain.handle("auth:delete", async (event, key: string) => {
+  ipcMain.handle("auth:delete", async (_event, key: string) => {
     try {
       const db = await getDatabase();
 
@@ -130,7 +130,7 @@ export function registerAuthHandlers() {
     }
   });
 
-  ipcMain.handle("auth:login", async (event, credentials) => {
+  ipcMain.handle("auth:login", async (_event, credentials) => {
     try {
       const db = await getDatabase();
 
@@ -223,7 +223,7 @@ export function registerAuthHandlers() {
     }
   });
 
-  ipcMain.handle("auth:verifyPin", async (event, userId: string, pin: string) => {
+  ipcMain.handle("auth:verifyPin", async (_event, userId: string, pin: string) => {
     try {
       const db = await getDatabase();
 
@@ -242,7 +242,7 @@ export function registerAuthHandlers() {
     }
   });
 
-  ipcMain.handle("auth:validateSession", async (event, token) => {
+  ipcMain.handle("auth:validateSession", async (_event, token) => {
     try {
       const db = await getDatabase();
 
@@ -298,7 +298,7 @@ export function registerAuthHandlers() {
     }
   });
 
-  ipcMain.handle("auth:logout", async (event, token, options) => {
+  ipcMain.handle("auth:logout", async (_event, token, options) => {
     try {
       const db = await getDatabase();
 
@@ -338,7 +338,7 @@ export function registerAuthHandlers() {
 
   ipcMain.handle(
     "auth:getUserById",
-    async (event, sessionTokenOrUserId: string, userId?: string) => {
+    async (_event, sessionTokenOrUserId: string, userId?: string) => {
       try {
         const db = await getDatabase();
 
@@ -431,7 +431,7 @@ export function registerAuthHandlers() {
 
   ipcMain.handle(
     "auth:updateUser",
-    async (event, sessionToken, userId, updates) => {
+    async (_event, sessionToken, userId, updates) => {
       try {
         const db = await getDatabase();
 
@@ -492,7 +492,7 @@ export function registerAuthHandlers() {
     }
   );
 
-  ipcMain.handle("auth:deleteUser", async (event, sessionToken, userId) => {
+  ipcMain.handle("auth:deleteUser", async (_event, sessionToken, userId) => {
     try {
       const db = await getDatabase();
 
@@ -556,7 +556,7 @@ export function registerAuthHandlers() {
 
   ipcMain.handle(
     "auth:getUsersByBusiness",
-    async (event, sessionToken, businessId) => {
+    async (_event, sessionToken, businessId) => {
       try {
         const db = await getDatabase();
 
@@ -592,7 +592,7 @@ export function registerAuthHandlers() {
     }
   );
 
-  ipcMain.handle("auth:createUser", async (event, sessionToken, userData) => {
+  ipcMain.handle("auth:createUser", async (_event, sessionToken, userData) => {
     try {
       const db = await getDatabase();
 
@@ -643,7 +643,7 @@ export function registerAuthHandlers() {
 
   ipcMain.handle(
     "auth:getAllActiveUsers",
-    async (event, sessionToken?: string) => {
+    async (_event, sessionToken?: string) => {
       try {
         const db = await getDatabase();
 
@@ -717,7 +717,7 @@ export function registerAuthHandlers() {
   // Business Management IPC handlers
   ipcMain.handle(
     "auth:getBusinessById",
-    async (event, sessionToken, businessId) => {
+    async (_event, sessionToken, businessId) => {
       try {
         const db = await getDatabase();
 
@@ -776,7 +776,7 @@ export function registerAuthHandlers() {
    */
   ipcMain.handle(
     "auth:change-pin",
-    async (event, sessionToken: string, currentPin: string, newPin: string) => {
+    async (_event, sessionToken: string, currentPin: string, newPin: string) => {
       try {
         const db = await getDatabase();
 
@@ -816,7 +816,7 @@ export function registerAuthHandlers() {
    */
   ipcMain.handle(
     "auth:reset-pin",
-    async (event, sessionToken: string, userId: string) => {
+    async (_event, sessionToken: string, userId: string) => {
       try {
         const db = await getDatabase();
 
@@ -877,7 +877,7 @@ export function registerAuthHandlers() {
    */
   ipcMain.handle(
     "auth:set-new-pin",
-    async (event, sessionToken: string, newPin: string) => {
+    async (_event, sessionToken: string, newPin: string) => {
       try {
         const db = await getDatabase();
 

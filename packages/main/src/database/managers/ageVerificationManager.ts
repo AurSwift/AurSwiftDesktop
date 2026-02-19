@@ -1,6 +1,5 @@
 import type {
   AgeVerificationRecord,
-  NewAgeVerificationRecord,
 } from "../schema.js";
 import type { DrizzleDB } from "../drizzle.js";
 import { eq, and, desc, gte, lte } from "drizzle-orm";
@@ -234,4 +233,3 @@ export class AgeVerificationManager {
     return records as AgeVerificationRecord[];
   }
 }
-

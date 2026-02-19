@@ -27,8 +27,7 @@ export function registerBasketHandlers() {
    */
   ipcMain.handle(
     "basket:save",
-    async (
-      event,
+    async (_event,
       data: {
         cartSessionId: string;
         basketName: string;
@@ -78,7 +77,7 @@ export function registerBasketHandlers() {
   /**
    * Get saved basket by basket code (for QR code lookup)
    */
-  ipcMain.handle("basket:getByCode", async (event, basketCode: string) => {
+  ipcMain.handle("basket:getByCode", async (_event, basketCode: string) => {
     try {
       const db = await getDatabase();
       const basket = await db.savedBaskets.getBasketByCode(basketCode);
@@ -116,8 +115,7 @@ export function registerBasketHandlers() {
    */
   ipcMain.handle(
     "basket:retrieve",
-    async (
-      event,
+    async (_event,
       data: {
         basketId: string;
         newCartSessionId: string;
@@ -160,7 +158,7 @@ export function registerBasketHandlers() {
   /**
    * Get saved basket by ID with items
    */
-  ipcMain.handle("basket:getById", async (event, basketId: string) => {
+  ipcMain.handle("basket:getById", async (_event, basketId: string) => {
     try {
       const db = await getDatabase();
       const basketWithItems = await db.savedBaskets.getBasketWithItems(
@@ -186,8 +184,7 @@ export function registerBasketHandlers() {
    */
   ipcMain.handle(
     "basket:getAll",
-    async (
-      event,
+    async (_event,
       data: {
         businessId: string;
         savedBy?: string;
@@ -227,8 +224,7 @@ export function registerBasketHandlers() {
    */
   ipcMain.handle(
     "basket:update",
-    async (
-      event,
+    async (_event,
       data: {
         basketId: string;
         updates: {
@@ -264,7 +260,7 @@ export function registerBasketHandlers() {
   /**
    * Delete saved basket
    */
-  ipcMain.handle("basket:delete", async (event, basketId: string) => {
+  ipcMain.handle("basket:delete", async (_event, basketId: string) => {
     try {
       const db = await getDatabase();
       await db.savedBaskets.deleteBasket(basketId);
@@ -287,8 +283,7 @@ export function registerBasketHandlers() {
    */
   ipcMain.handle(
     "basket:sendEmail",
-    async (
-      event,
+    async (_event,
       data: {
         basketId: string;
         customerEmail: string;
@@ -386,7 +381,7 @@ export function registerBasketHandlers() {
   /**
    * Generate receipt HTML for saved basket
    */
-  ipcMain.handle("basket:generateReceipt", async (event, basketId: string) => {
+  ipcMain.handle("basket:generateReceipt", async (_event, basketId: string) => {
     try {
       const db = await getDatabase();
       const basketWithItems = await db.savedBaskets.getBasketWithItems(

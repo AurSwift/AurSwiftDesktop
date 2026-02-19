@@ -129,7 +129,7 @@ export class BatchManager {
   /**
    * Generate batch number if not provided
    */
-  private generateBatchNumber(productId: string, expiryDate: Date): string {
+  private generateBatchNumber(expiryDate: Date): string {
     const dateStr = expiryDate.toISOString().split("T")[0].replace(/-/g, "");
     const random = Math.random().toString(36).substring(2, 6).toUpperCase();
     return `BATCH-${dateStr}-${random}`;
@@ -158,8 +158,7 @@ export class BatchManager {
 
     // Generate batch number if not provided
     const batchNumber =
-      batchData.batchNumber ||
-      this.generateBatchNumber(batchData.productId, batchData.expiryDate);
+      batchData.batchNumber || this.generateBatchNumber(batchData.expiryDate);
 
     // Check for duplicate batch number (per product and business)
     const existingBatch = this.db
@@ -714,7 +713,7 @@ export class BatchManager {
    * Delete/Remove batch
    */
   async removeBatch(batchId: string): Promise<boolean> {
-    const batch = await this.getBatchById(batchId);
+    await this.getBatchById(batchId);
 
     // Mark as removed instead of deleting (for audit trail)
     await this.updateBatchStatus(batchId, "REMOVED");

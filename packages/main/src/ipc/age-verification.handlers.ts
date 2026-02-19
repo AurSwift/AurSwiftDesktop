@@ -7,7 +7,7 @@ const logger = getLogger("ageVerificationHandlers");
 
 export function registerAgeVerificationHandlers() {
   // Age Verification IPC handlers
-  ipcMain.handle("ageVerification:create", async (event, verificationData) => {
+  ipcMain.handle("ageVerification:create", async (_event, verificationData) => {
     try {
       logger.info("Creating age verification record", {
         data: verificationData,
@@ -37,7 +37,7 @@ export function registerAgeVerificationHandlers() {
 
   ipcMain.handle(
     "ageVerification:getByTransaction",
-    async (event, transactionId) => {
+    async (_event, transactionId) => {
       try {
         const db = await getDatabase();
         const records =
@@ -61,7 +61,7 @@ export function registerAgeVerificationHandlers() {
 
   ipcMain.handle(
     "ageVerification:getByTransactionItem",
-    async (event, transactionItemId) => {
+    async (_event, transactionItemId) => {
       try {
         const db = await getDatabase();
         const records =
@@ -88,7 +88,7 @@ export function registerAgeVerificationHandlers() {
 
   ipcMain.handle(
     "ageVerification:getByBusiness",
-    async (event, businessId, options) => {
+    async (_event, businessId, options) => {
       try {
         const db = await getDatabase();
         const records = await db.ageVerification.getAgeVerificationsByBusiness(
@@ -110,7 +110,7 @@ export function registerAgeVerificationHandlers() {
     },
   );
 
-  ipcMain.handle("ageVerification:getByProduct", async (event, productId) => {
+  ipcMain.handle("ageVerification:getByProduct", async (_event, productId) => {
     try {
       const db = await getDatabase();
       const records =
@@ -131,7 +131,7 @@ export function registerAgeVerificationHandlers() {
 
   ipcMain.handle(
     "ageVerification:getByStaff",
-    async (event, staffId, options) => {
+    async (_event, staffId, options) => {
       try {
         const db = await getDatabase();
         const records = await db.ageVerification.getAgeVerificationsByStaff(

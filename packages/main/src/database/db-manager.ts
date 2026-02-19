@@ -26,7 +26,6 @@ import { getLogger } from "../utils/logger.js";
 const logger = getLogger("db-manager");
 // Layer 4: User dialogs
 import {
-  showRecoveryDialog,
   showDatabaseTooOldDialog,
   showCorruptedDatabaseDialog,
   showMigrationFailureDialog,
@@ -36,7 +35,6 @@ import {
 } from "./utils/db-recovery-dialog.js";
 // Path migration utility
 import {
-  hasOldDatabasePath,
   shouldMigrateDatabasePath,
   migrateDatabaseFromOldPath,
   getOldDatabasePath,
@@ -338,7 +336,7 @@ export class DBManager {
         // Note: We open the connection first to read version info from the database
         // This is acceptable as the downgrade check is quick and the connection
         // will be closed immediately if a downgrade is detected
-        const isDowngradeAttempt = this.checkForDowngrade(this.db, dbPath);
+        const isDowngradeAttempt = this.checkForDowngrade(this.db);
         if (isDowngradeAttempt) {
           logger.error(
             "❌ Database downgrade detected - app version is older than database schema"
@@ -499,7 +497,7 @@ export class DBManager {
    * Check if user is trying to open a newer database with an older app version
    * This prevents crashes from schema mismatches during downgrades
    */
-  private checkForDowngrade(db: Database.Database, dbPath: string): boolean {
+  private checkForDowngrade(db: Database.Database): boolean {
     try {
       // Get app version from package.json (not from Electron which returns wrong version)
       const appVersion = this.getAppVersion();
@@ -788,8 +786,7 @@ export class DBManager {
    */
   private async handleCreateFreshDatabase(dbPath: string): Promise<void> {
     logger.info("🔄 Creating fresh database...");
-    const migrationsFolder = this.getMigrationsFolder();
-    await createFreshDatabase(dbPath, migrationsFolder);
+    await createFreshDatabase(dbPath);
     logger.info("✅ Fresh database prepared");
   }
 

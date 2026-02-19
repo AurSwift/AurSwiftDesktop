@@ -75,9 +75,7 @@ export function resetDrizzle(): void {
  * @param drizzleDb - Drizzle database instance (not used, kept for API compatibility)
  * @returns Raw better-sqlite3 database instance
  */
-export function getRawDatabase(
-  drizzleDb: BetterSQLite3Database<typeof schema>
-): Database.Database {
+export function getRawDatabase(): Database.Database {
   // Return the stored raw database instance
   if (rawDatabaseInstance) {
     return rawDatabaseInstance;

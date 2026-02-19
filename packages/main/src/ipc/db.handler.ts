@@ -1,7 +1,6 @@
 // Database IPC Handlers
 import { ipcMain, dialog, BrowserWindow, app as electronApp } from "electron";
 import fs from "fs/promises";
-import path from "path";
 import Database from "better-sqlite3";
 import { getDatabase, closeDatabase } from "../database/index.js";
 import { getLogger } from "../utils/logger.js";
@@ -345,7 +344,7 @@ export function registerDbHandlers() {
   });
 
   // Database Backup IPC Handler - Save database to user-selected location
-  ipcMain.handle("database:backup", async (event) => {
+  ipcMain.handle("database:backup", async (_event) => {
     try {
       const db = await getDatabase();
       const info = db.getDatabaseInfo();
@@ -411,7 +410,7 @@ export function registerDbHandlers() {
   });
 
   // Database Empty IPC Handler - Delete all data from all tables (keep structure)
-  ipcMain.handle("database:empty", async (event) => {
+  ipcMain.handle("database:empty", async (_event) => {
     try {
       const db = await getDatabase();
       const info = db.getDatabaseInfo();
@@ -988,7 +987,7 @@ export function registerDbHandlers() {
   ipcMain.handle(
     "database:cleanup-backups",
     async (
-      event,
+      _event,
       options?: {
         customPolicy?: Record<string, number>;
         dryRun?: boolean;

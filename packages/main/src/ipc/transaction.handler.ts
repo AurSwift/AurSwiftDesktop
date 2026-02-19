@@ -74,7 +74,7 @@ export function registerTransactionHandlers() {
   // Transaction API endpoints
   ipcMain.handle(
     "transactions:create",
-    async (event, sessionToken, transactionData) => {
+    async (_event, sessionToken, transactionData) => {
       try {
         const db = await getDatabase();
 
@@ -147,7 +147,7 @@ export function registerTransactionHandlers() {
     }
   );
 
-  ipcMain.handle("transactions:getByShift", async (event, shiftId) => {
+  ipcMain.handle("transactions:getByShift", async (_event, shiftId) => {
     try {
       const db = await getDatabase();
       const transactions = await db.transactions.getTransactionsByShift(
@@ -172,7 +172,7 @@ export function registerTransactionHandlers() {
 
   ipcMain.handle(
     "transactions:createFromCart",
-    async (event, sessionToken, data) => {
+    async (_event, sessionToken, data) => {
       try {
         logger.info("Creating transaction from cart:", {
           cartSessionId: data.cartSessionId,
@@ -690,7 +690,7 @@ export function registerTransactionHandlers() {
   // Shift reconciliation endpoints for auto-ended shifts
   ipcMain.handle(
     "shift:reconcile",
-    async (event, shiftId, reconciliationData) => {
+    async (_event, shiftId, reconciliationData) => {
       try {
         const db = await getDatabase();
 
@@ -719,7 +719,7 @@ export function registerTransactionHandlers() {
 
   ipcMain.handle(
     "shift:getPendingReconciliation",
-    async (event, businessId) => {
+    async (_event, businessId) => {
       try {
         const db = await getDatabase();
         const pendingShifts =
@@ -743,7 +743,7 @@ export function registerTransactionHandlers() {
   );
 
   // Refund Transaction API endpoints
-  ipcMain.handle("refunds:getTransactionById", async (event, transactionId) => {
+  ipcMain.handle("refunds:getTransactionById", async (_event, transactionId) => {
     try {
       const db = await getDatabase();
       const transaction = await db.transactions.getTransactionById(
@@ -771,7 +771,7 @@ export function registerTransactionHandlers() {
 
   ipcMain.handle(
     "refunds:getTransactionByReceipt",
-    async (event, receiptNumber) => {
+    async (_event, receiptNumber) => {
       try {
         const db = await getDatabase();
         const transaction = await db.transactions.getTransactionByReceiptNumber(
@@ -800,7 +800,7 @@ export function registerTransactionHandlers() {
 
   ipcMain.handle(
     "refunds:getRecentTransactions",
-    async (event, businessId, limit = 50) => {
+    async (_event, businessId, limit = 50) => {
       try {
         const db = await getDatabase();
         const transactions = await db.transactions.getRecentTransactions(
@@ -827,7 +827,7 @@ export function registerTransactionHandlers() {
 
   ipcMain.handle(
     "refunds:getTransactionsByDateRange",
-    async (event, businessId, startDateIso, endDateIso, limit = 1000) => {
+    async (_event, businessId, startDateIso, endDateIso, limit = 1000) => {
       try {
         const db = await getDatabase();
         const startDate = new Date(startDateIso);
@@ -858,7 +858,7 @@ export function registerTransactionHandlers() {
 
   ipcMain.handle(
     "refunds:getShiftTransactions",
-    async (event, shiftId, limit = 50) => {
+    async (_event, shiftId, limit = 50) => {
       try {
         const db = await getDatabase();
         const transactions = await db.transactions.getShiftTransactions(
@@ -885,7 +885,7 @@ export function registerTransactionHandlers() {
 
   ipcMain.handle(
     "refunds:validateEligibility",
-    async (event, transactionId, refundItems) => {
+    async (_event, transactionId, refundItems) => {
       try {
         const db = await getDatabase();
         const validation = db.transactions.validateRefundEligibility(
@@ -907,7 +907,7 @@ export function registerTransactionHandlers() {
     }
   );
 
-  ipcMain.handle("refunds:create", async (event, sessionToken, refundData) => {
+  ipcMain.handle("refunds:create", async (_event, sessionToken, refundData) => {
     try {
       const db = await getDatabase();
 
@@ -1081,8 +1081,7 @@ export function registerTransactionHandlers() {
    */
   ipcMain.handle(
     "transactions:sendReceipt",
-    async (
-      event,
+    async (_event,
       data: {
         transactionId: string;
         customerEmail: string;

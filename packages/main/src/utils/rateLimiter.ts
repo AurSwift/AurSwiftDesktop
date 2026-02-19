@@ -84,7 +84,7 @@ export function checkRateLimit(
   lockedUntil?: number;
   message?: string;
 } {
-  const key = getRateLimitKey(identifier, type);
+  const key = getRateLimitKey(identifier, type, terminalId);
   const now = Date.now();
   
   let entry = rateLimitStore.get(key);
@@ -202,4 +202,3 @@ export function getRateLimitStats() {
     })),
   };
 }
-

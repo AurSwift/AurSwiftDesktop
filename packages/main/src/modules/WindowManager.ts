@@ -9,12 +9,7 @@ import {
   dialog,
 } from "electron";
 import type { AppInitConfig } from "../AppInitConfig.js";
-import type { UpdateCheckResult } from "electron-updater";
-import electronUpdater from "electron-updater";
-import { getAutoUpdaterInstance } from "../index.js";
 import { GITHUB_REPO_URL, GITHUB_RELEASES_URL } from "@app/shared";
-
-const { autoUpdater } = electronUpdater;
 import { join } from "node:path";
 
 import { getLogger } from "../utils/logger.js";

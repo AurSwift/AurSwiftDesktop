@@ -31,7 +31,6 @@ export class VivaWalletService {
   private terminalDiscovery: TerminalDiscovery;
   private transactionManager: TransactionManager;
   private connectedTerminal: Terminal | null = null;
-  private isInitialized = false;
 
   constructor() {
     this.configManager = new VivaWalletConfigManager();
@@ -92,7 +91,7 @@ export class VivaWalletService {
     // Connect Terminal
     ipcMain.handle(
       "viva:connect-terminal",
-      async (event, terminalId: string) => {
+      async (_event, terminalId: string) => {
         try {
           const config = await this.configManager.loadConfig();
           const terminal = config.terminals.find((t) => t.id === terminalId);
@@ -222,7 +221,7 @@ export class VivaWalletService {
     // Initiate Sale
     ipcMain.handle(
       "viva:initiate-sale",
-      async (event, amount: number, currency: string) => {
+      async (_event, amount: number, currency: string) => {
         try {
           if (!this.connectedTerminal) {
             return {
@@ -267,7 +266,7 @@ export class VivaWalletService {
     // Get Transaction Status
     ipcMain.handle(
       "viva:transaction-status",
-      async (event, transactionId: string) => {
+      async (_event, transactionId: string) => {
         try {
           if (!this.connectedTerminal) {
             return {
@@ -315,7 +314,12 @@ export class VivaWalletService {
     // Initiate Refund
     ipcMain.handle(
       "viva:initiate-refund",
-      async (event, originalTransactionId: string, amount: number, currency: string) => {
+      async (
+        _event,
+        originalTransactionId: string,
+        amount: number,
+        currency: string
+      ) => {
         try {
           if (!this.connectedTerminal) {
             return {
@@ -358,7 +362,7 @@ export class VivaWalletService {
     // Cancel Transaction
     ipcMain.handle(
       "viva:cancel-transaction",
-      async (event, transactionId: string) => {
+      async (_event, transactionId: string) => {
         try {
           if (!this.connectedTerminal) {
             return {
@@ -429,7 +433,7 @@ export class VivaWalletService {
     // Save Configuration
     ipcMain.handle(
       "viva:save-config",
-      async (event, config: VivaWalletConfig) => {
+      async (_event, config: VivaWalletConfig) => {
         try {
           await this.configManager.saveConfig(config);
           return { success: true };
@@ -447,7 +451,7 @@ export class VivaWalletService {
     // Test Connection
     ipcMain.handle(
       "viva:test-connection",
-      async (event, terminalId: string) => {
+      async (_event, terminalId: string) => {
         try {
           const config = await this.configManager.loadConfig();
           const terminal = config.terminals.find((t) => t.id === terminalId);

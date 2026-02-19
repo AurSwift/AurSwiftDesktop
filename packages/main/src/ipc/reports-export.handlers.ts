@@ -24,7 +24,7 @@ export function registerReportsExportHandlers() {
    */
   ipcMain.handle(
     "reports:showSaveDialog",
-    async (event, options: {
+    async (_event, options: {
       title?: string;
       defaultPath?: string;
       filters?: Array<{ name: string; extensions: string[] }>;
@@ -58,8 +58,7 @@ export function registerReportsExportHandlers() {
    */
   ipcMain.handle(
     "reports:exportCSV",
-    async (
-      event,
+    async (_event,
       sessionToken: string,
       exportData: ExportData,
       options?: CSVExportOptions
@@ -124,8 +123,7 @@ export function registerReportsExportHandlers() {
    */
   ipcMain.handle(
     "reports:exportPDF",
-    async (
-      event,
+    async (_event,
       sessionToken: string,
       exportData: ExportData,
       options?: PDFExportOptions

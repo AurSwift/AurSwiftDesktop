@@ -43,7 +43,7 @@ export class ScheduleValidator {
 
     try {
       // 1. Get today's schedule
-      const schedule = await this.getTodaySchedule(userId, businessId, db);
+      const schedule = await this.getTodaySchedule(userId, db);
 
       if (!schedule) {
         logger.warn(
@@ -217,7 +217,6 @@ export class ScheduleValidator {
    */
   private async getTodaySchedule(
     userId: string,
-    businessId: string,
     db: DatabaseManagers,
   ): Promise<Schedule | null> {
     const now = new Date();

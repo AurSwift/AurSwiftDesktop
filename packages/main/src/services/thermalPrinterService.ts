@@ -215,7 +215,7 @@ export class ThermalPrinterService {
     // Initialize printer
     ipcMain.handle(
       "printer:initialize",
-      async (event, config: PrinterConfig) => {
+      async (_event, config: PrinterConfig) => {
         return await this.initializePrinter(config);
       },
     );
@@ -223,7 +223,7 @@ export class ThermalPrinterService {
     // Print receipt
     ipcMain.handle(
       "printer:print",
-      async (event, printData: Buffer, jobId: string) => {
+      async (_event, printData: Buffer, jobId: string) => {
         return await this.enqueuePrint(printData, jobId, 15000);
       },
     );
@@ -799,43 +799,6 @@ export class ThermalPrinterService {
     if (t.length >= width) return t.slice(0, width);
     const pad = Math.floor((width - t.length) / 2);
     return this.repeat(" ", pad) + t;
-  }
-
-  private wrapText(text: string, width: number): string[] {
-    const t = (text || "").trim();
-    if (!t) return [""];
-    const words = t.split(/\s+/);
-    const lines: string[] = [];
-    let line = "";
-    for (const w of words) {
-      const candidate = line ? `${line} ${w}` : w;
-      if (candidate.length <= width) {
-        line = candidate;
-        continue;
-      }
-      if (line) lines.push(line);
-      if (w.length > width) {
-        lines.push(w.slice(0, width));
-        line = w.slice(width);
-      } else {
-        line = w;
-      }
-    }
-    if (line) lines.push(line);
-    return lines;
-  }
-
-  private formatLine(left: string, right: string, width: number): string {
-    const l = left ?? "";
-    const r = right ?? "";
-    const space = Math.max(1, width - l.length - r.length);
-    if (l.length + r.length >= width) {
-      return `${l.slice(0, Math.max(0, width - r.length - 1))} ${r}`.slice(
-        0,
-        width,
-      );
-    }
-    return `${l}${this.repeat(" ", space)}${r}`;
   }
 
   private async buildReceiptLatin1(transactionData: any): Promise<string> {

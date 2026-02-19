@@ -8,7 +8,7 @@ const logger = getLogger("categoryHandlers");
 
 export function registerCategoryHandlers() {
   // Category Management IPC handlers
-  ipcMain.handle("categories:create", async (event, categoryData) => {
+  ipcMain.handle("categories:create", async (_event, categoryData) => {
     try {
       const db = await getDatabase();
       return await db.categories.createCategoryWithResponse(categoryData);
@@ -21,7 +21,7 @@ export function registerCategoryHandlers() {
     }
   });
 
-  ipcMain.handle("categories:getByBusiness", async (event, businessId) => {
+  ipcMain.handle("categories:getByBusiness", async (_event, businessId) => {
     try {
       const db = await getDatabase();
       return await db.categories.getCategoriesByBusinessWithResponse(
@@ -37,7 +37,7 @@ export function registerCategoryHandlers() {
   });
 
   // Get category stats (optimized for dashboards)
-  ipcMain.handle("categories:getStats", async (event, businessId) => {
+  ipcMain.handle("categories:getStats", async (_event, businessId) => {
     try {
       const db = await getDatabase();
       const stats = await db.categories.getCategoryStats(businessId);
@@ -54,7 +54,7 @@ export function registerCategoryHandlers() {
     }
   });
 
-  ipcMain.handle("categories:getById", async (event, id) => {
+  ipcMain.handle("categories:getById", async (_event, id) => {
     try {
       const db = await getDatabase();
       return await db.categories.getCategoryByIdWithResponse(id);
@@ -67,7 +67,7 @@ export function registerCategoryHandlers() {
     }
   });
 
-  ipcMain.handle("categories:update", async (event, id, updates) => {
+  ipcMain.handle("categories:update", async (_event, id, updates) => {
     try {
       const db = await getDatabase();
       return await db.categories.updateCategoryWithResponse(id, updates);
@@ -80,7 +80,7 @@ export function registerCategoryHandlers() {
     }
   });
 
-  ipcMain.handle("categories:delete", async (event, id) => {
+  ipcMain.handle("categories:delete", async (_event, id) => {
     try {
       const db = await getDatabase();
       return await db.categories.deleteCategoryWithResponse(id);
@@ -95,7 +95,7 @@ export function registerCategoryHandlers() {
 
   ipcMain.handle(
     "categories:reorder",
-    async (event, businessId, categoryIds) => {
+    async (_event, businessId, categoryIds) => {
       try {
         const db = await getDatabase();
         return await db.categories.reorderCategoriesWithResponse(
@@ -115,7 +115,7 @@ export function registerCategoryHandlers() {
   // Get category children with pagination (for lazy loading large category trees)
   ipcMain.handle(
     "categories:getChildren",
-    async (event, businessId, parentId, pagination) => {
+    async (_event, businessId, parentId, pagination) => {
       try {
         const db = await getDatabase();
         const result = await db.categories.getCategoryChildren(

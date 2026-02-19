@@ -623,7 +623,7 @@ export async function logAction(
       action,
       entityType: "user",
       entityId: resourceId || user.id,
-      details: details || {},
+      details: { ...(details || {}), resource },
     });
   } catch (error) {
     logger.error("Failed to log action:", error);

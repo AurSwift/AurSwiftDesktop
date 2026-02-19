@@ -211,8 +211,7 @@ export function quickRepair(db: Database.Database): boolean {
  * @returns Path to new database file
  */
 export async function createFreshDatabase(
-  oldDbPath: string,
-  migrationsFolder: string
+  oldDbPath: string
 ): Promise<string> {
   // Backup old database
   const dbDir = path.dirname(oldDbPath);

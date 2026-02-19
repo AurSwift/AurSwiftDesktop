@@ -4,7 +4,6 @@
  */
 
 import { getLogger } from "../../utils/logger.js";
-import { VivaWalletHTTPClient } from "./http-client.js";
 import type { Terminal, TerminalStatusResponse } from "./types.js";
 
 const logger = getLogger("NetworkScanner");
@@ -201,8 +200,6 @@ export class NetworkScanner {
    * Examples: "192.168.1.0/24", "192.168.1.1-192.168.1.254"
    */
   private parseIPRange(ipRange: string): string[] {
-    const ips: string[] = [];
-
     // Check if it's CIDR notation
     if (ipRange.includes("/")) {
       return this.parseCIDR(ipRange);

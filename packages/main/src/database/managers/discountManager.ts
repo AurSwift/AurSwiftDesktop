@@ -1,5 +1,5 @@
 import type { DrizzleDB } from "../drizzle.js";
-import { eq, and, desc, lte, gte, lt, sql as drizzleSql } from "drizzle-orm";
+import { eq, and, desc, sql as drizzleSql } from "drizzle-orm";
 import * as schema from "../schema.js";
 import { Discount } from "../schema.js";
 

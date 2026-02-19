@@ -14,7 +14,7 @@ export function registerDashboardHandlers() {
    */
   ipcMain.handle(
     "dashboard:getStatistics",
-    async (event, sessionToken, businessId) => {
+    async (_event, sessionToken, businessId) => {
       try {
         const db = await getDatabase();
 

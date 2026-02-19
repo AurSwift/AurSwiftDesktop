@@ -64,7 +64,6 @@ export function getCorrectLogPath(): string {
   // On Windows, ensure logs go to LOCALAPPDATA instead of Roaming
   if (process.platform === "win32") {
     const logsPath = app.getPath("logs");
-    const appDataPath = app.getPath("appData"); // This is APPDATA (Roaming)
     const localAppDataPath = app.getPath("appData").replace("Roaming", "Local");
 
     // If logs path is in Roaming, redirect to Local

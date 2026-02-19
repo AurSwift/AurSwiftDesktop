@@ -10,8 +10,6 @@
 import { ipcMain } from "electron";
 import { createRequire } from "module";
 import { getLogger } from "../utils/logger.js";
-import * as path from "path";
-import { app } from "electron";
 import { getDatabase } from "../database/index.js";
 
 const require = createRequire(import.meta.url);
@@ -177,7 +175,7 @@ export class OfficePrinterService {
     // Print document
     ipcMain.handle(
       "office-printer:print",
-      async (event, config: PrintJobConfig) => {
+      async (_event, config: PrintJobConfig) => {
         return await this.printDocument(config);
       }
     );
@@ -185,25 +183,25 @@ export class OfficePrinterService {
     // Get job status
     ipcMain.handle(
       "office-printer:job-status",
-      async (event, jobId: string) => {
+      async (_event, jobId: string) => {
         return await this.getJobStatus(jobId);
       }
     );
 
     // Cancel print job
-    ipcMain.handle("office-printer:cancel", async (event, jobId: string) => {
+    ipcMain.handle("office-printer:cancel", async (_event, jobId: string) => {
       return await this.cancelPrintJob(jobId);
     });
 
     // Retry failed job
-    ipcMain.handle("office-printer:retry", async (event, jobId: string) => {
+    ipcMain.handle("office-printer:retry", async (_event, jobId: string) => {
       return await this.retryPrintJob(jobId);
     });
 
     // Get printer health
     ipcMain.handle(
       "office-printer:health",
-      async (event, printerName: string) => {
+      async (_event, printerName: string) => {
         return await this.getPrinterHealth(printerName);
       }
     );
@@ -324,8 +322,6 @@ export class OfficePrinterService {
     jobId: string;
     error?: string;
   }> {
-    const startTime = Date.now();
-
     try {
       // Validate configuration
       const validation = this.validatePrintConfig(config);
@@ -469,7 +465,6 @@ export class OfficePrinterService {
       if (attempt < this.MAX_RETRIES) {
         this.metrics.retriedJobs++;
         const retryDelay = this.RETRY_DELAYS[attempt] || 30000;
-        const nextRetryAt = new Date(Date.now() + retryDelay);
 
         await this.updateJobStatus(config.jobId, "retrying", {
           error: errorMessage,
@@ -530,17 +525,6 @@ export class OfficePrinterService {
 
     await this.pdfToPrinter.print(config.documentPath, options);
     return true;
-  }
-
-  /**
-   * Print using node-printer library
-   */
-  private async printWithNodePrinter(config: PrintJobConfig): Promise<boolean> {
-    // Node-printer package removed due to dependency conflicts
-    // Only PDF printing via pdf-to-printer is supported
-    throw new Error(
-      "Only PDF printing is supported. Please convert document to PDF first."
-    );
   }
 
   // ===========================================================================
@@ -975,30 +959,6 @@ export class OfficePrinterService {
       return { valid: false, error: "Document path or data required" };
     }
     return { valid: true };
-  }
-
-  /**
-   * Parse printer status from system printer object
-   */
-  private parsePrinterStatus(printer: any): string {
-    // Simplified status parsing since we're using pdf-to-printer
-    return "idle";
-  }
-
-  /**
-   * Map document type to node-printer type
-   */
-  private mapDocumentType(docType: string): string {
-    // No longer needed with pdf-to-printer only
-    return "PDF";
-  }
-
-  /**
-   * Build printer options object
-   */
-  private buildPrinterOptions(options?: PrintOptions): Record<string, any> {
-    // No longer needed with pdf-to-printer only
-    return {};
   }
 
   /**

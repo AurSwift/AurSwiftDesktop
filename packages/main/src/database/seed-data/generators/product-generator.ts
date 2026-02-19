@@ -7,9 +7,6 @@ import { v4 as uuidv4 } from "uuid";
 import type { InferInsertModel } from "drizzle-orm";
 import type * as schema from "../../schema.js";
 import { PRODUCT_TYPE_DISTRIBUTION } from "../config.js";
-import { getLogger } from "../../../utils/logger.js";
-
-const logger = getLogger("product-generator");
 
 type ProductInsert = InferInsertModel<typeof schema.products>;
 

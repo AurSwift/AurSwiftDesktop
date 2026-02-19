@@ -46,7 +46,7 @@ export class ErrorMessageMapper {
         (error: VivaWalletError, context?: any) => UserFriendlyError
       >
     > = {
-      [ErrorCode.NETWORK_CONNECTION_REFUSED]: (error, context) => ({
+      [ErrorCode.NETWORK_CONNECTION_REFUSED]: (_error, context) => ({
         title: "Cannot Connect to Terminal",
         message: context?.terminalName
           ? `Cannot connect to ${context.terminalName}. Please ensure the terminal is powered on and connected to the network.`
@@ -64,7 +64,7 @@ export class ErrorMessageMapper {
         helpLink: "https://developer.viva.com/",
       }),
 
-      [ErrorCode.NETWORK_TIMEOUT]: (error, context) => ({
+      [ErrorCode.NETWORK_TIMEOUT]: () => ({
         title: "Connection Timeout",
         message:
           "The connection to the terminal timed out. This may be due to network issues.",
@@ -79,7 +79,7 @@ export class ErrorMessageMapper {
         requiresAction: false,
       }),
 
-      [ErrorCode.NETWORK_UNREACHABLE]: (error, context) => ({
+      [ErrorCode.NETWORK_UNREACHABLE]: () => ({
         title: "Network Unreachable",
         message:
           "Cannot reach the payment terminal. Please check your network connection.",
@@ -93,7 +93,7 @@ export class ErrorMessageMapper {
         requiresAction: true,
       }),
 
-      [ErrorCode.DNS_RESOLUTION_FAILED]: (error, context) => ({
+      [ErrorCode.DNS_RESOLUTION_FAILED]: () => ({
         title: "Network Configuration Error",
         message:
           "DNS resolution failed. Please check your network configuration and terminal IP address.",
@@ -107,7 +107,7 @@ export class ErrorMessageMapper {
         requiresAction: true,
       }),
 
-      [ErrorCode.TERMINAL_OFFLINE]: (error, context) => ({
+      [ErrorCode.TERMINAL_OFFLINE]: (_error, context) => ({
         title: "Terminal Offline",
         message: context?.terminalName
           ? `${context.terminalName} appears to be offline.`
@@ -123,7 +123,7 @@ export class ErrorMessageMapper {
         requiresAction: true,
       }),
 
-      [ErrorCode.TERMINAL_BUSY]: (error, context) => ({
+      [ErrorCode.TERMINAL_BUSY]: () => ({
         title: "Terminal Busy",
         message:
           "The terminal is currently processing another transaction. Please wait.",
@@ -136,7 +136,7 @@ export class ErrorMessageMapper {
         requiresAction: false,
       }),
 
-      [ErrorCode.TERMINAL_AUTH_FAILED]: (error, context) => ({
+      [ErrorCode.TERMINAL_AUTH_FAILED]: () => ({
         title: "Authentication Failed",
         message:
           "Authentication failed with the terminal. Please check the API key in settings.",
@@ -150,7 +150,7 @@ export class ErrorMessageMapper {
         requiresAction: true,
       }),
 
-      [ErrorCode.TERMINAL_NOT_FOUND]: (error, context) => ({
+      [ErrorCode.TERMINAL_NOT_FOUND]: () => ({
         title: "Terminal Not Found",
         message:
           "Terminal not found. Please verify terminal configuration and try discovering terminals again.",
@@ -164,7 +164,7 @@ export class ErrorMessageMapper {
         requiresAction: true,
       }),
 
-      [ErrorCode.TRANSACTION_DECLINED]: (error, context) => ({
+      [ErrorCode.TRANSACTION_DECLINED]: () => ({
         title: "Card Declined",
         message:
           "The card was declined by the bank. Please try a different payment method.",
@@ -179,7 +179,7 @@ export class ErrorMessageMapper {
         requiresAction: true,
       }),
 
-      [ErrorCode.TRANSACTION_INSUFFICIENT_FUNDS]: (error, context) => ({
+      [ErrorCode.TRANSACTION_INSUFFICIENT_FUNDS]: () => ({
         title: "Insufficient Funds",
         message: `Insufficient funds to complete this transaction.`,
         suggestions: [
@@ -192,7 +192,7 @@ export class ErrorMessageMapper {
         requiresAction: true,
       }),
 
-      [ErrorCode.TRANSACTION_EXPIRED_CARD]: (error, context) => ({
+      [ErrorCode.TRANSACTION_EXPIRED_CARD]: () => ({
         title: "Expired Card",
         message: "The card has expired. Please use a different card.",
         suggestions: [
@@ -204,7 +204,7 @@ export class ErrorMessageMapper {
         requiresAction: true,
       }),
 
-      [ErrorCode.TRANSACTION_TIMEOUT]: (error, context) => ({
+      [ErrorCode.TRANSACTION_TIMEOUT]: () => ({
         title: "Transaction Timeout",
         message: "The transaction took too long to complete. Please try again.",
         suggestions: [
@@ -217,7 +217,7 @@ export class ErrorMessageMapper {
         requiresAction: false,
       }),
 
-      [ErrorCode.TRANSACTION_CANCELLED]: (error, context) => ({
+      [ErrorCode.TRANSACTION_CANCELLED]: () => ({
         title: "Transaction Cancelled",
         message: "The transaction was cancelled.",
         suggestions: [
@@ -228,7 +228,7 @@ export class ErrorMessageMapper {
         requiresAction: false,
       }),
 
-      [ErrorCode.CONFIG_INVALID_IP]: (error, context) => ({
+      [ErrorCode.CONFIG_INVALID_IP]: () => ({
         title: "Invalid IP Address",
         message: "The terminal IP address format is invalid.",
         suggestions: [
@@ -240,7 +240,7 @@ export class ErrorMessageMapper {
         requiresAction: true,
       }),
 
-      [ErrorCode.CONFIG_INVALID_PORT]: (error, context) => ({
+      [ErrorCode.CONFIG_INVALID_PORT]: () => ({
         title: "Invalid Port",
         message: "The terminal port number is invalid.",
         suggestions: [
@@ -252,7 +252,7 @@ export class ErrorMessageMapper {
         requiresAction: true,
       }),
 
-      [ErrorCode.CONFIG_MISSING_API_KEY]: (error, context) => ({
+      [ErrorCode.CONFIG_MISSING_API_KEY]: () => ({
         title: "Missing API Key",
         message: "API key is required for terminal authentication.",
         suggestions: [
@@ -264,7 +264,7 @@ export class ErrorMessageMapper {
         requiresAction: true,
       }),
 
-      [ErrorCode.SYSTEM_UNKNOWN_ERROR]: (error, context) => ({
+      [ErrorCode.SYSTEM_UNKNOWN_ERROR]: (error) => ({
         title: "Error Occurred",
         message:
           error.message || "An unexpected error occurred. Please try again.",

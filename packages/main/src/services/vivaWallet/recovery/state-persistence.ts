@@ -5,7 +5,7 @@
 
 import { getLogger } from "../../../utils/logger.js";
 import type { TransactionStateMachine } from "../transaction-state-machine.js";
-import type { Terminal, VivaWalletSaleRequest } from "../types.js";
+import type { VivaWalletSaleRequest } from "../types.js";
 import { getDatabase } from "../../../database/index.js";
 
 const logger = getLogger("StatePersistence");

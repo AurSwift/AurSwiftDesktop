@@ -1,5 +1,5 @@
 import type { DrizzleDB } from "../drizzle.js";
-import { eq, and, desc, lt, sql as drizzleSql } from "drizzle-orm";
+import { eq, and, desc, lt } from "drizzle-orm";
 import * as schema from "../schema.js";
 import { getLogger } from "../../utils/logger.js";
 

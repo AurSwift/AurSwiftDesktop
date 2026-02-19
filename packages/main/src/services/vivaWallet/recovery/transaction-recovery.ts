@@ -6,11 +6,9 @@
 import { getLogger } from "../../../utils/logger.js";
 import { VivaWalletHTTPClient } from "../http-client.js";
 import { TransactionPoller } from "../transaction-poller.js";
-import { TransactionStateMachine } from "../transaction-state-machine.js";
 import type {
   Terminal,
   VivaWalletTransactionResponse,
-  TransactionStatus,
 } from "../types.js";
 import { getDatabase } from "../../../database/index.js";
 import { VivaWalletConfigManager } from "../config.js";
@@ -159,7 +157,7 @@ export class TransactionRecovery {
 
       // Transaction completed on terminal but not in our system
       if (statusResponse.status === "completed") {
-        await this.finalizeTransaction(transaction, statusResponse);
+        await this.finalizeTransaction(transaction);
         return { status: "recovered" };
       }
 
@@ -168,7 +166,7 @@ export class TransactionRecovery {
         statusResponse.status === "failed" ||
         statusResponse.status === "cancelled"
       ) {
-        await this.markTransactionAsFailed(transaction, statusResponse);
+        await this.markTransactionAsFailed(transaction);
         return {
           status: "failed",
           reason: statusResponse.status,
@@ -205,8 +203,7 @@ export class TransactionRecovery {
    * Finalize a completed transaction
    */
   private async finalizeTransaction(
-    transaction: PendingTransaction,
-    statusResponse: VivaWalletTransactionResponse
+    transaction: PendingTransaction
   ): Promise<void> {
     logger.info(`Finalizing recovered transaction: ${transaction.id}`);
     // Update transaction in database/system
@@ -220,8 +217,7 @@ export class TransactionRecovery {
    * Mark transaction as failed
    */
   private async markTransactionAsFailed(
-    transaction: PendingTransaction,
-    statusResponse: VivaWalletTransactionResponse
+    transaction: PendingTransaction
   ): Promise<void> {
     logger.info(`Marking transaction as failed: ${transaction.id}`);
     await this.pendingTransactionsStorage.removePendingTransaction(

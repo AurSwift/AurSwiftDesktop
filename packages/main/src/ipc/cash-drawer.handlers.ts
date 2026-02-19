@@ -7,7 +7,7 @@ const logger = getLogger("cashDrawerHandlers");
 // let db: any = null; // Removed: Always get fresh DB reference
 
 export function registerCashDrawerHandlers() {
-  ipcMain.handle("cashDrawer:getExpectedCash", async (event, shiftId) => {
+  ipcMain.handle("cashDrawer:getExpectedCash", async (_event, shiftId) => {
     try {
       const db = await getDatabase();
       const result = db.cashDrawers.getExpectedCashForShift(shiftId);
@@ -25,7 +25,7 @@ export function registerCashDrawerHandlers() {
     }
   });
 
-  ipcMain.handle("cashDrawer:createCount", async (event, countData) => {
+  ipcMain.handle("cashDrawer:createCount", async (_event, countData) => {
     try {
       const db = await getDatabase();
 
@@ -85,7 +85,7 @@ export function registerCashDrawerHandlers() {
     }
   });
 
-  ipcMain.handle("cashDrawer:getCountsByShift", async (event, shiftId) => {
+  ipcMain.handle("cashDrawer:getCountsByShift", async (_event, shiftId) => {
     try {
       const db = await getDatabase();
       const counts = db.cashDrawers.getCashDrawerCountsByShift(shiftId);

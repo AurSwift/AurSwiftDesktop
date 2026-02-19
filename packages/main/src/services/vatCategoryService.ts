@@ -4,7 +4,7 @@ import { getDatabase } from "../database/index.js";
 export function registerVatCategoryIpc() {
   ipcMain.handle(
     "categories:getVatCategories",
-    async (event, businessId: string) => {
+    async (_event, businessId: string) => {
       try {
         const db = await getDatabase();
         // Get all VAT categories for the business

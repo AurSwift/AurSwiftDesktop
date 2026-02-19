@@ -1,5 +1,5 @@
 import type { DrizzleDB } from "../drizzle.js";
-import { eq, and, desc, asc, sql as drizzleSql } from "drizzle-orm";
+import { eq, and, desc, sql as drizzleSql } from "drizzle-orm";
 import * as schema from "../schema.js";
 
 export class ReportManager {
@@ -10,12 +10,16 @@ export class ReportManager {
   }
 
   // Report generation methods - to be implemented from database.ts
-  getSalesReport(businessId: string, startDate: string, endDate: string): any {
+  getSalesReport(
+    _businessId: string,
+    _startDate: string,
+    _endDate: string
+  ): any {
     // Implement sales report logic
     return {};
   }
 
-  getInventoryReport(businessId: string): any {
+  getInventoryReport(_businessId: string): any {
     // Implement inventory report logic
     return {};
   }
@@ -270,14 +274,6 @@ export class ReportManager {
         : typeof schedule.startTime === 'number'
         ? new Date(schedule.startTime)
         : new Date(schedule.startTime as string);
-      const plannedEnd = schedule.endTime
-        ? (schedule.endTime instanceof Date
-            ? schedule.endTime
-            : typeof schedule.endTime === 'number'
-            ? new Date(schedule.endTime)
-            : new Date(schedule.endTime as string))
-        : null;
-
       const earlyMinutes = Math.max(
         0,
         (plannedStart.getTime() - actualStart.getTime()) / (1000 * 60)

@@ -5,7 +5,7 @@
  */
 
 import type { DrizzleDB } from "../drizzle.js";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import {
   quickSellPages,
   quickSellButtons,
@@ -16,9 +16,6 @@ import {
   type QuickSellButton,
   type NewQuickSellButton,
 } from "../schema.js";
-import { getLogger } from "../../utils/logger.js";
-
-const logger = getLogger("quickSellManager");
 
 export interface QuickSellButtonWithDetails extends QuickSellButton {
   product?: {
@@ -40,11 +37,9 @@ export interface QuickSellPageWithButtons extends QuickSellPage {
 
 export class QuickSellManager {
   private drizzle: DrizzleDB;
-  private uuid: { v4: () => string };
 
-  constructor(drizzle: DrizzleDB, uuid: { v4: () => string }) {
+  constructor(drizzle: DrizzleDB) {
     this.drizzle = drizzle;
-    this.uuid = uuid;
   }
 
   /**
@@ -74,7 +69,6 @@ export class QuickSellManager {
     }
 
     // Get all buttons for these pages with product/category details
-    const pageIds = pages.map((p) => p.id);
     const buttonsResult = await this.drizzle
       .select({
         button: quickSellButtons,

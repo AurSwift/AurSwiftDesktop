@@ -23,7 +23,7 @@ export function registerRoleHandlers() {
   // RBAC - Role Management
   // ============================================================================
 
-  ipcMain.handle("roles:list", async (event, sessionToken, businessId) => {
+  ipcMain.handle("roles:list", async (_event, sessionToken, businessId) => {
     const db = await getDatabase();
 
     // First validate session
@@ -68,7 +68,7 @@ export function registerRoleHandlers() {
     }
   });
 
-  ipcMain.handle("roles:create", async (event, sessionToken, roleData) => {
+  ipcMain.handle("roles:create", async (_event, sessionToken, roleData) => {
     const db = await getDatabase();
 
     const sessionValidation = await validateSession(db, sessionToken);
@@ -108,7 +108,7 @@ export function registerRoleHandlers() {
 
   ipcMain.handle(
     "roles:update",
-    async (event, sessionToken, roleId, updates) => {
+    async (_event, sessionToken, roleId, updates) => {
       const db = await getDatabase();
 
       const auth = await validateSessionAndPermission(
@@ -159,7 +159,7 @@ export function registerRoleHandlers() {
     }
   );
 
-  ipcMain.handle("roles:delete", async (event, sessionToken, roleId) => {
+  ipcMain.handle("roles:delete", async (_event, sessionToken, roleId) => {
     const db = await getDatabase();
 
     const auth = await validateSessionAndPermission(
@@ -212,7 +212,7 @@ export function registerRoleHandlers() {
     }
   });
 
-  ipcMain.handle("roles:getById", async (event, sessionToken, roleId) => {
+  ipcMain.handle("roles:getById", async (_event, sessionToken, roleId) => {
     const db = await getDatabase();
 
     const auth = await validateSessionAndPermission(
@@ -248,7 +248,7 @@ export function registerRoleHandlers() {
 
   ipcMain.handle(
     "userRoles:assign",
-    async (event, sessionToken, userId, roleId) => {
+    async (_event, sessionToken, userId, roleId) => {
       const db = await getDatabase();
 
       const auth = await validateSessionAndPermission(
@@ -294,7 +294,7 @@ export function registerRoleHandlers() {
 
   ipcMain.handle(
     "userRoles:revoke",
-    async (event, sessionToken, userId, roleId) => {
+    async (_event, sessionToken, userId, roleId) => {
       const db = await getDatabase();
 
       const auth = await validateSessionAndPermission(
@@ -336,7 +336,7 @@ export function registerRoleHandlers() {
 
   ipcMain.handle(
     "userRoles:getUserRoles",
-    async (event, sessionToken, userId) => {
+    async (_event, sessionToken, userId) => {
       const db = await getDatabase();
 
       const auth = await validateSessionAndPermission(
@@ -364,7 +364,7 @@ export function registerRoleHandlers() {
 
   ipcMain.handle(
     "userRoles:setPrimaryRole",
-    async (event, sessionToken, userId, roleId) => {
+    async (_event, sessionToken, userId, roleId) => {
       const db = await getDatabase();
 
       const auth = await validateSessionAndPermission(
@@ -453,7 +453,7 @@ export function registerRoleHandlers() {
 
   ipcMain.handle(
     "roles:getUsersByRole",
-    async (event, sessionToken, roleId) => {
+    async (_event, sessionToken, roleId) => {
       const db = await getDatabase();
 
       const auth = await validateSessionAndPermission(
@@ -485,7 +485,7 @@ export function registerRoleHandlers() {
 
   ipcMain.handle(
     "userPermissions:grant",
-    async (event, sessionToken, userId, permission, reason, expiresAt) => {
+    async (_event, sessionToken, userId, permission, reason, expiresAt) => {
       const db = await getDatabase();
 
       const auth = await validateSessionAndPermission(
@@ -535,7 +535,7 @@ export function registerRoleHandlers() {
 
   ipcMain.handle(
     "userPermissions:revoke",
-    async (event, sessionToken, userId, permission) => {
+    async (_event, sessionToken, userId, permission) => {
       const db = await getDatabase();
 
       const auth = await validateSessionAndPermission(
@@ -582,7 +582,7 @@ export function registerRoleHandlers() {
 
   ipcMain.handle(
     "userPermissions:getUserPermissions",
-    async (event, sessionToken, userId) => {
+    async (_event, sessionToken, userId) => {
       const db = await getDatabase();
 
       // Validate session first

@@ -6,7 +6,7 @@ const logger = getLogger("batchHandlers");
 // let db: any = null; // Removed: Always get fresh DB reference
 
 export function registerBatchHandlers() {
-  ipcMain.handle("batches:create", async (event, batchData) => {
+  ipcMain.handle("batches:create", async (_event, batchData) => {
     try {
       const db = await getDatabase();
       const batch = await db.batches.createBatch(batchData);
@@ -25,7 +25,7 @@ export function registerBatchHandlers() {
     }
   });
 
-  ipcMain.handle("batches:getById", async (event, batchId) => {
+  ipcMain.handle("batches:getById", async (_event, batchId) => {
     try {
       const db = await getDatabase();
       const batch = await db.batches.getBatchById(batchId);
@@ -43,7 +43,7 @@ export function registerBatchHandlers() {
     }
   });
 
-  ipcMain.handle("batches:getByProduct", async (event, productId, options) => {
+  ipcMain.handle("batches:getByProduct", async (_event, productId, options) => {
     try {
       const db = await getDatabase();
       const batches = await db.batches.getBatchesByProduct(productId, options);
@@ -63,7 +63,7 @@ export function registerBatchHandlers() {
 
   ipcMain.handle(
     "batches:getByBusiness",
-    async (event, businessId, options) => {
+    async (_event, businessId, options) => {
       try {
         const db = await getDatabase();
         const batches = await db.batches.getBatchesByBusiness(
@@ -88,7 +88,7 @@ export function registerBatchHandlers() {
   // Get batches with pagination
   ipcMain.handle(
     "batches:getPaginated",
-    async (event, businessId, pagination, filters) => {
+    async (_event, businessId, pagination, filters) => {
       try {
         const db = await getDatabase();
         const result = await db.batches.getBatchesByBusinessPaginated(
@@ -113,7 +113,7 @@ export function registerBatchHandlers() {
   // Get batch stats (optimized for dashboards)
   ipcMain.handle(
     "batches:getStats",
-    async (event, businessId, expirySettings) => {
+    async (_event, businessId, expirySettings) => {
       try {
         const db = await getDatabase();
         const stats = await db.batches.getBatchStats(
@@ -136,7 +136,7 @@ export function registerBatchHandlers() {
 
   ipcMain.handle(
     "batches:getActiveBatches",
-    async (event, productId, rotationMethod) => {
+    async (_event, productId, rotationMethod) => {
       try {
         const db = await getDatabase();
         const batches = await db.batches.getActiveBatchesByProduct(
@@ -160,7 +160,7 @@ export function registerBatchHandlers() {
 
   ipcMain.handle(
     "batches:selectForSale",
-    async (event, productId, quantity, rotationMethod) => {
+    async (_event, productId, quantity, rotationMethod) => {
       try {
         const db = await getDatabase();
         const selected = await db.batches.selectBatchesForSale(
@@ -186,7 +186,7 @@ export function registerBatchHandlers() {
 
   ipcMain.handle(
     "batches:updateQuantity",
-    async (event, batchId, quantity, movementType, userId, reason) => {
+    async (_event, batchId, quantity, movementType, userId, reason) => {
       try {
         const db = await getDatabase();
 
@@ -241,7 +241,7 @@ export function registerBatchHandlers() {
     }
   );
 
-  ipcMain.handle("batches:updateStatus", async (event, batchId, status) => {
+  ipcMain.handle("batches:updateStatus", async (_event, batchId, status) => {
     try {
       const db = await getDatabase();
       const batch = await db.batches.updateBatchStatus(batchId, status);
@@ -259,7 +259,7 @@ export function registerBatchHandlers() {
     }
   });
 
-  ipcMain.handle("batches:getExpiringSoon", async (event, businessId, days) => {
+  ipcMain.handle("batches:getExpiringSoon", async (_event, businessId, days) => {
     try {
       const db = await getDatabase();
       const batches = await db.batches.getBatchesExpiringSoon(businessId, days);
@@ -277,7 +277,7 @@ export function registerBatchHandlers() {
     }
   });
 
-  ipcMain.handle("batches:calculateProductStock", async (event, productId) => {
+  ipcMain.handle("batches:calculateProductStock", async (_event, productId) => {
     try {
       const db = await getDatabase();
       const stock = await db.batches.calculateProductStock(productId);
@@ -295,7 +295,7 @@ export function registerBatchHandlers() {
     }
   });
 
-  ipcMain.handle("batches:autoUpdateExpired", async (event, businessId) => {
+  ipcMain.handle("batches:autoUpdateExpired", async (_event, businessId) => {
     try {
       const db = await getDatabase();
       const count = await db.batches.autoUpdateExpiredBatches(businessId);
@@ -313,7 +313,7 @@ export function registerBatchHandlers() {
     }
   });
 
-  ipcMain.handle("batches:remove", async (event, batchId) => {
+  ipcMain.handle("batches:remove", async (_event, batchId) => {
     try {
       const db = await getDatabase();
       await db.batches.removeBatch(batchId);
@@ -333,7 +333,7 @@ export function registerBatchHandlers() {
 
   ipcMain.handle(
     "batches:getByNumber",
-    async (event, batchNumber, productId, businessId) => {
+    async (_event, batchNumber, productId, businessId) => {
       try {
         const db = await getDatabase();
         const batch = await db.batches.getBatchByNumber(
@@ -366,7 +366,7 @@ export function registerBatchHandlers() {
   // Optimized dashboard batches (only expired + expiring soon, with limit)
   ipcMain.handle(
     "batches:getForDashboard",
-    async (event, businessId, options) => {
+    async (_event, businessId, options) => {
       try {
         const db = await getDatabase();
         const result = await db.batches.getBatchesForDashboard(

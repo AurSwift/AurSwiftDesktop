@@ -1,6 +1,6 @@
 import type { Terminal } from "../schema.js";
 import type { DrizzleDB } from "../drizzle.js";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import * as schema from "../schema.js";
 
 export class TerminalManager {

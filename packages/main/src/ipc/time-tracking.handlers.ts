@@ -22,7 +22,7 @@ export function registerTimeTrackingHandlers() {
   };
 
   // Time Tracking IPC Handlers
-  ipcMain.handle("timeTracking:clockIn", async (event, data) => {
+  ipcMain.handle("timeTracking:clockIn", async (_event, data) => {
     try {
       const db = await getDatabase();
 
@@ -178,7 +178,7 @@ export function registerTimeTrackingHandlers() {
     }
   });
 
-  ipcMain.handle("timeTracking:clockOut", async (event, data) => {
+  ipcMain.handle("timeTracking:clockOut", async (_event, data) => {
     try {
       const db = await getDatabase();
 
@@ -343,7 +343,7 @@ export function registerTimeTrackingHandlers() {
     }
   });
 
-  ipcMain.handle("timeTracking:getActiveShift", async (event, userId) => {
+  ipcMain.handle("timeTracking:getActiveShift", async (_event, userId) => {
     try {
       const db = await getDatabase();
       const shift = db.timeTracking.getActiveShift(userId);
@@ -380,7 +380,7 @@ export function registerTimeTrackingHandlers() {
     }
   });
 
-  ipcMain.handle("timeTracking:startBreak", async (event, data) => {
+  ipcMain.handle("timeTracking:startBreak", async (_event, data) => {
     try {
       const db = await getDatabase();
 
@@ -412,7 +412,7 @@ export function registerTimeTrackingHandlers() {
     }
   });
 
-  ipcMain.handle("timeTracking:endBreak", async (event, breakId) => {
+  ipcMain.handle("timeTracking:endBreak", async (_event, breakId) => {
     try {
       const db = await getDatabase();
       const breakRecord = await db.timeTracking.endBreak(breakId);
@@ -435,7 +435,7 @@ export function registerTimeTrackingHandlers() {
 
   ipcMain.handle(
     "timeTracking:reports:getRealTimeDashboard",
-    async (event, businessId: string) => {
+    async (_event, businessId: string) => {
       try {
         const db = await getDatabase();
         const data = db.timeTrackingReports.getRealTimeDashboard(businessId);
@@ -455,8 +455,7 @@ export function registerTimeTrackingHandlers() {
 
   ipcMain.handle(
     "timeTracking:reports:getBreakCompliance",
-    async (
-      event,
+    async (_event,
       args: { businessId: string; startDate: string; endDate: string }
     ) => {
       try {
@@ -482,8 +481,7 @@ export function registerTimeTrackingHandlers() {
 
   ipcMain.handle(
     "timeTracking:reports:getPayrollSummary",
-    async (
-      event,
+    async (_event,
       args: {
         businessId: string;
         startDate: string;
@@ -515,7 +513,7 @@ export function registerTimeTrackingHandlers() {
 
   ipcMain.handle(
     "timeTracking:reports:getShiftDetails",
-    async (event, shiftId: string) => {
+    async (_event, shiftId: string) => {
       try {
         const db = await getDatabase();
         const shift = db.timeTracking.getShiftById(shiftId);
@@ -559,8 +557,7 @@ export function registerTimeTrackingHandlers() {
 
   ipcMain.handle(
     "timeTracking:reports:getShifts",
-    async (
-      event,
+    async (_event,
       args: {
         businessId: string;
         startDate: string;
@@ -663,7 +660,7 @@ export function registerTimeTrackingHandlers() {
 
   ipcMain.handle(
     "timeTracking:reports:getPendingTimeCorrections",
-    async (event, businessId: string) => {
+    async (_event, businessId: string) => {
       try {
         const db = await getDatabase();
         const corrections = db.timeTracking.getPendingTimeCorrections(businessId);
@@ -700,7 +697,7 @@ export function registerTimeTrackingHandlers() {
 
   ipcMain.handle(
     "timeTracking:manager:forceClockOut",
-    async (event, args: { userId: string; managerId: string; reason: string }) => {
+    async (_event, args: { userId: string; managerId: string; reason: string }) => {
       try {
         const db = await getDatabase();
         const result = await db.timeTracking.forceClockOut(
@@ -739,8 +736,7 @@ export function registerTimeTrackingHandlers() {
 
   ipcMain.handle(
     "timeTracking:manager:updateBreak",
-    async (
-      event,
+    async (_event,
       args: {
         breakId: string;
         managerId: string;
@@ -793,8 +789,7 @@ export function registerTimeTrackingHandlers() {
 
   ipcMain.handle(
     "timeTracking:manager:processTimeCorrection",
-    async (
-      event,
+    async (_event,
       args: { correctionId: string; managerId: string; approved: boolean }
     ) => {
       try {

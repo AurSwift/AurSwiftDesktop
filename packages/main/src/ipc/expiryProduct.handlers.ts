@@ -9,7 +9,7 @@ const logger = getLogger("expiryProductHandlers");
 export function registerExpiryProductHandlers() {
   ipcMain.handle(
     "expiryNotifications:create",
-    async (event, notificationData) => {
+    async (_event, notificationData) => {
       try {
         const db = await getDatabase();
         const notification = await db.expiryNotifications.createNotification(
@@ -33,7 +33,7 @@ export function registerExpiryProductHandlers() {
     }
   );
 
-  ipcMain.handle("expiryNotifications:getByBatch", async (event, batchId) => {
+  ipcMain.handle("expiryNotifications:getByBatch", async (_event, batchId) => {
     try {
       const db = await getDatabase();
       const notifications =
@@ -54,7 +54,7 @@ export function registerExpiryProductHandlers() {
 
   ipcMain.handle(
     "expiryNotifications:getByBusiness",
-    async (event, businessId, filters) => {
+    async (_event, businessId, filters) => {
       try {
         const db = await getDatabase();
         const notifications =
@@ -79,7 +79,7 @@ export function registerExpiryProductHandlers() {
 
   ipcMain.handle(
     "expiryNotifications:getPending",
-    async (event, businessId) => {
+    async (_event, businessId) => {
       try {
         const db = await getDatabase();
         const notifications =
@@ -101,7 +101,7 @@ export function registerExpiryProductHandlers() {
 
   ipcMain.handle(
     "expiryNotifications:acknowledge",
-    async (event, notificationId, userId) => {
+    async (_event, notificationId, userId) => {
       try {
         const db = await getDatabase();
         const notification =
@@ -124,7 +124,7 @@ export function registerExpiryProductHandlers() {
     }
   );
 
-  ipcMain.handle("expirySettings:get", async (event, businessId) => {
+  ipcMain.handle("expirySettings:get", async (_event, businessId) => {
     try {
       const db = await getDatabase();
       const settings = await db.expirySettings.getOrCreateSettings(businessId);
@@ -144,7 +144,7 @@ export function registerExpiryProductHandlers() {
 
   ipcMain.handle(
     "expirySettings:createOrUpdate",
-    async (event, businessId, settingsData) => {
+    async (_event, businessId, settingsData) => {
       try {
         const db = await getDatabase();
         const settings = await db.expirySettings.createOrUpdateSettings(
@@ -171,7 +171,7 @@ export function registerExpiryProductHandlers() {
 
   ipcMain.handle(
     "expiryNotifications:scanAndCreate",
-    async (event, businessId) => {
+    async (_event, businessId) => {
       try {
         const db = await getDatabase();
         const service = new ExpiryNotificationService(db);
@@ -193,7 +193,7 @@ export function registerExpiryProductHandlers() {
 
   ipcMain.handle(
     "expiryNotifications:processTasks",
-    async (event, businessId) => {
+    async (_event, businessId) => {
       try {
         const db = await getDatabase();
         const service = new ExpiryNotificationService(db);

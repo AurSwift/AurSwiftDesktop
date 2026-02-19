@@ -8,7 +8,7 @@ import electronUpdater, {
 } from "electron-updater";
 import { app, dialog, Notification, shell, BrowserWindow } from "electron";
 import Store from "electron-store";
-import { GITHUB_REPO_URL, GITHUB_RELEASES_URL } from "@app/shared";
+import { GITHUB_RELEASES_URL } from "@app/shared";
 
 import { getLogger } from "../utils/logger.js";
 const logger = getLogger("AutoUpdater");
@@ -1033,7 +1033,6 @@ export class AutoUpdater implements AppModule {
 
           // Cache successful result (Performance: Phase 1.2)
           if (result?.updateInfo) {
-            const currentVersion = app.getVersion();
             const newVersion = result.updateInfo.version;
 
             // Update available - we're not on latest

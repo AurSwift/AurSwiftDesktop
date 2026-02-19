@@ -7,7 +7,7 @@ import type {
   NewBreakPolicyRule,
 } from "../schema.js";
 import type { DrizzleDB } from "../drizzle.js";
-import { eq, and, desc, asc, gte, lte, isNull, or, sql } from "drizzle-orm";
+import { eq, and, desc, asc, sql } from "drizzle-orm";
 import * as schema from "../schema.js";
 import { getLogger } from "../../utils/logger.js";
 
@@ -810,9 +810,7 @@ export class BreakPolicyManager {
       }
 
       // Add each break type with "not yet available" status
-      for (const [code, { rule, minHours }] of Object.entries(
-        breakTypeMinHours
-      )) {
+      for (const { rule, minHours } of Object.values(breakTypeMinHours)) {
         const hoursRemaining = minHours - shiftDurationHours;
         options.push({
           breakType: rule.breakType,

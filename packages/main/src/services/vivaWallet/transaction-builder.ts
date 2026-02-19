@@ -3,13 +3,10 @@
  * Builds and validates transaction requests
  */
 
-import { getLogger } from "../../utils/logger.js";
 import type {
   VivaWalletSaleRequest,
   VivaWalletRefundRequest,
 } from "./types.js";
-
-const logger = getLogger("TransactionBuilder");
 
 // =============================================================================
 // TRANSACTION BUILDER

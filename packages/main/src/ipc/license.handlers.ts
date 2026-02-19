@@ -283,7 +283,6 @@ async function deactivateLocalLicense(
 }
 
 // Track if we're currently in offline mode (last heartbeat/connection attempt failed)
-let isCurrentlyOffline = false;
 let lastConnectionError: string | null = null;
 // Track SSE connection status - if SSE is connected, we're definitely online
 let isSseConnected = false;
@@ -296,7 +295,6 @@ async function checkServerConnectivity(): Promise<boolean> {
   // If SSE is connected, we're definitely online - no need for HTTP check
   if (isSseConnected) {
     logger.debug("checkServerConnectivity: SSE is connected, returning online");
-    isCurrentlyOffline = false;
     lastConnectionError = null;
     return true;
   }
@@ -316,13 +314,11 @@ async function checkServerConnectivity(): Promise<boolean> {
     });
 
     clearTimeout(timeout);
-    isCurrentlyOffline = !response.ok;
     if (response.ok) {
       lastConnectionError = null;
     }
     return response.ok;
   } catch (error) {
-    isCurrentlyOffline = true;
     lastConnectionError =
       error instanceof Error ? error.message : "Connection failed";
     return false;
@@ -912,7 +908,6 @@ function initializeSSE(
     client.on("connected", () => {
       logger.info("SSE connected - real-time subscription sync enabled");
       isSseConnected = true;
-      isCurrentlyOffline = false;
       lastConnectionError = null;
       emitLicenseEvent("license:sseConnected", { connected: true });
     });
@@ -1082,7 +1077,7 @@ export function registerLicenseHandlers() {
    */
   ipcMain.handle(
     "license:activate",
-    async (event, licenseKey: string, terminalName?: string) => {
+    async (_event, licenseKey: string, terminalName?: string) => {
       try {
         const machineIdHash = generateMachineFingerprint();
 
@@ -1498,7 +1493,7 @@ export function registerLicenseHandlers() {
   /**
    * Check if a feature is enabled for current plan
    */
-  ipcMain.handle("license:hasFeature", async (event, featureName: string) => {
+  ipcMain.handle("license:hasFeature", async (_event, featureName: string) => {
     try {
       const activation = await getLocalActivation();
 

@@ -7,7 +7,7 @@ const logger = getLogger("productHandlers");
 
 export function registerProductHandlers() {
   // Product Management IPC handlers
-  ipcMain.handle("products:create", async (event, productData) => {
+  ipcMain.handle("products:create", async (_event, productData) => {
     try {
       const db = await getDatabase();
       return await db.products.createProductWithValidation(productData);
@@ -22,7 +22,7 @@ export function registerProductHandlers() {
 
   ipcMain.handle(
     "products:getByBusiness",
-    async (event, businessId, includeInactive = false) => {
+    async (_event, businessId, includeInactive = false) => {
       try {
         const db = await getDatabase();
         const products = await db.products.getProductsByBusiness(
@@ -44,7 +44,7 @@ export function registerProductHandlers() {
     },
   );
 
-  ipcMain.handle("products:getById", async (event, id) => {
+  ipcMain.handle("products:getById", async (_event, id) => {
     try {
       const db = await getDatabase();
       return await db.products.getProductByIdWithResponse(id);
@@ -57,7 +57,7 @@ export function registerProductHandlers() {
     }
   });
 
-  ipcMain.handle("products:update", async (event, id, updates) => {
+  ipcMain.handle("products:update", async (_event, id, updates) => {
     try {
       const db = await getDatabase();
       return await db.products.updateProductWithValidation(id, updates);
@@ -70,7 +70,7 @@ export function registerProductHandlers() {
     }
   });
 
-  ipcMain.handle("products:delete", async (event, id) => {
+  ipcMain.handle("products:delete", async (_event, id) => {
     try {
       const db = await getDatabase();
       return await db.products.deleteProductWithResponse(id);
@@ -86,7 +86,7 @@ export function registerProductHandlers() {
   // Get products with pagination
   ipcMain.handle(
     "products:getPaginated",
-    async (event, businessId, pagination, filters) => {
+    async (_event, businessId, pagination, filters) => {
       try {
         const db = await getDatabase();
         const result = await db.products.getProductsByBusinessPaginated(
@@ -114,8 +114,7 @@ export function registerProductHandlers() {
   // Get lightweight product lookup (optimized for dropdowns - only id, name, sku)
   ipcMain.handle(
     "products:getLookup",
-    async (
-      event,
+    async (_event,
       businessId,
       options?: { includeInactive?: boolean; productIds?: string[] },
     ) => {
@@ -140,7 +139,7 @@ export function registerProductHandlers() {
   );
 
   // Stock adjustment with audit trail
-  ipcMain.handle("products:adjustStock", async (event, adjustmentData) => {
+  ipcMain.handle("products:adjustStock", async (_event, adjustmentData) => {
     try {
       const db = await getDatabase();
 
@@ -237,7 +236,7 @@ export function registerProductHandlers() {
   });
 
   // Sync product stock from batches
-  ipcMain.handle("products:syncStock", async (event, businessId) => {
+  ipcMain.handle("products:syncStock", async (_event, businessId) => {
     try {
       const db = await getDatabase();
 
@@ -290,7 +289,7 @@ export function registerProductHandlers() {
     }
   });
 
-  ipcMain.handle("stock:adjust", async (event, adjustmentData) => {
+  ipcMain.handle("stock:adjust", async (_event, adjustmentData) => {
     try {
       const db = await getDatabase();
       const adjustment =
@@ -309,7 +308,7 @@ export function registerProductHandlers() {
     }
   });
 
-  ipcMain.handle("stock:getAdjustments", async (event, productId) => {
+  ipcMain.handle("stock:getAdjustments", async (_event, productId) => {
     try {
       const db = await getDatabase();
       const adjustments = db.inventory.getStockAdjustmentsByProduct(productId);
@@ -328,7 +327,7 @@ export function registerProductHandlers() {
   });
 }
 
-ipcMain.handle("stockMovements:create", async (event, movementData) => {
+ipcMain.handle("stockMovements:create", async (_event, movementData) => {
   try {
     const db = await getDatabase();
     const movement = await db.stockMovements.createStockMovement(movementData);
@@ -349,7 +348,7 @@ ipcMain.handle("stockMovements:create", async (event, movementData) => {
   }
 });
 
-ipcMain.handle("stockMovements:getByProduct", async (event, productId) => {
+ipcMain.handle("stockMovements:getByProduct", async (_event, productId) => {
   try {
     const db = await getDatabase();
     const movements = await db.stockMovements.getMovementsByProduct(productId);
@@ -367,7 +366,7 @@ ipcMain.handle("stockMovements:getByProduct", async (event, productId) => {
   }
 });
 
-ipcMain.handle("stockMovements:getByBatch", async (event, batchId) => {
+ipcMain.handle("stockMovements:getByBatch", async (_event, batchId) => {
   try {
     const db = await getDatabase();
     const movements = await db.stockMovements.getMovementsByBatch(batchId);
@@ -387,7 +386,7 @@ ipcMain.handle("stockMovements:getByBatch", async (event, batchId) => {
 
 ipcMain.handle(
   "stockMovements:getByBusiness",
-  async (event, businessId, filters) => {
+  async (_event, businessId, filters) => {
     try {
       const db = await getDatabase();
       const movements = await db.stockMovements.getMovementsByBusiness(
@@ -410,7 +409,7 @@ ipcMain.handle(
 );
 
 // Get product statistics for dashboard (optimized - no full product loading)
-ipcMain.handle("products:getStats", async (event, businessId) => {
+ipcMain.handle("products:getStats", async (_event, businessId) => {
   try {
     const db = await getDatabase();
     const stats = await db.products.getProductStats(businessId);

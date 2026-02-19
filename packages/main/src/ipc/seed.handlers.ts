@@ -16,7 +16,7 @@ export function registerSeedHandlers() {
   /**
    * Seed categories and products with a preset
    */
-  ipcMain.handle("seed:run", async (event, preset: SeedPreset) => {
+  ipcMain.handle("seed:run", async (_event, preset: SeedPreset) => {
     try {
       logger.info(`Seeding with preset: ${preset}`);
 
@@ -25,9 +25,7 @@ export function registerSeedHandlers() {
 
       // Get Drizzle and SQLite instances directly from drizzle module
       const drizzleDb = getDrizzle();
-      // getRawDatabase doesn't actually use the parameter, it returns the stored instance
-      // Type assertion needed due to TypeScript module resolution differences
-      const sqliteDb = getRawDatabase(drizzleDb as any);
+      const sqliteDb = getRawDatabase();
 
       if (!drizzleDb || !sqliteDb) {
         throw new Error("Could not get database instances");
@@ -63,8 +61,7 @@ export function registerSeedHandlers() {
    */
   ipcMain.handle(
     "seed:custom",
-    async (
-      event,
+    async (_event,
       config: {
         categories: number;
         products: number;
@@ -82,7 +79,7 @@ export function registerSeedHandlers() {
         const drizzleDb = getDrizzle();
         // getRawDatabase doesn't actually use the parameter, it returns the stored instance
         // Type assertion needed due to TypeScript module resolution differences
-        const sqliteDb = getRawDatabase(drizzleDb as any);
+        const sqliteDb = getRawDatabase();
 
         if (!drizzleDb || !sqliteDb) {
           throw new Error("Could not get database instances");

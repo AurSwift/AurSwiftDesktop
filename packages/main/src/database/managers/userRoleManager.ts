@@ -6,7 +6,7 @@
  */
 
 import type { DrizzleDB } from "../drizzle.js";
-import type { UserRole, NewUserRole, Role, User } from "../schema.js";
+import type { UserRole, Role, User } from "../schema.js";
 import { eq, and, desc, sql, or, isNull } from "drizzle-orm";
 import * as schema from "../schema.js";
 

@@ -93,7 +93,7 @@ async function initializeEmailServiceFromBusiness(
 }
 
 export function registerEmailSettingsHandlers() {
-  ipcMain.handle("emailSettings:get", async (event, sessionToken: string, businessId: string) => {
+  ipcMain.handle("emailSettings:get", async (_event, sessionToken: string, businessId: string) => {
     try {
       const db = await getDatabase();
 
@@ -169,8 +169,7 @@ export function registerEmailSettingsHandlers() {
 
   ipcMain.handle(
     "emailSettings:set",
-    async (
-      event,
+    async (_event,
       sessionToken: string,
       businessId: string,
       payload: {
@@ -264,7 +263,7 @@ export function registerEmailSettingsHandlers() {
     }
   );
 
-  ipcMain.handle("emailSettings:clear", async (event, sessionToken: string, businessId: string) => {
+  ipcMain.handle("emailSettings:clear", async (_event, sessionToken: string, businessId: string) => {
     try {
       const db = await getDatabase();
       const authz = await validateSessionAndPermission(
@@ -310,7 +309,7 @@ export function registerEmailSettingsHandlers() {
 
   ipcMain.handle(
     "emailSettings:testConnection",
-    async (event, sessionToken: string, businessId: string) => {
+    async (_event, sessionToken: string, businessId: string) => {
     try {
       const db = await getDatabase();
 

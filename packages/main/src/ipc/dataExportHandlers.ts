@@ -4,7 +4,7 @@
  * Electron IPC handlers for data export functionality
  */
 
-import { ipcMain, dialog } from "electron";
+import { ipcMain } from "electron";
 import Database from "better-sqlite3";
 import {
   exportLocalData,
@@ -25,7 +25,7 @@ export function registerDataExportHandlers(db: Database.Database): void {
   // Export data programmatically
   ipcMain.handle(
     "data-export:export",
-    async (event, options: ExportOptions = { format: "both" }) => {
+    async (_event, options: ExportOptions = { format: "both" }) => {
       try {
         logger.info("Manual data export requested", options);
         const result = await exportLocalData(db, options);
@@ -58,8 +58,7 @@ export function registerDataExportHandlers(db: Database.Database): void {
   // Trigger auto-export based on subscription event
   ipcMain.handle(
     "data-export:auto-export",
-    async (
-      event,
+    async (_event,
       eventType:
         | "subscription_cancelled"
         | "license_revoked"

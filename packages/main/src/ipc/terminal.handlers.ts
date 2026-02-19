@@ -22,7 +22,7 @@ export function registerTerminalHandlers() {
 
   ipcMain.handle(
     "terminals:getByBusiness",
-    async (event, sessionToken, businessId) => {
+    async (_event, sessionToken, businessId) => {
       try {
         const db = await getDatabase();
 
@@ -74,7 +74,7 @@ export function registerTerminalHandlers() {
 
   ipcMain.handle(
     "terminals:getById",
-    async (event, sessionToken, terminalId) => {
+    async (_event, sessionToken, terminalId) => {
       try {
         const db = await getDatabase();
 
@@ -132,7 +132,7 @@ export function registerTerminalHandlers() {
 
   ipcMain.handle(
     "terminals:update",
-    async (event, sessionToken, terminalId, updates) => {
+    async (_event, sessionToken, terminalId, updates) => {
       try {
         const db = await getDatabase();
 

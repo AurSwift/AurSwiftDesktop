@@ -103,7 +103,7 @@ export class PaymentService {
     // Initialize card reader
     ipcMain.handle(
       "payment:initialize-reader",
-      async (event, config: CardReaderConfig) => {
+      async (_event, config: CardReaderConfig) => {
         return await this.initializeCardReader(config);
       }
     );
@@ -111,7 +111,7 @@ export class PaymentService {
     // Create payment intent
     ipcMain.handle(
       "payment:create-intent",
-      async (event, data: PaymentIntentData) => {
+      async (_event, data: PaymentIntentData) => {
         return await this.createPaymentIntent(data);
       }
     );
@@ -119,7 +119,7 @@ export class PaymentService {
     // Process card payment
     ipcMain.handle(
       "payment:process-card",
-      async (event, paymentIntentId: string) => {
+      async (_event, paymentIntentId: string) => {
         return await this.processCardPayment(paymentIntentId);
       }
     );
@@ -393,7 +393,7 @@ export class PaymentService {
       }, 30000); // 30 second timeout
 
       // Listen for card data
-      const handleCardData = async (cardData: any) => {
+      const handleCardData = async (_cardData: any) => {
         clearTimeout(timeout);
         this.paymentState.currentStep = "processing";
 
@@ -514,7 +514,7 @@ export class PaymentService {
   /**
    * Process card data from reader
    */
-  private async processCardData(cardData: any): Promise<void> {
+  private async processCardData(_cardData: any): Promise<void> {
     if (!this.currentPaymentIntent) {
       return;
     }

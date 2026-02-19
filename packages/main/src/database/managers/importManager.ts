@@ -5,7 +5,6 @@ import type {
 } from "../../services/bookerImportService.js";
 import { CategoryManager } from "./categoryManager.js";
 import { ProductManager } from "./productManager.js";
-import { SupplierManager } from "./supplierManager.js";
 import { BatchManager } from "./batchManager.js";
 import { VatCategoryManager } from "./vatCategoryManager.js";
 import { eq, and } from "drizzle-orm";
@@ -78,7 +77,6 @@ export interface ImportError {
 export class ImportManager {
   private categoryManager: CategoryManager;
   private productManager: ProductManager;
-  private supplierManager: SupplierManager;
   private batchManager: BatchManager;
   private vatCategoryManager: VatCategoryManager;
   private drizzle: DrizzleDB;
@@ -89,7 +87,6 @@ export class ImportManager {
     this.uuid = uuid;
     this.categoryManager = new CategoryManager(drizzle, uuid);
     this.productManager = new ProductManager(drizzle, uuid);
-    this.supplierManager = new SupplierManager(drizzle, uuid);
     this.batchManager = new BatchManager(drizzle, uuid);
     this.vatCategoryManager = new VatCategoryManager(drizzle, uuid);
   }

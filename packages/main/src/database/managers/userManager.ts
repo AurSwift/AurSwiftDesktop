@@ -1,5 +1,5 @@
 import type { DrizzleDB } from "../drizzle.js";
-import { eq, and, like, desc, sql as drizzleSql } from "drizzle-orm";
+import { eq, and, desc, sql as drizzleSql } from "drizzle-orm";
 import * as schema from "../schema.js";
 import type { User } from "../schema.js";
 
@@ -1554,24 +1554,4 @@ export class UserManager {
     }
   }
 
-  /**
-   * Helper to check if a user has admin-level roles (admin/owner)
-   * Used to determine if clock-in/out is required
-   */
-  private isAdminUser(user: User): boolean {
-    // Check if user has admin or owner role via RBAC
-    const userRoles = this.db
-      .select({ name: schema.roles.name })
-      .from(schema.userRoles)
-      .innerJoin(schema.roles, eq(schema.userRoles.roleId, schema.roles.id))
-      .where(
-        and(
-          eq(schema.userRoles.userId, user.id),
-          eq(schema.userRoles.isActive, true),
-        ),
-      )
-      .all();
-
-    return userRoles.some((ur) => ur.name === "admin" || ur.name === "owner");
-  }
 }

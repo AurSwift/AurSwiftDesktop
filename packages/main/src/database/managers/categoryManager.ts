@@ -1,6 +1,6 @@
 import type { DrizzleDB } from "../drizzle.js";
 import { eq, and, sql as drizzleSql, isNull } from "drizzle-orm";
-import { Category, categories } from "../schema.js";
+import { Category } from "../schema.js";
 import * as schema from "../schema.js";
 import type { PaginationParams, PaginatedResult } from "../types/pagination.js";
 import {

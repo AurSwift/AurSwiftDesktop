@@ -122,7 +122,7 @@ export async function initApp(initConfig: AppInitConfig) {
   }
 
   // Initialize expiry notification service
-  const expiryService = new ExpiryNotificationService(db);
+  new ExpiryNotificationService(db);
 
   // Helper function to handle auto-closing shifts and clocking out TimeShifts
   const handleAutoCloseShifts = async () => {

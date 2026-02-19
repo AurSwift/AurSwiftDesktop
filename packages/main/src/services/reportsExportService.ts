@@ -5,7 +5,6 @@
  */
 
 import { writeFile } from "fs/promises";
-import { join } from "path";
 import PDFDocument from "pdfkit";
 import { getLogger } from "../utils/logger.js";
 import { getDatabase } from "../database/index.js";
@@ -117,7 +116,6 @@ export function generateCSVContent(
     includeHeaders = true,
     delimiter = ",",
     includeItems = false,
-    dateFormat = "en-GB",
   } = options;
 
   const lines: string[] = [];
@@ -471,4 +469,3 @@ export async function exportToPDF(
     );
   }
 }
-

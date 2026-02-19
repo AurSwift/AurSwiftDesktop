@@ -277,7 +277,6 @@ export class ShiftManager {
     cashierId: string;
   }> {
     const now = new Date();
-    const nowString = now.toISOString();
 
     const basicCutoffTime = new Date(now);
     basicCutoffTime.setDate(basicCutoffTime.getDate() - 1);
@@ -367,10 +366,6 @@ export class ShiftManager {
       }
 
       if (shouldClose) {
-        // Use snake_case field names from schema
-        const estimatedCash =
-          (shift.starting_cash || 0) + (shift.total_sales || 0);
-
         this.db
           .update(schema.shifts)
           .set({
@@ -406,7 +401,6 @@ export class ShiftManager {
     cashierId: string;
   }> {
     const now = new Date();
-    const nowString = now.toISOString();
 
     // Get all active shifts with their schedules and clock-in events
     const activeShifts = this.db
@@ -507,10 +501,6 @@ export class ShiftManager {
       }
 
       if (shouldClose) {
-        // Use snake_case field names from schema
-        const estimatedCash =
-          (shift.starting_cash || 0) + (shift.total_sales || 0);
-
         this.db
           .update(schema.shifts)
           .set({

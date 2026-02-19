@@ -24,11 +24,6 @@ export type TransactionState =
   | "cancelled"
   | "refunded";
 
-interface StateTransition {
-  from: TransactionState;
-  to: TransactionState[];
-}
-
 // =============================================================================
 // STATE MACHINE
 // =============================================================================

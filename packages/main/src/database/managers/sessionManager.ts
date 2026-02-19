@@ -182,7 +182,7 @@ export class SessionManager {
    * Desktop apps use long-lived tokens with secure storage (Electron safeStorage)
    * This method is kept for backward compatibility but will always return null
    */
-  getSessionByRefreshToken(refreshToken: string): Session | null {
+  getSessionByRefreshToken(_refreshToken: string): Session | null {
     // Refresh tokens not supported in desktop EPOS
     return null;
   }
@@ -193,8 +193,8 @@ export class SessionManager {
    * This method is kept for backward compatibility but will always return null
    */
   refreshAccessToken(
-    refreshToken: string,
-    accessTokenExpiryHours: number = 1
+    _refreshToken: string,
+    _accessTokenExpiryHours: number = 1
   ): Session | null {
     // Refresh tokens not supported in desktop EPOS
     return null;

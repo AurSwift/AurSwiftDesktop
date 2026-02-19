@@ -9,7 +9,7 @@ const logger = getLogger("shiftHandlers");
 
 export function registerShiftHandlers() {
   // Schedule Management API handlers
-  ipcMain.handle("schedules:create", async (event, scheduleData) => {
+  ipcMain.handle("schedules:create", async (_event, scheduleData) => {
     try {
       const db = await getDatabase();
 
@@ -47,7 +47,7 @@ export function registerShiftHandlers() {
     }
   });
 
-  ipcMain.handle("schedules:getByBusiness", async (event, businessId) => {
+  ipcMain.handle("schedules:getByBusiness", async (_event, businessId) => {
     try {
       const db = await getDatabase();
       const schedules = db.schedules.getSchedulesByBusiness(businessId);
@@ -68,7 +68,7 @@ export function registerShiftHandlers() {
     }
   });
 
-  ipcMain.handle("schedules:getByStaff", async (event, staffId) => {
+  ipcMain.handle("schedules:getByStaff", async (_event, staffId) => {
     try {
       const db = await getDatabase();
       const schedules = db.schedules.getSchedulesByStaffId(staffId);
@@ -89,7 +89,7 @@ export function registerShiftHandlers() {
     }
   });
 
-  ipcMain.handle("schedules:update", async (event, id, updates) => {
+  ipcMain.handle("schedules:update", async (_event, id, updates) => {
     try {
       const db = await getDatabase();
 
@@ -129,7 +129,7 @@ export function registerShiftHandlers() {
     }
   });
 
-  ipcMain.handle("schedules:delete", async (event, id) => {
+  ipcMain.handle("schedules:delete", async (_event, id) => {
     try {
       const db = await getDatabase();
 
@@ -149,7 +149,7 @@ export function registerShiftHandlers() {
     }
   });
 
-  ipcMain.handle("schedules:updateStatus", async (event, id, status) => {
+  ipcMain.handle("schedules:updateStatus", async (_event, id, status) => {
     try {
       const db = await getDatabase();
       db.schedules.updateScheduleStatus(id, status);
@@ -166,7 +166,7 @@ export function registerShiftHandlers() {
     }
   });
 
-  ipcMain.handle("schedules:getCashierUsers", async (event, businessId) => {
+  ipcMain.handle("schedules:getCashierUsers", async (_event, businessId) => {
     try {
       const db = await getDatabase();
       const users = db.users.getUsersByBusiness(businessId);
@@ -196,7 +196,7 @@ export function registerShiftHandlers() {
   });
 
   // Shift management IPC handlers
-  ipcMain.handle("shift:start", async (event, shiftData) => {
+  ipcMain.handle("shift:start", async (_event, shiftData) => {
     try {
       const db = await getDatabase();
 
@@ -422,7 +422,7 @@ export function registerShiftHandlers() {
     }
   });
 
-  ipcMain.handle("shift:end", async (event, shiftId, endData) => {
+  ipcMain.handle("shift:end", async (_event, shiftId, endData) => {
     try {
       const db = await getDatabase();
 
@@ -498,7 +498,7 @@ export function registerShiftHandlers() {
     }
   });
 
-  ipcMain.handle("shift:getActive", async (event, cashierId) => {
+  ipcMain.handle("shift:getActive", async (_event, cashierId) => {
     try {
       const db = await getDatabase();
 
@@ -536,7 +536,7 @@ export function registerShiftHandlers() {
   // Schedule validation endpoint
   ipcMain.handle(
     "schedules:validateClockIn",
-    async (event, userId, businessId) => {
+    async (_event, userId, businessId) => {
       try {
         const db = await getDatabase();
 
@@ -569,7 +569,7 @@ export function registerShiftHandlers() {
     }
   );
 
-  ipcMain.handle("shift:getTodaySchedule", async (event, cashierId) => {
+  ipcMain.handle("shift:getTodaySchedule", async (_event, cashierId) => {
     try {
       const db = await getDatabase();
 
@@ -696,7 +696,7 @@ export function registerShiftHandlers() {
     }
   });
 
-  ipcMain.handle("shift:getStats", async (event, shiftId) => {
+  ipcMain.handle("shift:getStats", async (_event, shiftId) => {
     try {
       const db = await getDatabase();
 
@@ -733,7 +733,7 @@ export function registerShiftHandlers() {
     }
   });
 
-  ipcMain.handle("shift:getHourlyStats", async (event, shiftId) => {
+  ipcMain.handle("shift:getHourlyStats", async (_event, shiftId) => {
     try {
       const db = await getDatabase();
 
@@ -752,7 +752,7 @@ export function registerShiftHandlers() {
     }
   });
 
-  ipcMain.handle("shift:getCashDrawerBalance", async (event, shiftId) => {
+  ipcMain.handle("shift:getCashDrawerBalance", async (_event, shiftId) => {
     try {
       const db = await getDatabase();
 

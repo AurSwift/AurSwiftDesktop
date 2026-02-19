@@ -291,8 +291,6 @@ export function isDatabaseLocked(dbPath: string): boolean {
 
     // Check for SQLite lock files
     const walFile = `${dbPath}-wal`;
-    const shmFile = `${dbPath}-shm`;
-
     // If WAL or SHM files exist but are older than 5 minutes,
     // they might be stale locks from crashed processes
     const now = Date.now();

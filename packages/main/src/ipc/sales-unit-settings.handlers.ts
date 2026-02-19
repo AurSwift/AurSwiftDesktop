@@ -6,7 +6,7 @@ const logger = getLogger("salesUnitSettingsHandlers");
 // let db: any = null; // Removed: Always get fresh DB reference
 
 export function registerSalesUnitSettingsHandlers() {
-  ipcMain.handle("salesUnitSettings:get", async (event, businessId) => {
+  ipcMain.handle("salesUnitSettings:get", async (_event, businessId) => {
     try {
       const db = await getDatabase();
       const settings = await db.salesUnitSettings.getOrCreateSettings(
@@ -28,7 +28,7 @@ export function registerSalesUnitSettingsHandlers() {
 
   ipcMain.handle(
     "salesUnitSettings:createOrUpdate",
-    async (event, businessId, settingsData) => {
+    async (_event, businessId, settingsData) => {
       try {
         const db = await getDatabase();
         const settings = await db.salesUnitSettings.createOrUpdateSettings(

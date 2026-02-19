@@ -1,5 +1,4 @@
 import fs from "fs";
-import path from "path";
 
 export interface BookerDepartment {
   department: string;
@@ -316,7 +315,7 @@ export class BookerImportService {
   /**
    * Validate parsed data before import
    */
-  validateData(data: BookerProduct[], businessId: string): ValidationResult {
+  validateData(data: BookerProduct[]): ValidationResult {
     const errors: ValidationError[] = [];
     const duplicates: DuplicateInfo[] = [];
 

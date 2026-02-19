@@ -12,7 +12,7 @@
  */
 
 import type { DatabaseManagers } from "../database/index.js";
-import type { User, Role } from "../database/schema.js";
+import type { User } from "../database/schema.js";
 import { getLogger } from "./logger.js";
 
 const logger = getLogger("shiftRequirementResolver");
@@ -141,4 +141,3 @@ export class ShiftRequirementResolver {
 
 // Export singleton instance for convenience
 export const shiftRequirementResolver = new ShiftRequirementResolver();
-

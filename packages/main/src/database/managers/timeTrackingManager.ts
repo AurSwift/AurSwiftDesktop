@@ -6,7 +6,6 @@ import {
   desc,
   gte,
   lte,
-  isNull,
   sql as drizzleSql,
 } from "drizzle-orm";
 import * as schema from "../schema.js";
@@ -1229,7 +1228,7 @@ export class TimeTrackingManager {
    */
   async forceClockOut(
     userId: string,
-    managerId: string,
+    _managerId: string,
     reason: string
   ): Promise<{ clockEvent: ClockEvent; shift: Shift }> {
     const activeShift = this.getActiveShift(userId);

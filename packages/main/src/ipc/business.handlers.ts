@@ -21,7 +21,7 @@ export function registerBusinessHandlers() {
 
   ipcMain.handle(
     "business:update",
-    async (event, sessionToken, businessId, updates) => {
+    async (_event, sessionToken, businessId, updates) => {
       try {
         const db = await getDatabase();
 

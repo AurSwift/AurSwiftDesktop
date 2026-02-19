@@ -17,7 +17,6 @@ function getLogsDirectory(): string {
     // Explicitly use LOCALAPPDATA for Windows
     // app.getPath("logs") should return LOCALAPPDATA, but we verify
     const logsPath = app.getPath("logs");
-    const appDataPath = app.getPath("appData"); // This is APPDATA (Roaming)
     const localAppDataPath = app.getPath("appData").replace("Roaming", "Local");
 
     // If logs path is in Roaming, redirect to Local

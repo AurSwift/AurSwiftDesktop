@@ -1,6 +1,6 @@
 import type { StockAdjustment } from "../schema.js";
 import type { DrizzleDB } from "../drizzle.js";
-import { eq, desc, sql as drizzleSql } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import * as schema from "../schema.js";
 import type { StockMovementManager } from "./stockMovementManager.js";
 

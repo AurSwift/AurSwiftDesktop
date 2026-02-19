@@ -28,7 +28,7 @@ export class TimeTrackingReportManager {
 
   constructor(drizzle: DrizzleDB) {
     this.db = drizzle;
-    this.rawDb = getRawDatabase(drizzle);
+    this.rawDb = getRawDatabase();
   }
 
   /**
@@ -434,8 +434,6 @@ export class TimeTrackingReportManager {
    * Get real-time dashboard data
    */
   getRealTimeDashboard(businessId: string): any {
-    const today = new Date().toISOString().split("T")[0];
-
     // Currently clocked in users
     const currentlyWorking = this.rawDb
       .prepare(

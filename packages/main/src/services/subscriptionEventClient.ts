@@ -76,9 +76,6 @@ export interface ConnectionState {
   error: string | null;
 }
 
-// Event handler type
-type EventHandler = (event: SubscriptionEvent) => void;
-
 // ============================================================================
 // SSE CLIENT CLASS (Native Node.js Implementation)
 // ============================================================================
@@ -106,8 +103,6 @@ export class SubscriptionEventClient extends EventEmitter {
 
   // Terminal coordination (Phase 6)
   private heartbeatIntervalId: NodeJS.Timeout | null = null;
-  private terminalSessionId: string | null = null;
-
   constructor(licenseKey: string, machineIdHash: string, apiBaseUrl: string) {
     super();
     this.licenseKey = licenseKey.toUpperCase();
@@ -366,48 +361,6 @@ export class SubscriptionEventClient extends EventEmitter {
   // (Event subscription handled in parseSSEMessage)
   // =========================================================================
 
-  /**
-   * Handle incoming event
-   */
-  private handleEvent(eventType: SubscriptionEventType, data: string): void {
-    try {
-      const event = JSON.parse(data) as SubscriptionEvent;
-
-      // Deduplicate events
-      if (this.processedEvents.has(event.id)) {
-        logger.debug(`Ignoring duplicate event: ${event.id}`);
-        return;
-      }
-      this.processedEvents.set(event.id, Date.now());
-
-      // Handle heartbeat separately
-      if (eventType === "heartbeat_ack") {
-        this.handleHeartbeat(event);
-        return;
-      }
-
-      logger.info(`Received subscription event: ${eventType}`, {
-        eventId: event.id,
-        licenseKey: event.licenseKey.substring(0, 15) + "...",
-      });
-
-      // Emit the event for handlers to process
-      this.emit("event", event);
-      this.emit(eventType, event);
-    } catch (error) {
-      logger.error("Failed to process event:", error);
-    }
-  }
-
-  /**
-   * Handle heartbeat event
-   */
-  private handleHeartbeat(event: SubscriptionEvent): void {
-    this.lastHeartbeat = new Date();
-    this.resetHeartbeatTimeout();
-    logger.debug("Heartbeat received from server");
-  }
-
   // =========================================================================
   // HEARTBEAT MONITORING
   // =========================================================================
@@ -631,7 +584,7 @@ export class SubscriptionEventClient extends EventEmitter {
         },
       };
 
-      await new Promise<void>((resolve, reject) => {
+      await new Promise<void>((resolve) => {
         const request = httpModule.request(options, (res: IncomingMessage) => {
           if (res.statusCode !== 200) {
             logger.warn(
@@ -741,7 +694,6 @@ export class SubscriptionEventClient extends EventEmitter {
       );
 
       if (response.success) {
-        this.terminalSessionId = response.sessionId;
         logger.info("Terminal session registered", {
           sessionId: response.sessionId,
         });

@@ -8,7 +8,6 @@
 
 import Database from "better-sqlite3";
 import { app } from "electron";
-import semver from "semver";
 import fs from "fs";
 import { getDatabaseAge, formatDatabaseAge } from "./db-validator.js";
 
@@ -129,12 +128,6 @@ export function checkDatabaseCompatibility(
     let schemaError: string | undefined;
 
     try {
-      // Quick check if core tables exist
-      const coreTables = [
-        // Add your core required tables here
-        // Example: 'users', 'products', 'transactions'
-      ];
-
       // For now, just check if we can read from migrations table
       const testQuery = db.prepare(
         "SELECT COUNT(*) as count FROM __drizzle_migrations"

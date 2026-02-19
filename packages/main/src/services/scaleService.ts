@@ -82,7 +82,6 @@ export class ScaleService {
   private readingHistory: number[] = [];
   private stabilityThreshold: number = 2; // 2g default
   private stabilityReadings: number = 3; // 3 consistent readings
-  private readingInterval: NodeJS.Timeout | null = null;
   private mainWindow: BrowserWindow | null = null;
 
   constructor() {
@@ -390,8 +389,8 @@ export class ScaleService {
     this.isReading = true;
     this.readingHistory = [];
 
-    this.currentDriver.startReading((weight, stable) => {
-      this.processWeightReading(weight, stable);
+    this.currentDriver.startReading((weight, _stable) => {
+      this.processWeightReading(weight);
     });
 
     logger.info("Started scale reading");
@@ -411,7 +410,7 @@ export class ScaleService {
   /**
    * Process weight reading from driver
    */
-  private processWeightReading(weight: number, driverStable: boolean): void {
+  private processWeightReading(weight: number): void {
     // Apply tare weight if configured
     if (this.currentConfig?.tareWeight) {
       weight = Math.max(0, weight - this.currentConfig.tareWeight);
@@ -798,4 +797,3 @@ export function getScaleService(): ScaleService {
 
 // Auto-initialize on import
 getScaleService();
-

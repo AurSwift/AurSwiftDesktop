@@ -636,7 +636,7 @@ export class ProductManager {
       }
 
       // Update the product
-      const product = await this.updateProduct(id, updates);
+      await this.updateProduct(id, updates);
 
       // Fetch the complete updated product
       const updatedProduct = await this.getProductById(id, true);

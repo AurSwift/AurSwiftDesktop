@@ -10,7 +10,7 @@ export function registerCartHandlers() {
   // CART SESSION IPC HANDLERS
   // ============================================================================
 
-  ipcMain.handle("cart:createSession", async (event, sessionData) => {
+  ipcMain.handle("cart:createSession", async (_event, sessionData) => {
     try {
       const db = await getDatabase();
       const session = await db.cart.createSession(sessionData);
@@ -31,7 +31,7 @@ export function registerCartHandlers() {
     }
   });
 
-  ipcMain.handle("cart:getSession", async (event, sessionId) => {
+  ipcMain.handle("cart:getSession", async (_event, sessionId) => {
     try {
       const db = await getDatabase();
       const session = await db.cart.getSessionById(sessionId);
@@ -50,7 +50,7 @@ export function registerCartHandlers() {
     }
   });
 
-  ipcMain.handle("cart:getActiveSession", async (event, cashierId) => {
+  ipcMain.handle("cart:getActiveSession", async (_event, cashierId) => {
     try {
       const db = await getDatabase();
       const session = await db.cart.getActiveSession(cashierId);
@@ -71,7 +71,7 @@ export function registerCartHandlers() {
     }
   });
 
-  ipcMain.handle("cart:updateSession", async (event, sessionId, updates) => {
+  ipcMain.handle("cart:updateSession", async (_event, sessionId, updates) => {
     try {
       const db = await getDatabase();
       const session = await db.cart.updateSession(sessionId, updates);
@@ -92,7 +92,7 @@ export function registerCartHandlers() {
     }
   });
 
-  ipcMain.handle("cart:completeSession", async (event, sessionId) => {
+  ipcMain.handle("cart:completeSession", async (_event, sessionId) => {
     try {
       const db = await getDatabase();
       const session = await db.cart.completeSession(sessionId);
@@ -113,7 +113,7 @@ export function registerCartHandlers() {
     }
   });
 
-  ipcMain.handle("cart:cancelSession", async (event, sessionId) => {
+  ipcMain.handle("cart:cancelSession", async (_event, sessionId) => {
     try {
       const db = await getDatabase();
       const session = await db.cart.cancelSession(sessionId);
@@ -134,7 +134,7 @@ export function registerCartHandlers() {
     }
   });
 
-  ipcMain.handle("cart:addItem", async (event, itemData) => {
+  ipcMain.handle("cart:addItem", async (_event, itemData) => {
     try {
       const db = await getDatabase();
       const item = await db.cart.addItem(itemData);
@@ -153,7 +153,7 @@ export function registerCartHandlers() {
     }
   });
 
-  ipcMain.handle("cart:getItems", async (event, sessionId) => {
+  ipcMain.handle("cart:getItems", async (_event, sessionId) => {
     try {
       const db = await getDatabase();
       const items = await db.cart.getItemsBySession(sessionId);
@@ -172,7 +172,7 @@ export function registerCartHandlers() {
     }
   });
 
-  ipcMain.handle("cart:updateItem", async (event, itemId, updates) => {
+  ipcMain.handle("cart:updateItem", async (_event, itemId, updates) => {
     try {
       const db = await getDatabase();
       const item = await db.cart.updateItem(itemId, updates);
@@ -191,7 +191,7 @@ export function registerCartHandlers() {
     }
   });
 
-  ipcMain.handle("cart:removeItem", async (event, itemId) => {
+  ipcMain.handle("cart:removeItem", async (_event, itemId) => {
     try {
       const db = await getDatabase();
       await db.cart.removeItem(itemId);
@@ -209,7 +209,7 @@ export function registerCartHandlers() {
     }
   });
 
-  ipcMain.handle("cart:clearCart", async (event, sessionId) => {
+  ipcMain.handle("cart:clearCart", async (_event, sessionId) => {
     try {
       const db = await getDatabase();
       await db.cart.clearCart(sessionId);

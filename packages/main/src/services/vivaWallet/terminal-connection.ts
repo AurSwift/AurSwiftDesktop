@@ -27,13 +27,11 @@ export class TerminalConnection {
     lastConnectedAt: null as Date | null,
     reconnectAttempts: 0,
   };
-  private terminal: Terminal | null = null;
 
   /**
    * Connect to terminal
    */
   async connect(terminal: Terminal): Promise<boolean> {
-    this.terminal = terminal;
     this.connectionState = "connecting";
 
     try {
@@ -64,7 +62,6 @@ export class TerminalConnection {
   disconnect(): void {
     this.stopHealthMonitoring();
     this.connectionState = "disconnected";
-    this.terminal = null;
     this.connectionMetrics = {
       latency: 0,
       uptime: 0,

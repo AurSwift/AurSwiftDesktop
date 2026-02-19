@@ -11,7 +11,7 @@ export function registerSupplierHandlers() {
   // SUPPLIER MANAGEMENT IPC HANDLERS
   // ============================================================================
 
-  ipcMain.handle("suppliers:create", async (event, supplierData) => {
+  ipcMain.handle("suppliers:create", async (_event, supplierData) => {
     try {
       const db = await getDatabase();
       const supplier = await db.suppliers.createSupplier(supplierData);
@@ -30,7 +30,7 @@ export function registerSupplierHandlers() {
     }
   });
 
-  ipcMain.handle("suppliers:getById", async (event, supplierId) => {
+  ipcMain.handle("suppliers:getById", async (_event, supplierId) => {
     try {
       const db = await getDatabase();
       const supplier = await db.suppliers.getSupplierById(supplierId);
@@ -50,7 +50,7 @@ export function registerSupplierHandlers() {
 
   ipcMain.handle(
     "suppliers:getByBusiness",
-    async (event, businessId, includeInactive) => {
+    async (_event, businessId, includeInactive) => {
       try {
         const db = await getDatabase();
         const suppliers = await db.suppliers.getSuppliersByBusiness(
@@ -72,7 +72,7 @@ export function registerSupplierHandlers() {
     }
   );
 
-  ipcMain.handle("suppliers:update", async (event, supplierId, updates) => {
+  ipcMain.handle("suppliers:update", async (_event, supplierId, updates) => {
     try {
       const db = await getDatabase();
       const supplier = await db.suppliers.updateSupplier(supplierId, updates);
@@ -91,7 +91,7 @@ export function registerSupplierHandlers() {
     }
   });
 
-  ipcMain.handle("suppliers:delete", async (event, supplierId) => {
+  ipcMain.handle("suppliers:delete", async (_event, supplierId) => {
     try {
       const db = await getDatabase();
       const deleted = await db.suppliers.deleteSupplier(supplierId);

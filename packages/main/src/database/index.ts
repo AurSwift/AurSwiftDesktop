@@ -384,7 +384,7 @@ export async function getDatabase(): Promise<DatabaseManagers> {
       get quickSell() {
         return createLazy(
           "quickSell",
-          () => new QuickSellManager(drizzle, uuid),
+          () => new QuickSellManager(drizzle),
         );
       },
 
