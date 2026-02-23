@@ -54,19 +54,19 @@ class WindowManager implements AppModule {
       // App menu (macOS only)
       ...(isMac
         ? [
-            {
-              label: electronApp.name,
-              submenu: [
-                { role: "about" as const },
-                { type: "separator" as const },
-                { role: "hide" as const },
-                { role: "hideOthers" as const },
-                { role: "unhide" as const },
-                { type: "separator" as const },
-                { role: "quit" as const },
-              ],
-            },
-          ]
+          {
+            label: electronApp.name,
+            submenu: [
+              { role: "about" as const },
+              { type: "separator" as const },
+              { role: "hide" as const },
+              { role: "hideOthers" as const },
+              { role: "unhide" as const },
+              { type: "separator" as const },
+              { role: "quit" as const },
+            ],
+          },
+        ]
         : []),
 
       // Help menu
@@ -152,15 +152,29 @@ class WindowManager implements AppModule {
     // Hide the menu bar completely
     browserWindow.setMenuBarVisibility(false);
 
-    // Disable DevTools completely in production
-    if (process.env.NODE_ENV === "production") {
+    // Allow DevTools shortcuts in development, block them in production
+    if (process.env.NODE_ENV === "development") {
+      browserWindow.webContents.on("before-input-event", (event, input) => {
+        if (input.type === "keyDown") {
+          // Block F12 and Ctrl+Shift+I (Cmd+Option+I on Mac) to toggle DevTools
+          if (
+            input.key === "F12" ||
+            (input.control && input.shift && input.key.toLowerCase() === "i") ||
+            (input.meta && input.alt && input.key.toLowerCase() === "i")
+          ) {
+            browserWindow.webContents.toggleDevTools();
+            event.preventDefault();
+          }
+        }
+      });
+    } else if (process.env.NODE_ENV === "production") {
       // Prevent opening DevTools with keyboard shortcuts
       browserWindow.webContents.on("before-input-event", (event, input) => {
         // Block F12 and Ctrl+Shift+I (Cmd+Option+I on Mac)
         if (
           input.key === "F12" ||
-          (input.control && input.shift && input.key === "I") ||
-          (input.meta && input.alt && input.key === "I")
+          (input.control && input.shift && input.key.toLowerCase() === "i") ||
+          (input.meta && input.alt && input.key.toLowerCase() === "i")
         ) {
           event.preventDefault();
         }
@@ -223,9 +237,9 @@ class WindowManager implements AppModule {
           await dialog.showErrorBox(
             "Development Server Not Running",
             `The frontend development server is not running.\n\n` +
-              `Please start it with:\n` +
-              `npm run dev --workspace @app/renderer\n\n` +
-              `Then restart the app.`
+            `Please start it with:\n` +
+            `npm run dev --workspace @app/renderer\n\n` +
+            `Then restart the app.`
           );
 
           electronApp.quit();

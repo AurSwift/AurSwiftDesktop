@@ -1094,12 +1094,12 @@ export function OperationsOverview() {
         className={cn(
           "grid gap-4",
           hasContextPanel
-            ? "xl:grid-cols-[16rem_minmax(0,1fr)_21rem]"
-            : "xl:grid-cols-[16rem_minmax(0,1fr)]",
+            ? "xl:grid-cols-[1fr_21rem]"
+            : "xl:grid-cols-1",
         )}
       >
         <main className="space-y-4">
-          <section className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-5">
+          <section className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
             {kpis.map((kpi) => (
               <KpiTile
                 key={kpi.id}
