@@ -15,9 +15,9 @@ export {
 
 // Shell Components
 export {
-  AurSwiftBackOfficeShell,
-  AurSwiftSidebar,
-  AurSwiftTopbar,
+  BackOfficeShell,
+  BackOfficeSidebar,
+  BackOfficeTopbar,
 } from "./shell";
 
 // Hooks

@@ -1,12 +1,12 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useAuth } from "@/shared/hooks";
 import { getUserRoleName } from "@/shared/utils/rbac-helpers";
-import { UserSelectionGrid } from "@/features/auth/components/user-selection-grid";
-import { PinEntryScreen } from "@/features/auth/components/pin-entry-screen";
-import { AuthHeader } from "@/features/auth/components/auth-header";
-import { getUserColor } from "@/features/auth/components/utils";
 import { getAppVersion } from "@/shared/utils/version";
 import type { UserForLogin } from "@/types/domain";
+import { AuthHeader } from "./auth-header";
+import { PinEntryScreen } from "./pin-entry-screen";
+import { UserSelectionGrid } from "./user-selection-grid";
+import { getUserColor } from "./utils";
 
 import { getLogger } from "@/shared/utils/logger";
 const logger = getLogger("auth-user-selection");

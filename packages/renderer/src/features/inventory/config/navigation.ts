@@ -10,53 +10,52 @@ export const INVENTORY_ROUTES = {
   DASHBOARD: "inventory:dashboard",
 
   /** Product list view */
-  PRODUCTS: "inventory:products",
+  PRODUCTS: "inventory:management:products",
 
   /** Product details view */
-  PRODUCT_DETAILS: "inventory:product-details",
+  PRODUCT_DETAILS: "inventory:management:product-details",
 
   /** Batch management view */
-  BATCHES: "inventory:batches",
+  BATCHES: "inventory:management:batches",
 
   /** Category management view */
-  CATEGORIES: "inventory:categories",
+  CATEGORIES: "inventory:management:categories",
 
   /** Stock movement history view */
-  HISTORY: "inventory:history",
+  HISTORY: "inventory:management:stock-history",
 
   /** Product expiry dashboard view */
-  EXPIRY_DASHBOARD: "inventory:expiry-dashboard",
+  EXPIRY_DASHBOARD: "inventory:batches:expiry-alerts",
 
-  // Legacy nested route constants (will be migrated to new structure)
-  /** Product management root view (legacy) */
-  PRODUCT_MANAGEMENT: "productManagement",
+  /** Product management root view */
+  PRODUCT_MANAGEMENT: "inventory:management",
 
   /** Product dashboard nested view */
-  PRODUCT_DASHBOARD: "productDashboard",
+  PRODUCT_DASHBOARD: "inventory:management:dashboard",
 
   /** Product list nested view */
-  PRODUCT_LIST: "productList",
+  PRODUCT_LIST: "inventory:management:products",
 
   /** Product details nested view */
-  PRODUCT_DETAILS_NESTED: "productDetails",
+  PRODUCT_DETAILS_NESTED: "inventory:management:product-details",
 
   /** Category management nested view */
-  CATEGORY_MANAGEMENT: "categoryManagement",
+  CATEGORY_MANAGEMENT: "inventory:management:categories",
 
-  /** Batch management root view (legacy) */
-  BATCH_MANAGEMENT: "batchManagement",
+  /** Batch management root view */
+  BATCH_MANAGEMENT: "inventory:management:batches",
 
   /** Batch dashboard nested view */
-  BATCH_DASHBOARD: "batchDashboard",
+  BATCH_DASHBOARD: "inventory:batches:dashboard",
 
   /** Batch list nested view */
-  BATCH_LIST: "batchList",
+  BATCH_LIST: "inventory:batches:list",
 
   /** Expiry alerts nested view */
-  EXPIRY_ALERTS: "expiryAlerts",
+  EXPIRY_ALERTS: "inventory:batches:expiry-alerts",
 
   /** Stock movement history nested view */
-  STOCK_MOVEMENT_HISTORY: "stockMovementHistory",
+  STOCK_MOVEMENT_HISTORY: "inventory:management:stock-history",
 } as const;
 
 export type InventoryRoute =

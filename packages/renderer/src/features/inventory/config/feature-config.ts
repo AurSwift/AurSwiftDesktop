@@ -4,7 +4,6 @@
  * Central configuration for the inventory feature.
  * This is used by the navigation system and dashboard.
  *
- * NOTE: This file will be updated as views are migrated to the new structure.
  */
 
 import { lazy } from "react";
@@ -38,28 +37,24 @@ export const inventoryFeature: FeatureConfig = {
       id: "view-products",
       label: "View Products",
       icon: Package,
-      onClick: () => {}, // Will be injected by dashboard
       permissions: [INVENTORY_PERMISSIONS.READ],
     },
     {
       id: "manage-products",
       label: "Manage Products",
       icon: Package,
-      onClick: () => {},
       permissions: [INVENTORY_PERMISSIONS.MANAGE],
     },
     {
       id: "manage-batches",
       label: "Manage Batches",
       icon: Package,
-      onClick: () => {},
       permissions: [INVENTORY_PERMISSIONS.MANAGE_BATCHES],
     },
     {
       id: "manage-categories",
       label: "Manage Categories",
       icon: Package,
-      onClick: () => {},
       permissions: [INVENTORY_PERMISSIONS.MANAGE_CATEGORIES],
     },
   ],
@@ -71,7 +66,6 @@ export const inventoryFeature: FeatureConfig = {
  * All views in the inventory feature are registered here.
  * This is used by the navigation system.
  *
- * NOTE: These will be updated to use new view locations after migration.
  */
 export const inventoryViews: Record<string, ViewConfig> = {
   // Main product management view (will become inventory dashboard)
@@ -88,7 +82,7 @@ export const inventoryViews: Record<string, ViewConfig> = {
     requiresAuth: true,
   },
 
-  // Product management (legacy route - will be mapped to new routes)
+  // Product management container
   [INVENTORY_ROUTES.PRODUCT_MANAGEMENT]: {
     id: INVENTORY_ROUTES.PRODUCT_MANAGEMENT,
     level: "root",

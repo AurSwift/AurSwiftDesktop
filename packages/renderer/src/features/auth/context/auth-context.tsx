@@ -8,7 +8,7 @@ const logger = getLogger("auth-context");
 
 /* eslint-disable react-refresh/only-export-components */
 export const AuthContext = createContext<AuthContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -25,7 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (
     username: string,
     pin: string,
-    rememberMe: boolean = false
+    rememberMe: boolean = false,
   ): Promise<{ success: boolean; message: string; errors?: string[] }> => {
     setIsLoading(true);
     setError(null);
@@ -52,13 +52,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (response.shift) {
           await window.authStore.set(
             "activeShift",
-            JSON.stringify(response.shift)
+            JSON.stringify(response.shift),
           );
         }
         if (response.clockEvent) {
           await window.authStore.set(
             "clockEvent",
-            JSON.stringify(response.clockEvent)
+            JSON.stringify(response.clockEvent),
           );
         }
 
@@ -88,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Handle specific error codes
         if (response.code === "NO_SCHEDULED_SHIFT") {
           setError(
-            "You don't have a scheduled shift at this time. Please contact your manager."
+            "You don't have a scheduled shift at this time. Please contact your manager.",
           );
         } else {
           setError(response.message);
@@ -246,7 +246,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               setRequiresPinChange(false);
             }
             logger.info(
-              `[ValidateSession] Session validated for user ${response.user.id}`
+              `[ValidateSession] Session validated for user ${response.user.id}`,
             );
           } else {
             // Session is invalid - clear stored data
@@ -255,7 +255,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               window.authStore.delete("user"),
               window.authStore.delete("token"),
             ]);
-            setSessionToken(null); 
+            setSessionToken(null);
             setRequiresPinChange(false);
           }
         } else {
@@ -283,7 +283,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    */
   const clockIn = async (
     userId: string,
-    businessId: string
+    businessId: string,
   ): Promise<{ success: boolean; message?: string }> => {
     try {
       const terminalId = `TERMINAL-${navigator.userAgent.slice(0, 10)}`;
@@ -300,7 +300,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (response.shift) {
           await window.authStore.set(
             "activeShift",
-            JSON.stringify(response.shift)
+            JSON.stringify(response.shift),
           );
         }
         return { success: true, message: "Clocked in successfully" };
@@ -320,7 +320,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * Clock Out: End time tracking shift
    */
   const clockOut = async (
-    userId: string
+    userId: string,
   ): Promise<{ success: boolean; message?: string }> => {
     try {
       const terminalId = `TERMINAL-${navigator.userAgent.slice(0, 10)}`;
@@ -365,7 +365,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * Complete forced PIN change
    */
   const completeForceChangePIN = async (
-    newPin: string
+    newPin: string,
   ): Promise<{ success: boolean; message: string }> => {
     try {
       if (!sessionToken) throw new Error("No session");

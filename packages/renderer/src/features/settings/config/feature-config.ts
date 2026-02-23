@@ -28,21 +28,18 @@ export const settingsFeature: FeatureConfig = {
       id: "general-settings",
       label: "General Settings",
       icon: Settings,
-      onClick: () => {}, // Will be injected by dashboard
       permissions: [SETTINGS_PERMISSIONS.MANAGE],
     },
     {
       id: "store-configuration",
       label: "Terminal Configuration",
       icon: Building2,
-      onClick: () => {}, // Will be injected by dashboard
       permissions: [SETTINGS_PERMISSIONS.MANAGE],
     },
     {
       id: "viva-wallet-settings",
       label: "Viva Wallet",
       icon: CreditCard,
-      onClick: () => {}, // Will be injected by dashboard
       permissions: [SETTINGS_PERMISSIONS.MANAGE],
     },
   ],

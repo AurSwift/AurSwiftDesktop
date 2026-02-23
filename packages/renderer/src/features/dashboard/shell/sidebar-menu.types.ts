@@ -37,17 +37,8 @@ export interface SidebarFeatureVisibility {
   upgradeMessage?: string;
 }
 
-export interface SidebarModuleTab {
-  id: string;
-  label: string;
-  icon: LucideIcon;
-  isActive: boolean;
-  isDisabled: boolean;
-}
-
 export interface SidebarMenuViewModel {
   groups: SidebarGroupConfig[];
-  moduleTabs: SidebarModuleTab[];
   activeSelection: SidebarSelection | null;
   activeGroupId: string | null;
 }

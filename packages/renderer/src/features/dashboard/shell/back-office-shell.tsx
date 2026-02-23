@@ -14,8 +14,8 @@ import { getDashboardFeaturesForRole } from "@/features/dashboard/utils/dashboar
 import { useOptionalDashboardActions } from "@/features/dashboard/context/dashboard-actions-context";
 import { getLogger } from "@/shared/utils/logger";
 import { buildSidebarMenu } from "./sidebar-menu-builder";
-import { AurSwiftTopbar } from "./aurswift-topbar";
-import { AurSwiftSidebar } from "./aurswift-sidebar";
+import { BackOfficeTopbar } from "./back-office-topbar";
+import { BackOfficeSidebar } from "./back-office-sidebar";
 import type {
   SidebarActionItem,
   SidebarFeatureVisibility,
@@ -23,9 +23,9 @@ import type {
   SidebarSelection,
 } from "./sidebar-menu.types";
 
-const logger = getLogger("aurswift-backoffice-shell");
+const logger = getLogger("back-office-shell");
 
-interface AurSwiftBackOfficeShellProps {
+interface BackOfficeShellProps {
   currentViewId: string;
   currentViewTitle?: string;
   children: ReactNode;
@@ -49,11 +49,11 @@ function findSelectedItem(
   return null;
 }
 
-export function AurSwiftBackOfficeShell({
+export function BackOfficeShell({
   currentViewId,
   currentViewTitle,
   children,
-}: AurSwiftBackOfficeShellProps) {
+}: BackOfficeShellProps) {
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const dashboardActions = useOptionalDashboardActions();
@@ -210,7 +210,6 @@ export function AurSwiftBackOfficeShell({
   const selectedItem =
     findSelectedItem(menu.groups, menu.activeSelection) ||
     findSelectedItem(menu.groups, lastSelected);
-  const sidebarContextLabel = user?.businessName || "Back Office";
 
   const breadcrumbItems = useMemo(() => {
     const items: string[] = [];
@@ -236,7 +235,7 @@ export function AurSwiftBackOfficeShell({
 
   return (
     <div className="flex h-dvh min-h-screen flex-col bg-background text-foreground">
-      <AurSwiftTopbar
+      <BackOfficeTopbar
         currentViewTitle={currentViewTitle}
         breadcrumbItems={breadcrumbItems}
         onSidebarToggle={handleSidebarToggle}
@@ -244,9 +243,8 @@ export function AurSwiftBackOfficeShell({
       />
 
       <div className="flex min-h-0 flex-1">
-        <AurSwiftSidebar
+        <BackOfficeSidebar
           groups={menu.groups}
-          contextLabel={sidebarContextLabel}
           layoutMode={layoutMode}
           isMobileDrawerOpen={isMobileDrawerOpen}
           onMobileDrawerOpenChange={setIsMobileDrawerOpen}

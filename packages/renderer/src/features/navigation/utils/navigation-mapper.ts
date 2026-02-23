@@ -11,6 +11,7 @@ import { SALES_ROUTES } from "@/features/sales/config/navigation";
 import { STAFF_ROUTES } from "@/features/staff/config/navigation";
 import { SETTINGS_ROUTES } from "@/features/settings/config/navigation";
 import { QUICK_SELL_ROUTES } from "@/features/quick-sell-config/config/navigation";
+import { INVENTORY_ROUTES } from "@/features/inventory/config/navigation";
 
 export type MappedViewTarget =
   | string
@@ -22,8 +23,7 @@ export type MappedViewTarget =
 /**
  * Map feature ID and action ID to view ID
  *
- * Uses route constants where available for type safety and maintainability.
- * Legacy route names are automatically mapped by the view registry.
+ * Uses route constants for type safety and maintainability.
  *
  * @param featureId - Feature identifier
  * @param actionId - Action identifier
@@ -48,7 +48,7 @@ export function mapActionToView(
     },
     "management-actions": {
       "new-sale": SALES_ROUTES.NEW_TRANSACTION,
-      "manage-inventory": "productManagement", // Legacy route - automatically mapped by route mapper
+      "manage-inventory": INVENTORY_ROUTES.PRODUCT_MANAGEMENT,
       "sales-reports": SALES_ROUTES.SALES_REPORTS,
       "manage-users": USERS_ROUTES.MANAGEMENT,
       "staff-schedules": STAFF_ROUTES.SCHEDULES,

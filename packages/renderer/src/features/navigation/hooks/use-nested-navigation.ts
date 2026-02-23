@@ -25,12 +25,12 @@ const logger = getLogger("use-nested-navigation");
  * ```tsx
  * function ProductManagementView() {
  *   const { navigateTo, currentNestedView } = useNestedNavigation(
- *     "productManagement"
+ *     "inventory:management"
  *   );
  *
  *   return (
  *     <div>
- *       <button onClick={() => navigateTo("productList")}>
+ *       <button onClick={() => navigateTo("inventory:management:products")}>
  *         View Products
  *       </button>
  *       {currentNestedView && <currentNestedView.component />}

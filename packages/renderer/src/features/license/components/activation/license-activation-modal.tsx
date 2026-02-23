@@ -6,7 +6,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
   AdaptiveKeyboard,
@@ -20,7 +19,7 @@ import {
   Power,
   TestTube,
 } from "lucide-react";
-import { useLicense, type MachineInfo } from "../../hooks/use-license";
+import { useLicense } from "../../hooks/use-license";
 import type { LicenseActivationFormProps } from "./license-activation-form";
 
 const logger = getLogger("license-activation-modal");
@@ -45,10 +44,6 @@ function formatLicenseKey(value: string): string {
   return formatted;
 }
 
-function formatPCCode(fingerprint: string): string {
-  return fingerprint.replace(/(.{1,3})/g, "$1 ").trim();
-}
-
 export function LicenseActivationModal({
   open,
   onActivationSuccess,
@@ -59,10 +54,9 @@ export function LicenseActivationModal({
     useLicense();
 
   const [licenseKey, setLicenseKey] = useState("");
-  const [machineInfo, setMachineInfo] = useState<MachineInfo | null>(null);
   const [activationError, setActivationError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [productSelected, setProductSelected] = useState(true);
+  const productSelected = true;
   const [showKeyboard, setShowKeyboard] = useState(false);
 
   const handleFieldFocus = useCallback(() => {
@@ -93,13 +87,7 @@ export function LicenseActivationModal({
       setShowKeyboard(false);
       return;
     }
-    let isMounted = true;
-    void getMachineInfo().then((info) => {
-      if (isMounted) setMachineInfo(info);
-    });
-    return () => {
-      isMounted = false;
-    };
+    void getMachineInfo();
   }, [open, getMachineInfo]);
 
   const handleLicenseKeyChange = (value: string) => {
@@ -132,16 +120,6 @@ export function LicenseActivationModal({
       handleCloseKeyboard();
     }
   }, [licenseKey, isLoading, handleCloseKeyboard]);
-
-  const isValidKey =
-    licenseKey.length >= MIN_LICENSE_LENGTH &&
-    /^[A-Z0-9]{3}-[A-Z0-9]{3}-[A-Z0-9]{2}-[A-Z0-9]{8}-[A-Z0-9]{8}$/i.test(
-      licenseKey,
-    );
-
-  const pcCode = machineInfo?.fingerprintPreview
-    ? formatPCCode(machineInfo.fingerprintPreview)
-    : null;
 
   return (
     <Dialog

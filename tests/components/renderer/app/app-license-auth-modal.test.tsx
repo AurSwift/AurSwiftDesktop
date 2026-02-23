@@ -17,6 +17,7 @@ vi.mock("@/app/startup", () => ({
 
 vi.mock("@/features/auth", () => ({
   AuthPage: () => <div data-testid="auth-page" />,
+  useTestMode: () => ({ testMode: false, setTestMode: vi.fn() }),
 }));
 
 vi.mock("@/features/license", () => ({

@@ -1,0 +1,11 @@
+#Personal Acc
+Host github-personal
+           hostname github.com
+           User git
+           IdentityFile ~/.ssh/personal/id_personal
+#Mohan Acc
+Host github-mohan
+           hostname github.com
+           User git
+           IdentityFile ~/.ssh/mohan/id_mohan
+

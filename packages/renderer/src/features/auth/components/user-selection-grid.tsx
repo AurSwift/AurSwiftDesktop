@@ -1,6 +1,6 @@
 import { Check } from "lucide-react";
-import { getInitials } from "@/features/auth/components/utils";
 import type { UserForLogin } from "@/types/domain";
+import { getInitials } from "./utils";
 
 interface UserSelectionGridProps {
   users: UserForLogin[];

@@ -14,6 +14,7 @@ export * from "./components";
 // Context
 // ============================================================================
 export { AuthContext, AuthProvider } from "./context/auth-context";
+export { useTestMode } from "./context/test-mode-store";
 
 // ============================================================================
 // Hooks

@@ -29,7 +29,6 @@ export const salesFeature: FeatureConfig = {
       id: "new-sale",
       label: "New Sale",
       icon: ShoppingCart,
-      onClick: () => {}, // Will be injected by dashboard
       permissions: [SALES_PERMISSIONS.WRITE],
     },
   ],

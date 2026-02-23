@@ -19,7 +19,7 @@ import {
   type StartupWarningCode,
 } from "@/app/startup";
 import type { StartupState } from "@/app/startup/startup.types";
-import { AuthPage } from "@/features/auth";
+import { AuthPage, useTestMode } from "@/features/auth";
 import { LicenseActivationModal, useLicenseContext } from "@/features/license";
 import { ProtectedAppShell } from "@/features/navigation/components/protected-app-shell";
 import { useAuth } from "@/shared/hooks";
@@ -90,13 +90,20 @@ function useSystemNotifications() {
 }
 
 /**
+ * Default route redirects to auth.
+ */
+function DefaultRouteRedirect() {
+  return <Navigate to="/auth" replace />;
+}
+
+/**
  * Main App content - only shown after license check
  */
 function AppContent() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Navigate to="/auth" replace />} />
+        <Route path="/" element={<DefaultRouteRedirect />} />
 
         <Route
           path="/auth"
@@ -130,7 +137,7 @@ function AppContent() {
           path="/license"
           element={
             <ProtectedRoute>
-              <ProtectedAppShell subtitle="License">
+              <ProtectedAppShell>
                 <RouteErrorBoundary>
                   <RetryableLazyRoute
                     loader={licenseLoader}
@@ -153,10 +160,10 @@ function AppContent() {
 function AppWithLicenseCheck() {
   const { isLoading, isActivated, refreshStatus } = useLicenseContext();
   const { user, isInitializing } = useAuth();
+  const { testMode, setTestMode } = useTestMode();
   const [showActivation, setShowActivation] = useState(
     () => !isLoading && !isActivated,
   );
-  const [testMode, setTestMode] = useState(false);
   const startupWarningShownRef = useRef(false);
   const prefetchedAuthRef = useRef(false);
   const prefetchedDashboardRef = useRef(false);
@@ -164,19 +171,20 @@ function AppWithLicenseCheck() {
   // Listen for system notifications
   useSystemNotifications();
 
-  const runStartupUpdateCheck = useCallback(async (): Promise<StartupWarningCode | null> => {
-    if (!window.updateAPI?.checkForUpdates) {
-      return "update-unavailable";
-    }
+  const runStartupUpdateCheck =
+    useCallback(async (): Promise<StartupWarningCode | null> => {
+      if (!window.updateAPI?.checkForUpdates) {
+        return "update-unavailable";
+      }
 
-    try {
-      await window.updateAPI.checkForUpdates();
-      return null;
-    } catch (error) {
-      startupLogger.warn("Startup update check failed", error);
-      return "update-failed";
-    }
-  }, []);
+      try {
+        await window.updateAPI.checkForUpdates();
+        return null;
+      } catch (error) {
+        startupLogger.warn("Startup update check failed", error);
+        return "update-failed";
+      }
+    }, []);
 
   const startupState = useStartupSequence({
     licenseLoading: isLoading,

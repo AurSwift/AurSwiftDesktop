@@ -34,13 +34,11 @@ describe("buildSidebarMenu", () => {
           id: "apply-discount",
           label: "Apply Discount",
           icon: TrendingUp,
-          onClick: () => {},
         },
         {
           id: "sales-reports",
           label: "Sales Reports",
           icon: TrendingUp,
-          onClick: () => {},
         },
       ],
     };
@@ -64,8 +62,6 @@ describe("buildSidebarMenu", () => {
     expect(salesReports?.isActive).toBe(true);
     expect(menu.groups[0].category).toBe("actions");
     expect(menu.activeGroupId).toBe("management-actions");
-    expect(menu.moduleTabs).toHaveLength(1);
-    expect(menu.moduleTabs[0].isActive).toBe(true);
   });
 
   it("injects system settings extras and keeps them enabled when feature is accessible", () => {
@@ -81,7 +77,6 @@ describe("buildSidebarMenu", () => {
           id: "general-settings",
           label: "General Settings",
           icon: Settings,
-          onClick: () => {},
         },
       ],
     };
@@ -98,12 +93,14 @@ describe("buildSidebarMenu", () => {
     const ids = menu.groups[0].items.map((item) => item.actionId);
     expect(menu.groups[0].category).toBe("settings");
     expect(ids).toContain("show-license-info");
-    expect(ids).toContain("change-pin");
-    expect(ids).toContain("logout");
-    expect(ids).toContain("quit-app");
+    expect(ids).not.toContain("change-pin");
+    expect(ids).not.toContain("logout");
+    expect(ids).not.toContain("quit-app");
 
-    const logoutItem = menu.groups[0].items.find((item) => item.actionId === "logout");
-    expect(logoutItem?.state).toBe("enabled");
+    const licenseInfoItem = menu.groups[0].items.find(
+      (item) => item.actionId === "show-license-info",
+    );
+    expect(licenseInfoItem?.state).toBe("enabled");
   });
 
   it("filters out actions when permission checks fail", () => {
@@ -119,7 +116,6 @@ describe("buildSidebarMenu", () => {
           id: "manage-users",
           label: "Manage Users",
           icon: Shield,
-          onClick: () => {},
           permissions: [PERMISSIONS.USERS_MANAGE],
         },
       ],
@@ -150,7 +146,6 @@ describe("buildSidebarMenu", () => {
           id: "sales-reports",
           label: "Sales Reports",
           icon: Shield,
-          onClick: () => {},
         },
       ],
     };
@@ -186,7 +181,6 @@ describe("buildSidebarMenu", () => {
           id: "apply-discount",
           label: "Apply Discount",
           icon: TrendingUp,
-          onClick: () => {},
         },
       ],
     };
@@ -201,7 +195,6 @@ describe("buildSidebarMenu", () => {
     });
 
     expect(menu.activeGroupId).toBeNull();
-    expect(menu.moduleTabs[0].isActive).toBe(false);
   });
 
   it("uses lastSelected fallback as active selection when route is ambiguous", () => {
@@ -217,7 +210,6 @@ describe("buildSidebarMenu", () => {
           id: "general-settings",
           label: "General Settings",
           icon: Settings,
-          onClick: () => {},
         },
       ],
     };
@@ -239,6 +231,5 @@ describe("buildSidebarMenu", () => {
     );
     expect(selected?.isActive).toBe(true);
     expect(menu.activeGroupId).toBe("system-settings");
-    expect(menu.moduleTabs[0].isActive).toBe(true);
   });
 });

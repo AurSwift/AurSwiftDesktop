@@ -1,6 +1,6 @@
-export { AurSwiftBackOfficeShell } from "./aurswift-backoffice-shell";
-export { AurSwiftSidebar } from "./aurswift-sidebar";
-export { AurSwiftTopbar } from "./aurswift-topbar";
+export { BackOfficeShell } from "./back-office-shell";
+export { BackOfficeSidebar } from "./back-office-sidebar";
+export { BackOfficeTopbar } from "./back-office-topbar";
 export { buildSidebarMenu } from "./sidebar-menu-builder";
 export type {
   SidebarActionItem,
@@ -9,6 +9,5 @@ export type {
   SidebarGroupConfig,
   SidebarLayoutMode,
   SidebarMenuViewModel,
-  SidebarModuleTab,
   SidebarSelection,
 } from "./sidebar-menu.types";

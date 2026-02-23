@@ -7,10 +7,10 @@ import { useAuth } from "@/shared/hooks/use-auth";
 import { useActiveShift } from "../hooks/use-active-shift";
 import { useDatabaseActions } from "../hooks/use-database-actions";
 import { LicenseInfoModal } from "@/features/license";
-import { ChangePinDialog } from "@/features/auth/components/change-pin-dialog";
+import { ChangePinDialog } from "@/features/auth/components";
 import { LogoutConfirmationDialog } from "../components/logout-confirmation-dialog";
 import {
-  SYSTEM_SETTINGS_EXTRA_ACTION_IDS,
+  SYSTEM_SETTINGS_ACTION_IDS,
   type SystemSettingsExtraActionId,
 } from "../config/system-settings-actions";
 
@@ -73,7 +73,7 @@ export function DashboardActionsProvider({
 
       if (
         featureId === "system-settings" &&
-        SYSTEM_SETTINGS_EXTRA_ACTION_IDS.has(actionId as SystemSettingsExtraActionId)
+        SYSTEM_SETTINGS_ACTION_IDS.has(actionId as SystemSettingsExtraActionId)
       ) {
         switch (actionId as SystemSettingsExtraActionId) {
           case "show-license-info":

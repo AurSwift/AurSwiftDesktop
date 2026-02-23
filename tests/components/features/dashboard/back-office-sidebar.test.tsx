@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { Settings, Users } from "lucide-react";
 import { render, screen, userEvent } from "../../../utils/render-helpers";
-import { AurSwiftSidebar } from "@/features/dashboard/shell/aurswift-sidebar";
+import { BackOfficeSidebar } from "@/features/dashboard/shell/back-office-sidebar";
 import type { SidebarGroupConfig } from "@/features/dashboard/shell/sidebar-menu.types";
 
 function createGroups(): SidebarGroupConfig[] {
@@ -47,14 +47,13 @@ function createGroups(): SidebarGroupConfig[] {
   ];
 }
 
-describe("AurSwiftSidebar", () => {
-  it("renders context label, category sections, and actions in expanded mode", () => {
+describe("BackOfficeSidebar", () => {
+  it("renders category sections and actions in expanded mode", () => {
     const onActionClick = vi.fn();
 
     render(
-      <AurSwiftSidebar
+      <BackOfficeSidebar
         groups={createGroups()}
-        contextLabel="Sunnyville"
         layoutMode="expanded"
         isMobileDrawerOpen={false}
         onMobileDrawerOpenChange={vi.fn()}
@@ -74,9 +73,8 @@ describe("AurSwiftSidebar", () => {
 
   it("renders a dedicated scroll region and separate collapse control", () => {
     render(
-      <AurSwiftSidebar
+      <BackOfficeSidebar
         groups={createGroups()}
-        contextLabel="Sunnyville"
         layoutMode="expanded"
         isMobileDrawerOpen={false}
         onMobileDrawerOpenChange={vi.fn()}
@@ -114,9 +112,8 @@ describe("AurSwiftSidebar", () => {
     ];
 
     render(
-      <AurSwiftSidebar
+      <BackOfficeSidebar
         groups={groups}
-        contextLabel="Sunnyville"
         layoutMode="expanded"
         isMobileDrawerOpen={false}
         onMobileDrawerOpenChange={vi.fn()}
@@ -138,9 +135,8 @@ describe("AurSwiftSidebar", () => {
     const onToggleSidebarCollapsed = vi.fn();
 
     render(
-      <AurSwiftSidebar
+      <BackOfficeSidebar
         groups={createGroups()}
-        contextLabel="Sunnyville"
         layoutMode="collapsed"
         isMobileDrawerOpen={false}
         onMobileDrawerOpenChange={vi.fn()}

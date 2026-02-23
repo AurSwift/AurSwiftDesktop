@@ -39,11 +39,10 @@ export interface ViewChromeConfig {
    * Controls which application shell wraps this view.
    * - back-office: AurSwift sidebar + top bar shell
    * - immersive: Full-bleed layout (e.g. POS transaction screen)
-   * - legacy: Previous header-only shell (migration fallback)
    *
    * Defaults to "back-office" when omitted.
    */
-  appShellMode?: "back-office" | "immersive" | "legacy";
+  appShellMode?: "back-office" | "immersive";
 
   /**
    * Whether to show the dashboard header for this view.

@@ -28,14 +28,12 @@ export const rbacFeature: FeatureConfig = {
       id: "role-permissions",
       label: "Role Management",
       icon: Shield,
-      onClick: () => {}, // Will be injected by dashboard
       permissions: [RBAC_PERMISSIONS.MANAGE],
     },
     {
       id: "user-role-assignment",
       label: "User Role Assignment",
       icon: Shield,
-      onClick: () => {},
       permissions: [RBAC_PERMISSIONS.MANAGE],
     },
   ],

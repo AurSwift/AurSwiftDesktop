@@ -1,4 +1,4 @@
-import { AuthUserSelection } from "@/features/auth/components";
+import { AuthUserSelection } from "../components";
 
 /**
  * Full-screen auth page with light atmospheric background.

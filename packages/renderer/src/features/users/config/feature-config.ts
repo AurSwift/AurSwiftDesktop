@@ -28,7 +28,6 @@ export const usersFeature: FeatureConfig = {
       id: "manage-users",
       label: "Manage Users",
       icon: Users,
-      onClick: () => {}, // Will be injected by dashboard
       permissions: [USERS_PERMISSIONS.MANAGE],
     },
   ],

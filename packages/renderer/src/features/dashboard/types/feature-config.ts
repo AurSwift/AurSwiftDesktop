@@ -14,7 +14,6 @@ export interface FeatureAction {
   id: string;
   label: string;
   icon: LucideIcon;
-  onClick: () => void;
   permissions?: string[]; // Optional: action-specific permissions
   variant?: "default" | "outline" | "destructive";
   disabled?: boolean;
@@ -53,4 +52,3 @@ export interface FeatureConfig {
   requiredFeatures?: ServerFeatureFlag[]; // Required feature flags from subscription
   upgradePrompt?: UpgradePrompt; // Upgrade prompt configuration
 }
-

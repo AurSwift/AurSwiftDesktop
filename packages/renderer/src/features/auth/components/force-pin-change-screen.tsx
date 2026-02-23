@@ -1,4 +1,3 @@
-
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -6,9 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { getLogger } from "@/shared/utils/logger";
-
-const logger = getLogger("force-pin-change-screen");
-
 import {
   Card,
   CardContent,
@@ -28,16 +24,21 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/shared/hooks/use-auth";
+import { PIN_LENGTH } from "./pin/constants";
+import { sanitizePinValue } from "./pin/sanitize-pin";
+import { usePinKeypadController } from "./pin/pin-keypad-controller";
+
+const logger = getLogger("force-pin-change-screen");
 
 const forcePinChangeSchema = z
   .object({
     newPin: z
       .string()
-      .length(4, "PIN must be exactly 4 digits")
+      .length(PIN_LENGTH, `PIN must be exactly ${PIN_LENGTH} digits`)
       .regex(/^\d+$/, "PIN must contain only numbers"),
     confirmPin: z
       .string()
-      .length(4, "PIN must be exactly 4 digits")
+      .length(PIN_LENGTH, `PIN must be exactly ${PIN_LENGTH} digits`)
       .regex(/^\d+$/, "PIN must contain only numbers"),
   })
   .refine((data) => data.newPin === data.confirmPin, {
@@ -46,17 +47,10 @@ const forcePinChangeSchema = z
   });
 
 type ForcePinChangeValues = z.infer<typeof forcePinChangeSchema>;
+type ActivePinField = "newPin" | "confirmPin";
 
 interface ForcePinChangeScreenProps {
   onComplete: () => void;
-}
-
-type ActivePinField = "newPin" | "confirmPin";
-
-const PIN_LENGTH = 4;
-
-function sanitizePinValue(value: string) {
-  return value.replace(/\D/g, "").slice(0, PIN_LENGTH);
 }
 
 export function ForcePinChangeScreen({ onComplete }: ForcePinChangeScreenProps) {
@@ -64,7 +58,7 @@ export function ForcePinChangeScreen({ onComplete }: ForcePinChangeScreenProps) 
   const [activeField, setActiveField] = useState<ActivePinField>("newPin");
   const newPinInputRef = useRef<HTMLInputElement | null>(null);
   const confirmPinInputRef = useRef<HTMLInputElement | null>(null);
-  const { completeForceChangePIN, logout } = useAuth(); // Destructure completeForceChangePIN
+  const { completeForceChangePIN, logout } = useAuth();
 
   const form = useForm<ForcePinChangeValues>({
     resolver: zodResolver(forcePinChangeSchema),
@@ -76,52 +70,29 @@ export function ForcePinChangeScreen({ onComplete }: ForcePinChangeScreenProps) 
 
   const newPin = form.watch("newPin");
   const confirmPin = form.watch("confirmPin");
-  const activeValue = activeField === "newPin" ? newPin : confirmPin;
 
-  const setActiveValue = (nextValue: string) => {
-    form.setValue(activeField, nextValue, {
-      shouldDirty: true,
-      shouldTouch: true,
-      shouldValidate: true,
+  const { activeValue, handleDigit, handleBackspace, handleClear } =
+    usePinKeypadController<ActivePinField>({
+      isLoading,
+      activeField,
+      setActiveField,
+      getValue: (field) => (field === "newPin" ? newPin : confirmPin),
+      setValue: (field, value) => {
+        form.setValue(field, value, {
+          shouldDirty: true,
+          shouldTouch: true,
+          shouldValidate: true,
+        });
+      },
+      focusField: (field) => {
+        if (field === "newPin") {
+          newPinInputRef.current?.focus();
+          return;
+        }
+        confirmPinInputRef.current?.focus();
+      },
+      getNextField: (field) => (field === "newPin" ? "confirmPin" : null),
     });
-  };
-
-  const focusActiveInput = () => {
-    if (activeField === "newPin") {
-      newPinInputRef.current?.focus();
-      return;
-    }
-    confirmPinInputRef.current?.focus();
-  };
-
-  const handleKeypadDigit = (digit: string) => {
-    if (isLoading) return;
-    focusActiveInput();
-
-    const next = sanitizePinValue(activeValue + digit);
-    if (next === activeValue) return;
-
-    setActiveValue(next);
-
-    if (activeField === "newPin" && next.length === PIN_LENGTH) {
-      setActiveField("confirmPin");
-      queueMicrotask(() => confirmPinInputRef.current?.focus());
-    }
-  };
-
-  const handleKeypadBackspace = () => {
-    if (isLoading) return;
-    focusActiveInput();
-    if (!activeValue) return;
-    setActiveValue(activeValue.slice(0, -1));
-  };
-
-  const handleKeypadClear = () => {
-    if (isLoading) return;
-    focusActiveInput();
-    if (!activeValue) return;
-    setActiveValue("");
-  };
 
   const onSubmit = async (data: ForcePinChangeValues) => {
     setIsLoading(true);
@@ -143,14 +114,13 @@ export function ForcePinChangeScreen({ onComplete }: ForcePinChangeScreenProps) 
   };
 
   const handleSignOut = () => {
-    logout();
+    void logout();
   };
 
   return (
     <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-lg border-primary/20">
         <CardHeader className="space-y-1 items-center text-center">
-      
           <CardTitle className="text-2xl">Update Your PIN</CardTitle>
           <CardDescription>
             For security, you must set a new PIN before continuing.
@@ -173,15 +143,15 @@ export function ForcePinChangeScreen({ onComplete }: ForcePinChangeScreenProps) 
                           newPinInputRef.current = node;
                         }}
                         type="password"
-                        maxLength={4}
+                        maxLength={PIN_LENGTH}
                         inputMode="numeric"
                         pattern="[0-9]*"
                         autoComplete="off"
                         placeholder="Enter new 4-digit PIN"
                         className="text-center text-lg tracking-widest"
                         onFocus={() => setActiveField("newPin")}
-                        onChange={(e) =>
-                          field.onChange(sanitizePinValue(e.target.value))
+                        onChange={(event) =>
+                          field.onChange(sanitizePinValue(event.target.value))
                         }
                       />
                     </FormControl>
@@ -204,15 +174,15 @@ export function ForcePinChangeScreen({ onComplete }: ForcePinChangeScreenProps) 
                           confirmPinInputRef.current = node;
                         }}
                         type="password"
-                        maxLength={4}
+                        maxLength={PIN_LENGTH}
                         inputMode="numeric"
                         pattern="[0-9]*"
                         autoComplete="off"
                         placeholder="Re-enter new PIN"
                         className="text-center text-lg tracking-widest"
                         onFocus={() => setActiveField("confirmPin")}
-                        onChange={(e) =>
-                          field.onChange(sanitizePinValue(e.target.value))
+                        onChange={(event) =>
+                          field.onChange(sanitizePinValue(event.target.value))
                         }
                       />
                     </FormControl>
@@ -221,13 +191,12 @@ export function ForcePinChangeScreen({ onComplete }: ForcePinChangeScreenProps) 
                 )}
               />
 
-              {/* Responsive Numeric Keypad */}
               <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-1">
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
                   <Button
                     key={num}
                     type="button"
-                    onClick={() => handleKeypadDigit(num.toString())}
+                    onClick={() => handleDigit(num.toString())}
                     disabled={isLoading || activeValue.length >= PIN_LENGTH}
                     className="h-12 sm:h-14 lg:h-16 text-lg sm:text-xl font-semibold bg-gray-200 hover:bg-gray-300 active:bg-primary active:text-primary-foreground text-gray-900 border-0 rounded-lg transition-colors duration-150 disabled:opacity-50 touch-manipulation"
                     aria-label={`Digit ${num}`}
@@ -239,7 +208,7 @@ export function ForcePinChangeScreen({ onComplete }: ForcePinChangeScreenProps) 
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={handleKeypadClear}
+                  onClick={handleClear}
                   disabled={isLoading || activeValue.length === 0}
                   className="h-12 sm:h-14 lg:h-16 text-sm sm:text-base font-semibold rounded-lg touch-manipulation"
                   aria-label="Clear"
@@ -249,7 +218,7 @@ export function ForcePinChangeScreen({ onComplete }: ForcePinChangeScreenProps) 
 
                 <Button
                   type="button"
-                  onClick={() => handleKeypadDigit("0")}
+                  onClick={() => handleDigit("0")}
                   disabled={isLoading || activeValue.length >= PIN_LENGTH}
                   className="h-12 sm:h-14 lg:h-16 text-lg sm:text-xl font-semibold bg-gray-200 hover:bg-gray-300 active:bg-primary active:text-primary-foreground text-gray-900 border-0 rounded-lg transition-colors duration-150 disabled:opacity-50 touch-manipulation"
                   aria-label="Digit 0"
@@ -260,7 +229,7 @@ export function ForcePinChangeScreen({ onComplete }: ForcePinChangeScreenProps) 
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={handleKeypadBackspace}
+                  onClick={handleBackspace}
                   disabled={isLoading || activeValue.length === 0}
                   className="h-12 sm:h-14 lg:h-16 text-lg sm:text-xl font-semibold rounded-lg touch-manipulation"
                   aria-label="Backspace"

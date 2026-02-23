@@ -30,7 +30,6 @@ export const {feature}Feature: FeatureConfig = {
       id: "manage-{feature}",
       label: "Manage {Feature}",
       icon: Icon,
-      onClick: () => {}, // Will be injected by dashboard
       permissions: [{FEATURE}_PERMISSIONS.MANAGE],
     },
   ],
@@ -67,4 +66,3 @@ export const {feature}Views: Record<string, ViewConfig> = {
     requiresAuth: true,
   },
 };
-

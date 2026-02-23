@@ -1,10 +1,7 @@
 import { useMemo } from "react";
-import { DashboardHeader } from "@/features/dashboard/components/dashboard-header";
 import { DashboardActionsProvider } from "@/features/dashboard/context";
 import { useShiftExpiryLogout } from "@/features/dashboard/hooks/use-shift-expiry-logout";
-import { AurSwiftBackOfficeShell } from "@/features/dashboard/shell";
-import { useAuth } from "@/shared/hooks";
-import { getUserDisplayName } from "@/shared/utils/auth";
+import { BackOfficeShell } from "@/features/dashboard/shell";
 import { useNavigation } from "../hooks/use-navigation";
 import { getView } from "../registry/view-registry";
 import { NavigationContainer } from "./navigation-container";
@@ -16,7 +13,6 @@ import { NavigationContainer } from "./navigation-container";
  * via the navigation system. Header visibility is controlled by ViewConfig.chrome.
  */
 export function AuthenticatedAppShell() {
-  const { user } = useAuth();
   const { currentViewId } = useNavigation();
 
   // Auto-logout when scheduled shift end is exceeded (runs even when header hidden, e.g. New Transaction)
@@ -25,33 +21,17 @@ export function AuthenticatedAppShell() {
   const view = useMemo(() => getView(currentViewId), [currentViewId]);
   const appShellMode = view?.chrome?.appShellMode ?? "back-office";
 
-  const showDashboardHeader = view?.chrome?.showDashboardHeader !== false;
-
-  const subtitle = useMemo(() => {
-    if (!user) return view?.metadata?.title;
-
-    if (currentViewId === "dashboard") {
-      const userDisplayName = getUserDisplayName(user);
-      return `Welcome, ${userDisplayName}`;
-    }
-
-    return view?.metadata?.title;
-  }, [currentViewId, user, view?.metadata?.title]);
-
   return (
     <DashboardActionsProvider>
       {appShellMode === "back-office" ? (
-        <AurSwiftBackOfficeShell
+        <BackOfficeShell
           currentViewId={currentViewId}
           currentViewTitle={view?.metadata?.title}
         >
           <NavigationContainer />
-        </AurSwiftBackOfficeShell>
+        </BackOfficeShell>
       ) : (
         <div className="min-h-screen bg-background flex flex-col">
-          {appShellMode === "legacy" && showDashboardHeader && (
-            <DashboardHeader subtitle={subtitle} />
-          )}
           <main className="flex-1 min-h-0 flex flex-col overflow-hidden">
             <div className="flex-1 min-h-0 flex flex-col">
               <NavigationContainer />

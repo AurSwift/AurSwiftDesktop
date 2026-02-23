@@ -206,17 +206,8 @@ export function buildSidebarMenu({
 
   const activeGroupId = groups.find((group) => group.isActive)?.featureId || null;
 
-  const moduleTabs = groups.map((group) => ({
-    id: group.featureId,
-    label: group.label,
-    icon: group.icon,
-    isActive: group.featureId === activeGroupId,
-    isDisabled: group.items.every((item) => item.state === "disabled"),
-  }));
-
   return {
     groups,
-    moduleTabs,
     activeSelection,
     activeGroupId,
   };

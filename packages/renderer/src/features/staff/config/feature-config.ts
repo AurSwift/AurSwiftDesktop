@@ -28,21 +28,18 @@ export const staffFeature: FeatureConfig = {
       id: "manage-cashiers",
       label: "Manage Cashiers",
       icon: Users,
-      onClick: () => {}, // Will be injected by dashboard
       permissions: [STAFF_PERMISSIONS.MANAGE],
     },
     {
       id: "staff-schedules",
       label: "Staff Schedules",
       icon: Users,
-      onClick: () => {},
       permissions: [STAFF_PERMISSIONS.MANAGE],
     },
     {
       id: "break-policies",
       label: "Break Policies",
       icon: Coffee,
-      onClick: () => {},
       permissions: [STAFF_PERMISSIONS.MANAGE_BREAK_POLICIES],
     },
   ],

@@ -45,7 +45,6 @@ describe("FeatureMenuBar", () => {
             id: "general-settings",
             label: "General Settings",
             icon: Settings,
-            onClick: () => {},
           },
         ],
       },
@@ -56,8 +55,8 @@ describe("FeatureMenuBar", () => {
     await userEvent.click(screen.getByRole("button", { name: /settings/i }));
 
     expect(screen.getByText("Show license info")).toBeInTheDocument();
-    expect(screen.getByText("Change PIN")).toBeInTheDocument();
-    expect(screen.getByText("Log out")).toBeInTheDocument();
-    expect(screen.getByText("Quit App")).toBeInTheDocument();
+    expect(screen.queryByText("Change PIN")).not.toBeInTheDocument();
+    expect(screen.queryByText("Log out")).not.toBeInTheDocument();
+    expect(screen.queryByText("Quit App")).not.toBeInTheDocument();
   });
 });

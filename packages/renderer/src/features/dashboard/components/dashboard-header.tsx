@@ -5,11 +5,7 @@ import { getUserRoleName } from "@/shared/utils/rbac-helpers";
 import { getDashboardFeaturesForRole } from "../utils/dashboard-features";
 import { useOptionalDashboardActions } from "../context/dashboard-actions-context";
 
-export interface DashboardHeaderProps {
-  subtitle?: string;
-}
-
-export function DashboardHeader({ subtitle: _subtitle }: DashboardHeaderProps) {
+export function DashboardHeader() {
   const logoSrc = `${import.meta.env.BASE_URL}logo.png`;
   const { user } = useAuth();
   const dashboardActions = useOptionalDashboardActions();
