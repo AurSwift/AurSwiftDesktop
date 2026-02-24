@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CalendarClock, FileText, Plus, UserPlus } from "lucide-react";
+import { CalendarClock, FileText, Plus, ShoppingCart, UserPlus } from "lucide-react";
 import { PERMISSIONS } from "@app/shared/constants/permissions";
 import { useAuth } from "@/shared/hooks";
 import { useNavigation } from "@/features/navigation/hooks/use-navigation";
@@ -278,6 +278,14 @@ export function useCommandCenterData(): CommandCenterViewModel {
           navigateTo(INVENTORY_ROUTES.PRODUCT_MANAGEMENT, {
             openCreateProduct: true,
           }),
+      },
+      {
+        id: "go-to-sales",
+        label: "Go to Sales",
+        shortcut: "F3",
+        icon: ShoppingCart,
+        disabled: false,
+        onTrigger: () => navigateTo(SALES_ROUTES.NEW_TRANSACTION),
       },
       {
         id: "new-report",
