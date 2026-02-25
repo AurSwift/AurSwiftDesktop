@@ -182,6 +182,7 @@ export function CreateRoleForm({
               <FormItem>
                 <FormControl>
                   <AdaptiveFormField
+                    variant="borderOnly"
                     {...form.register("name")}
                     label="Role Name *"
                     value={keyboard.formValues.name || ""}
@@ -212,6 +213,7 @@ export function CreateRoleForm({
               <FormItem>
                 <FormControl>
                   <AdaptiveFormField
+                    variant="borderOnly"
                     {...form.register("displayName")}
                     label="Display Name *"
                     value={keyboard.formValues.displayName || ""}

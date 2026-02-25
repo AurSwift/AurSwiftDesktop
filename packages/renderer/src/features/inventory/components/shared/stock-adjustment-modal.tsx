@@ -268,13 +268,14 @@ const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
                 Quantity to {adjustmentType === "add" ? "Add" : "Remove"}
               </Label>
               <AdaptiveFormField
+                variant="borderOnly"
                 id="stock-quantity"
                 label=""
                 placeholder="Enter quantity"
                 value={localQuantity}
                 readOnly
                 onFocus={() => handleFieldFocus("quantity")}
-                className="mt-1.5 text-sm sm:text-base"
+                className="mt-1.5 text-xs sm:text-sm md:text-base"
               />
             </div>
 
@@ -304,13 +305,14 @@ const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
                   Note / Details
                 </Label>
                 <AdaptiveFormField
+                  variant="borderOnly"
                   id="stock-note"
                   label=""
                   placeholder="Enter details..."
                   value={customNote}
                   readOnly
                   onFocus={() => handleFieldFocus("note")}
-                  className="mt-1.5 text-sm sm:text-base"
+                  className="mt-1.5 text-xs sm:text-sm md:text-base"
                 />
               </div>
             )}
