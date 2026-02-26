@@ -1,16 +1,16 @@
 /**
- * Phase 2 Performance Tests
+ * VirtualizedProductTable — performance tests
  *
- * Tests for virtualized table rendering and caching performance
+ * Covers render time with large lists, memory stability, and category path
+ * calculation when using virtualization.
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import { VirtualizedProductTable } from "@/features/inventory/components/product/virtualized-product-table";
 import type { Product } from "@/types/domain";
 import type { Category } from "@/features/inventory/hooks/use-product-data";
 
-// Mock @tanstack/react-virtual
 vi.mock("@tanstack/react-virtual", () => ({
   useVirtualizer: vi.fn(() => ({
     getVirtualItems: () => [],
@@ -18,7 +18,7 @@ vi.mock("@tanstack/react-virtual", () => ({
   })),
 }));
 
-describe("VirtualizedProductTable Performance", () => {
+describe("VirtualizedProductTable performance", () => {
   const mockCategories: Category[] = [
     {
       id: "cat-1",
@@ -81,10 +81,9 @@ describe("VirtualizedProductTable Performance", () => {
     vi.clearAllMocks();
   });
 
-  describe("Rendering Performance", () => {
-    it("should render component with empty products quickly", () => {
+  describe("render performance", () => {
+    it("renders with empty products within budget", () => {
       const start = performance.now();
-
       render(
         <VirtualizedProductTable
           products={[]}
@@ -93,15 +92,13 @@ describe("VirtualizedProductTable Performance", () => {
           {...mockHandlers}
         />
       );
-
       const duration = performance.now() - start;
-      expect(duration).toBeLessThan(100); // Should render in <100ms (CI can be slower)
+      expect(duration).toBeLessThan(100);
     });
 
-    it("should handle 1000 products without performance degradation", () => {
+    it("renders 1000 products within budget (virtualization)", () => {
       const products = generateProducts(1000);
       const start = performance.now();
-
       render(
         <VirtualizedProductTable
           products={products}
@@ -110,18 +107,13 @@ describe("VirtualizedProductTable Performance", () => {
           {...mockHandlers}
         />
       );
-
       const duration = performance.now() - start;
-
-      // Initial render should be fast since virtualization only renders visible rows
-      expect(duration).toBeLessThan(100); // Should render in <100ms
-      console.log(`Rendered 1000 products in ${duration.toFixed(2)}ms`);
+      expect(duration).toBeLessThan(100);
     });
 
-    it("should handle 10,000 products efficiently", () => {
+    it("renders 10,000 products within budget (virtualization)", () => {
       const products = generateProducts(10000);
       const start = performance.now();
-
       render(
         <VirtualizedProductTable
           products={products}
@@ -130,20 +122,13 @@ describe("VirtualizedProductTable Performance", () => {
           {...mockHandlers}
         />
       );
-
       const duration = performance.now() - start;
-
-      // Should still be fast with 10k products due to virtualization
-      expect(duration).toBeLessThan(150); // Should render in <150ms
-      console.log(`Rendered 10,000 products in ${duration.toFixed(2)}ms`);
+      expect(duration).toBeLessThan(150);
     });
   });
 
-  describe("Memory Efficiency", () => {
-    it("should maintain constant memory regardless of product count", () => {
-      // Memory usage should be similar for 100 vs 10,000 products
-      // since only visible rows are rendered
-
+  describe("memory stability", () => {
+    it("mounts and unmounts with 100 then 10,000 products without error", () => {
       const products100 = generateProducts(100);
       const products10000 = generateProducts(10000);
 
@@ -155,10 +140,9 @@ describe("VirtualizedProductTable Performance", () => {
           {...mockHandlers}
         />
       );
-
       unmount1();
 
-      const { unmount: unmount2 } = render(
+      const { container, unmount: unmount2 } = render(
         <VirtualizedProductTable
           products={products10000}
           categories={mockCategories}
@@ -166,19 +150,15 @@ describe("VirtualizedProductTable Performance", () => {
           {...mockHandlers}
         />
       );
-
+      expect(container.firstChild).toBeTruthy();
       unmount2();
-
-      // Both should complete without errors (memory overflow would cause crash)
-      expect(true).toBe(true);
     });
   });
 
-  describe("Category Path Calculation", () => {
-    it("should efficiently calculate category paths for 1000 products", () => {
+  describe("category path calculation", () => {
+    it("computes category paths for 1000 products within budget", () => {
       const products = generateProducts(1000);
       const start = performance.now();
-
       render(
         <VirtualizedProductTable
           products={products}
@@ -187,29 +167,8 @@ describe("VirtualizedProductTable Performance", () => {
           {...mockHandlers}
         />
       );
-
       const duration = performance.now() - start;
-
-      // Category map memoization should keep this fast
       expect(duration).toBeLessThan(100);
     });
-  });
-});
-
-describe("Cache Performance", () => {
-  it("should describe cache timing characteristics", () => {
-    // Cache operations should be sub-millisecond
-    const cacheSetTime = 0.1; // ms - Map.set()
-    const cacheGetTime = 0.1; // ms - Map.get()
-    const cacheLookupTime = 0.05; // ms - Map.has()
-
-    expect(cacheSetTime).toBeLessThan(1);
-    expect(cacheGetTime).toBeLessThan(1);
-    expect(cacheLookupTime).toBeLessThan(1);
-
-    console.log("Cache operations are sub-millisecond:");
-    console.log(`  - Set: ${cacheSetTime}ms`);
-    console.log(`  - Get: ${cacheGetTime}ms`);
-    console.log(`  - Lookup: ${cacheLookupTime}ms`);
   });
 });
