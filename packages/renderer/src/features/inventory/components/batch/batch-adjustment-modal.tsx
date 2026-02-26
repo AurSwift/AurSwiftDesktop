@@ -350,6 +350,7 @@ const BatchAdjustmentModal: React.FC<BatchAdjustmentModalProps> = ({
                 {adjustmentType === "set" ? "to Set" : `to ${adjustmentType}`}
               </Label>
               <AdaptiveFormField
+                variant="borderOnly"
                 id="batch-quantity"
                 label=""
                 placeholder={
@@ -360,7 +361,7 @@ const BatchAdjustmentModal: React.FC<BatchAdjustmentModalProps> = ({
                 value={quantity}
                 readOnly
                 onFocus={() => handleFieldFocus("quantity")}
-                className="mt-1.5"
+                className="mt-1.5 text-xs sm:text-sm md:text-base"
                 disabled={isSubmitting}
               />
             </div>

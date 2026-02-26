@@ -46,12 +46,14 @@ export const AddressField = memo(function AddressField({
         <FormItem>
           <FormControl>
             <AdaptiveFormField
+              variant="borderOnly"
               label="Address (Optional)"
               name="address"
               placeholder="Enter address"
               value={getFieldValue("address")}
               onFocus={() => onFieldFocus("address")}
               disabled={disabled}
+              className="text-xs sm:text-sm md:text-base"
             />
           </FormControl>
           <FormMessage />

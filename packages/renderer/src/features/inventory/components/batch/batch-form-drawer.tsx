@@ -432,6 +432,7 @@ const BatchFormDrawer: React.FC<BatchFormDrawerProps> = ({
                     </div>
                     <FormControl>
                       <AdaptiveFormField
+                        variant="borderOnly"
                         id="batchNumber"
                         label=""
                         value={field.value || ""}
@@ -443,6 +444,7 @@ const BatchFormDrawer: React.FC<BatchFormDrawerProps> = ({
                         readOnly
                         onFocus={() => keyboard.handleFieldFocus("batchNumber")}
                         error={form.formState.errors.batchNumber?.message}
+                        className="text-xs sm:text-sm md:text-base"
                       />
                     </FormControl>
                   </FormItem>
@@ -528,6 +530,7 @@ const BatchFormDrawer: React.FC<BatchFormDrawerProps> = ({
                       <FormLabel>Initial Quantity *</FormLabel>
                       <FormControl>
                         <AdaptiveFormField
+                          variant="borderOnly"
                           id="initialQuantity"
                           label=""
                           value={String(field.value || "")}
@@ -541,6 +544,7 @@ const BatchFormDrawer: React.FC<BatchFormDrawerProps> = ({
                             (form.formState.errors as any).initialQuantity
                               ?.message
                           }
+                          className="text-xs sm:text-sm md:text-base"
                         />
                       </FormControl>
                     </FormItem>
@@ -600,6 +604,7 @@ const BatchFormDrawer: React.FC<BatchFormDrawerProps> = ({
                       <FormLabel>Purchase Order # (Optional)</FormLabel>
                       <FormControl>
                         <AdaptiveFormField
+                          variant="borderOnly"
                           id="purchaseOrderNumber"
                           label=""
                           value={field.value || ""}
@@ -612,6 +617,7 @@ const BatchFormDrawer: React.FC<BatchFormDrawerProps> = ({
                           error={
                             form.formState.errors.purchaseOrderNumber?.message
                           }
+                          className="text-xs sm:text-sm md:text-base"
                         />
                       </FormControl>
                     </FormItem>
@@ -626,6 +632,7 @@ const BatchFormDrawer: React.FC<BatchFormDrawerProps> = ({
                       <FormLabel>Cost Price (Optional)</FormLabel>
                       <FormControl>
                         <AdaptiveFormField
+                          variant="borderOnly"
                           id="costPrice"
                           label=""
                           value={String(field.value || "")}
@@ -634,6 +641,7 @@ const BatchFormDrawer: React.FC<BatchFormDrawerProps> = ({
                           readOnly
                           onFocus={() => keyboard.handleFieldFocus("costPrice")}
                           error={form.formState.errors.costPrice?.message}
+                          className="text-xs sm:text-sm md:text-base"
                         />
                       </FormControl>
                     </FormItem>

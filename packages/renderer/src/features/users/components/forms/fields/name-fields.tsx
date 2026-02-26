@@ -48,6 +48,7 @@ export const NameFields = memo(function NameFields({
           <FormItem>
             <FormControl>
               <AdaptiveFormField
+                variant="borderOnly"
                 label="First Name"
                 name="firstName"
                 placeholder="Enter first name"
@@ -55,6 +56,7 @@ export const NameFields = memo(function NameFields({
                 onFocus={() => onFieldFocus("firstName")}
                 disabled={disabled}
                 required
+                className="text-xs sm:text-sm md:text-base"
               />
             </FormControl>
             <FormMessage />
@@ -70,6 +72,7 @@ export const NameFields = memo(function NameFields({
           <FormItem>
             <FormControl>
               <AdaptiveFormField
+                variant="borderOnly"
                 label="Last Name"
                 name="lastName"
                 placeholder="Enter last name"
@@ -77,6 +80,7 @@ export const NameFields = memo(function NameFields({
                 onFocus={() => onFieldFocus("lastName")}
                 disabled={disabled}
                 required
+                className="text-xs sm:text-sm md:text-base"
               />
             </FormControl>
             <FormMessage />

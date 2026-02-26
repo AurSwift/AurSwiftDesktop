@@ -445,6 +445,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                             <FormItem className="col-span-2">
                               <FormControl>
                                 <AdaptiveFormField
+                                  variant="borderOnly"
                                   {...form.register("name")}
                                   label="Product Name *"
                                   value={keyboard.formValues.name || ""}
@@ -455,6 +456,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                                   placeholder="Enter product name"
                                   disabled={isSubmitting}
                                   className={cn(
+                                    "text-xs sm:text-sm md:text-base",
                                     keyboard.activeField === "name" &&
                                       "ring-2 ring-primary border-primary",
                                   )}
@@ -473,6 +475,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                             <FormItem className="col-span-2">
                               <FormControl>
                                 <AdaptiveTextarea
+                                  variant="borderOnly"
                                   {...form.register("description")}
                                   label="Description"
                                   value={keyboard.formValues.description || ""}
@@ -555,6 +558,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                             <FormItem>
                               <FormControl>
                                 <AdaptiveFormField
+                                  variant="borderOnly"
                                   {...form.register("sku")}
                                   label="SKU *"
                                   value={keyboard.formValues.sku || ""}
@@ -565,6 +569,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                                   placeholder="Enter SKU"
                                   disabled={isSubmitting}
                                   className={cn(
+                                    "text-xs sm:text-sm md:text-base",
                                     keyboard.activeField === "sku" &&
                                       "ring-2 ring-primary border-primary",
                                   )}
@@ -583,6 +588,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                             <FormItem className="col-span-2">
                               <FormControl>
                                 <AdaptiveFormField
+                                  variant="borderOnly"
                                   {...form.register("plu")}
                                   label="PLU Code (Optional)"
                                   value={keyboard.formValues.plu || ""}
@@ -593,6 +599,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                                   placeholder="Enter PLU code"
                                   disabled={isSubmitting}
                                   className={cn(
+                                    "text-xs sm:text-sm md:text-base",
                                     keyboard.activeField === "plu" &&
                                       "ring-2 ring-primary border-primary",
                                   )}
@@ -616,6 +623,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                               <FormItem>
                                 <FormControl>
                                   <AdaptiveFormField
+                                    variant="borderOnly"
                                     {...form.register("basePrice")}
                                     label="Sale Price *"
                                     value={
@@ -631,6 +639,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                                     placeholder="0.00"
                                     disabled={isSubmitting}
                                     className={cn(
+                                      "text-xs sm:text-sm md:text-base",
                                       keyboard.activeField === "basePrice" &&
                                         "ring-2 ring-primary border-primary",
                                     )}
@@ -650,6 +659,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                             <FormItem>
                               <FormControl>
                                 <AdaptiveFormField
+                                  variant="borderOnly"
                                   {...form.register("costPrice")}
                                   label="Cost Price *"
                                   value={
@@ -665,6 +675,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                                   placeholder="0.00"
                                   disabled={isSubmitting}
                                   className={cn(
+                                    "text-xs sm:text-sm md:text-base",
                                     keyboard.activeField === "costPrice" &&
                                       "ring-2 ring-primary border-primary",
                                   )}
@@ -683,6 +694,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                             <FormItem>
                               <FormControl>
                                 <AdaptiveFormField
+                                  variant="borderOnly"
                                   {...form.register("barcode")}
                                   label="Barcode (Optional)"
                                   value={keyboard.formValues.barcode || ""}
@@ -693,6 +705,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                                   placeholder="Enter barcode"
                                   disabled={isSubmitting}
                                   className={cn(
+                                    "text-xs sm:text-sm md:text-base",
                                     keyboard.activeField === "barcode" &&
                                       "ring-2 ring-primary border-primary",
                                   )}
@@ -934,6 +947,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                                       <FormItem>
                                         <FormControl>
                                           <AdaptiveFormField
+                                            variant="borderOnly"
                                             {...form.register("pricePerKg")}
                                             label={`Price per ${
                                               salesUnitSettings.mode ===
@@ -963,6 +977,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                                             placeholder="0.00"
                                             disabled={isSubmitting}
                                             className={cn(
+                                              "text-xs sm:text-sm md:text-base",
                                               keyboard.activeField ===
                                                 "pricePerKg" &&
                                                 "ring-2 ring-primary border-primary",
@@ -993,6 +1008,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                                 <div className="p-4 bg-purple-50 rounded-lg">
                                   <FormControl>
                                     <AdaptiveFormField
+                                      variant="borderOnly"
                                       {...form.register("genericDefaultPrice")}
                                       label="Default Price"
                                       value={
@@ -1011,6 +1027,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                                       placeholder="0.00"
                                       disabled={isSubmitting}
                                       className={cn(
+                                        "text-xs sm:text-sm md:text-base",
                                         keyboard.activeField ===
                                           "genericDefaultPrice" &&
                                           "ring-2 ring-primary border-primary",
@@ -1037,6 +1054,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                             <FormItem>
                               <FormControl>
                                 <AdaptiveFormField
+                                  variant="borderOnly"
                                   {...form.register("stockLevel")}
                                   label="Current Stock"
                                   value={
@@ -1052,6 +1070,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                                   placeholder="0"
                                   disabled={isSubmitting}
                                   className={cn(
+                                    "text-xs sm:text-sm md:text-base",
                                     keyboard.activeField === "stockLevel" &&
                                       "ring-2 ring-primary border-primary",
                                   )}
@@ -1070,6 +1089,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                             <FormItem>
                               <FormControl>
                                 <AdaptiveFormField
+                                  variant="borderOnly"
                                   {...form.register("minStockLevel")}
                                   label="Minimum Stock Level"
                                   value={
@@ -1085,6 +1105,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                                   placeholder="5"
                                   disabled={isSubmitting}
                                   className={cn(
+                                    "text-xs sm:text-sm md:text-base",
                                     keyboard.activeField === "minStockLevel" &&
                                       "ring-2 ring-primary border-primary",
                                   )}
@@ -1103,6 +1124,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                             <FormItem>
                               <FormControl>
                                 <AdaptiveFormField
+                                  variant="borderOnly"
                                   {...form.register("reorderPoint")}
                                   label="Reorder Point"
                                   value={
@@ -1118,6 +1140,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                                   placeholder="0"
                                   disabled={isSubmitting}
                                   className={cn(
+                                    "text-xs sm:text-sm md:text-base",
                                     keyboard.activeField === "reorderPoint" &&
                                       "ring-2 ring-primary border-primary",
                                   )}
@@ -1189,6 +1212,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                               <FormItem>
                                 <FormControl>
                                   <AdaptiveFormField
+                                    variant="borderOnly"
                                     {...form.register("vatOverridePercent")}
                                     label="VAT Override (%)"
                                     value={
@@ -1207,6 +1231,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                                     placeholder="Override VAT percent"
                                     disabled={isSubmitting}
                                     className={cn(
+                                      "text-xs sm:text-sm md:text-base",
                                       keyboard.activeField ===
                                         "vatOverridePercent" &&
                                         "ring-2 ring-primary border-primary",
@@ -1377,6 +1402,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                                 <FormItem>
                                   <FormControl>
                                     <AdaptiveFormField
+                                      variant="borderOnly"
                                       {...form.register("shelfLifeDays")}
                                       label="Expected Shelf Life (Days)"
                                       value={
@@ -1395,6 +1421,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                                       placeholder="e.g., 30"
                                       disabled={isSubmitting}
                                       className={cn(
+                                        "text-xs sm:text-sm md:text-base",
                                         keyboard.activeField ===
                                           "shelfLifeDays" &&
                                           "ring-2 ring-primary border-primary",
@@ -1560,6 +1587,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                                 <FormItem>
                                   <FormControl>
                                     <AdaptiveFormField
+                                      variant="borderOnly"
                                       {...form.register("restrictionReason")}
                                       label="Restriction Reason"
                                       value={
@@ -1578,6 +1606,7 @@ const ProductFormDrawer: React.FC<ProductFormDrawerProps> = ({
                                       placeholder="e.g., Alcoholic beverage, Tobacco product..."
                                       disabled={isSubmitting}
                                       className={cn(
+                                        "text-xs sm:text-sm md:text-base",
                                         keyboard.activeField ===
                                           "restrictionReason" &&
                                           "ring-2 ring-primary border-primary",

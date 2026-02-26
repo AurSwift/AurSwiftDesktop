@@ -830,6 +830,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
                       <FormLabel>Assigned Register</FormLabel>
                       <FormControl>
                         <AdaptiveFormField
+                          variant="borderOnly"
                           id="assignedRegister"
                           label=""
                           value={keyboard.formValues.assignedRegister || ""}
@@ -1040,6 +1041,7 @@ const StaffSchedulesView: React.FC<StaffSchedulesViewProps> = ({ onBack }) => {
                     <FormLabel>Notes (Optional)</FormLabel>
                     <FormControl>
                       <AdaptiveTextarea
+                        variant="borderOnly"
                         id="notes"
                         label=""
                         value={keyboard.formValues.notes || ""}

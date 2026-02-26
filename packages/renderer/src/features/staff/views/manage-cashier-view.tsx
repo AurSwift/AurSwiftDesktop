@@ -715,6 +715,7 @@ function CreateCashierDialog({
                     <FormLabel>First Name *</FormLabel>
                     <FormControl>
                       <AdaptiveFormField
+                        variant="borderOnly"
                         id="firstName"
                         label=""
                         value={field.value || ""}
@@ -723,6 +724,7 @@ function CreateCashierDialog({
                         readOnly
                         onFocus={() => keyboard.handleFieldFocus("firstName")}
                         error={form.formState.errors.firstName?.message}
+                        className="text-xs sm:text-sm md:text-base"
                       />
                     </FormControl>
                     <FormMessage />
@@ -737,6 +739,7 @@ function CreateCashierDialog({
                     <FormLabel>Last Name *</FormLabel>
                     <FormControl>
                       <AdaptiveFormField
+                        variant="borderOnly"
                         id="lastName"
                         label=""
                         value={field.value || ""}
@@ -745,6 +748,7 @@ function CreateCashierDialog({
                         readOnly
                         onFocus={() => keyboard.handleFieldFocus("lastName")}
                         error={form.formState.errors.lastName?.message}
+                        className="text-xs sm:text-sm md:text-base"
                       />
                     </FormControl>
                     <FormMessage />
@@ -762,6 +766,7 @@ function CreateCashierDialog({
                   <FormLabel>Email (Optional)</FormLabel>
                   <FormControl>
                     <AdaptiveFormField
+                      variant="borderOnly"
                       id="email"
                       label=""
                       value={field.value || ""}
@@ -770,6 +775,7 @@ function CreateCashierDialog({
                       readOnly
                       onFocus={() => keyboard.handleFieldFocus("email")}
                       error={form.formState.errors.email?.message}
+                      className="text-xs sm:text-sm md:text-base"
                     />
                   </FormControl>
                   <FormMessage />
@@ -786,6 +792,7 @@ function CreateCashierDialog({
                   <FormLabel>Username *</FormLabel>
                   <FormControl>
                     <AdaptiveFormField
+                      variant="borderOnly"
                       id="username"
                       label=""
                       value={field.value || ""}
@@ -794,6 +801,7 @@ function CreateCashierDialog({
                       readOnly
                       onFocus={() => keyboard.handleFieldFocus("username")}
                       error={form.formState.errors.username?.message}
+                      className="text-xs sm:text-sm md:text-base"
                     />
                   </FormControl>
                   <FormMessage />
@@ -810,6 +818,7 @@ function CreateCashierDialog({
                   <FormLabel>Address</FormLabel>
                   <FormControl>
                     <AdaptiveFormField
+                      variant="borderOnly"
                       id="address"
                       label=""
                       value={field.value || ""}
@@ -818,6 +827,7 @@ function CreateCashierDialog({
                       readOnly
                       onFocus={() => keyboard.handleFieldFocus("address")}
                       error={form.formState.errors.address?.message}
+                      className="text-xs sm:text-sm md:text-base"
                     />
                   </FormControl>
                   <FormMessage />
@@ -834,6 +844,7 @@ function CreateCashierDialog({
                   <FormLabel>PIN *</FormLabel>
                   <FormControl>
                     <AdaptiveFormField
+                      variant="borderOnly"
                       id="pin"
                       label=""
                       type="password"
@@ -844,6 +855,7 @@ function CreateCashierDialog({
                       onFocus={() => keyboard.handleFieldFocus("pin")}
                       error={form.formState.errors.pin?.message}
                       maxLength={6}
+                      className="text-xs sm:text-sm md:text-base"
                     />
                   </FormControl>
                   <FormMessage />
@@ -1005,6 +1017,7 @@ function EditCashierDialog({
                     <FormLabel>First Name *</FormLabel>
                     <FormControl>
                       <AdaptiveFormField
+                        variant="borderOnly"
                         id="edit-firstName"
                         label=""
                         value={field.value || ""}
@@ -1013,6 +1026,7 @@ function EditCashierDialog({
                         readOnly
                         onFocus={() => keyboard.handleFieldFocus("firstName")}
                         error={form.formState.errors.firstName?.message}
+                        className="text-xs sm:text-sm md:text-base"
                       />
                     </FormControl>
                     <FormMessage />
@@ -1027,6 +1041,7 @@ function EditCashierDialog({
                     <FormLabel>Last Name *</FormLabel>
                     <FormControl>
                       <AdaptiveFormField
+                        variant="borderOnly"
                         id="edit-lastName"
                         label=""
                         value={field.value || ""}
@@ -1035,6 +1050,7 @@ function EditCashierDialog({
                         readOnly
                         onFocus={() => keyboard.handleFieldFocus("lastName")}
                         error={form.formState.errors.lastName?.message}
+                        className="text-xs sm:text-sm md:text-base"
                       />
                     </FormControl>
                     <FormMessage />
@@ -1076,6 +1092,7 @@ function EditCashierDialog({
                   <FormLabel>Address</FormLabel>
                   <FormControl>
                     <AdaptiveFormField
+                      variant="borderOnly"
                       id="edit-address"
                       label=""
                       value={field.value || ""}
@@ -1084,6 +1101,7 @@ function EditCashierDialog({
                       readOnly
                       onFocus={() => keyboard.handleFieldFocus("address")}
                       error={form.formState.errors.address?.message}
+                      className="text-xs sm:text-sm md:text-base"
                     />
                   </FormControl>
                   <FormMessage />

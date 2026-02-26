@@ -195,6 +195,7 @@ export function CategoryFormDrawer({
                   <FormItem>
                     <FormControl>
                       <AdaptiveFormField
+                        variant="borderOnly"
                         {...form.register("name")}
                         label="Category Name *"
                         value={keyboard.formValues.name || ""}
@@ -203,6 +204,7 @@ export function CategoryFormDrawer({
                         placeholder="Enter category name"
                         disabled={isSubmitting}
                         className={cn(
+                          "text-xs sm:text-sm md:text-base",
                           keyboard.activeField === "name" &&
                             "ring-2 ring-primary border-primary"
                         )}
@@ -221,6 +223,7 @@ export function CategoryFormDrawer({
                   <FormItem>
                     <FormControl>
                       <AdaptiveTextarea
+                        variant="borderOnly"
                         {...form.register("description")}
                         label="Description (Optional)"
                         value={keyboard.formValues.description || ""}
@@ -313,6 +316,7 @@ export function CategoryFormDrawer({
                   <FormItem>
                     <FormControl>
                       <AdaptiveFormField
+                        variant="borderOnly"
                         {...form.register("vatOverridePercent")}
                         label="VAT Override (%)"
                         value={keyboard.formValues.vatOverridePercent || ""}
@@ -325,6 +329,7 @@ export function CategoryFormDrawer({
                         placeholder="Override VAT percent (optional)"
                         disabled={isSubmitting}
                         className={cn(
+                          "text-xs sm:text-sm md:text-base",
                           keyboard.activeField === "vatOverridePercent" &&
                             "ring-2 ring-primary border-primary"
                         )}
@@ -343,6 +348,7 @@ export function CategoryFormDrawer({
                   <FormItem>
                     <FormControl>
                       <AdaptiveFormField
+                        variant="borderOnly"
                         {...form.register("color")}
                         label="Color"
                         value={keyboard.formValues.color || ""}
@@ -351,6 +357,7 @@ export function CategoryFormDrawer({
                         placeholder="Enter color (optional)"
                         disabled={isSubmitting}
                         className={cn(
+                          "text-xs sm:text-sm md:text-base",
                           keyboard.activeField === "color" &&
                             "ring-2 ring-primary border-primary"
                         )}
@@ -369,6 +376,7 @@ export function CategoryFormDrawer({
                   <FormItem>
                     <FormControl>
                       <AdaptiveFormField
+                        variant="borderOnly"
                         {...form.register("image")}
                         label="Image URL"
                         value={keyboard.formValues.image || ""}
@@ -377,6 +385,7 @@ export function CategoryFormDrawer({
                         placeholder="Enter image URL (optional)"
                         disabled={isSubmitting}
                         className={cn(
+                          "text-xs sm:text-sm md:text-base",
                           keyboard.activeField === "image" &&
                             "ring-2 ring-primary border-primary"
                         )}
