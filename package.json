@@ -1,7 +1,7 @@
 {
   "name": "aurswift",
   "description": "aurswift is the pos software for supermarket.",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "author": {
