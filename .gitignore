@@ -65,3 +65,9 @@ test-results
 data/*.db
 data/*.db-wal
 data/*.db-shm
+
+# Prettier cache
+.prettier-cache
+
+# lint-staged cache
+.lint-staged-cache

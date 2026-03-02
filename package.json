@@ -83,20 +83,30 @@
     "migrate:rbac": "tsx packages/main/src/scripts/migrate-rbac.ts",
     "analyze:packages": "node scripts/analyze-package-sizes.mjs",
     "analyze:bundle": "cd packages/renderer && ANALYZE=true npm run build",
-    "lint:typography": "rg 'text-\\[\\d+px\\]' packages/renderer/src 2>/dev/null && (echo 'Typography: avoid text-[Npx] in UI; use scale tokens. See docs/Guides/Typography/TYPOGRAPHY.md'; exit 1) || true"
+    "lint:typography": "rg 'text-\\[\\d+px\\]' packages/renderer/src 2>/dev/null && (echo 'Typography: avoid text-[Npx] in UI; use scale tokens. See docs/Guides/Typography/TYPOGRAPHY.md'; exit 1) || true",
+    "prepare": "husky",
+    "lint": "eslint . --max-warnings=0 --config eslint.config.js",
+    "lint:renderer": "npm --workspace=packages/renderer run lint -- --max-warnings=0",
+    "lint:all": "npm run lint && npm run lint:renderer",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.4.2",
+    "@commitlint/config-conventional": "^20.4.2",
     "@electron/rebuild": "^4.0.1",
+    "@eslint/js": "^9.39.3",
     "@faker-js/faker": "^10.1.0",
     "@npmcli/map-workspaces": "5.0.0",
     "@playwright/test": "1.55.0",
-    "@tanstack/react-query": "^5.62.0",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
     "@semantic-release/github": "^12.0.0",
+    "@tanstack/react-query": "^5.62.0",
     "@testing-library/jest-dom": "^6.6.0",
     "@testing-library/react": "^16.0.0",
     "@testing-library/user-event": "^14.5.2",
+    "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/node": "24.5.2",
     "@types/pdfkit": "^0.17.3",
     "@vitest/coverage-v8": "^2.1.0",
@@ -106,13 +116,19 @@
     "create-vite": "7.1.2",
     "electron": "^38.1.2",
     "electron-builder": "26.0.12",
+    "eslint": "^9.39.3",
     "glob": "^11.0.3",
+    "globals": "^16.5.0",
+    "husky": "^9.1.7",
     "jsdom": "^25.0.0",
+    "lint-staged": "^16.3.1",
     "msw": "^2.6.0",
     "playwright": "^1.55.0",
     "png2icons": "^2.0.1",
+    "prettier": "^3.8.1",
     "semantic-release": "^25.0.1",
     "tsx": "^4.20.6",
+    "typescript-eslint": "^8.56.1",
     "vitest": "^2.1.0"
   },
   "dependencies": {
@@ -132,5 +148,18 @@
     "usb": "^2.16.0",
     "winston": "^3.18.3",
     "winston-daily-rotate-file": "^5.0.0"
+  },
+  "lint-staged": {
+    "packages/renderer/**/*.{ts,tsx,js,mjs,cjs}": [
+      "eslint --max-warnings=0 --fix --config packages/renderer/eslint.config.js",
+      "prettier --write"
+    ],
+    "{*.{ts,tsx,js,mjs,cjs},packages/*.{ts,tsx,js,mjs,cjs},packages/{main,preload,shared,integrate-renderer,electron-versions}/**/*.{ts,tsx,js,mjs,cjs},scripts/**/*.{ts,tsx,js,mjs,cjs},tests/**/*.{ts,tsx,js,mjs,cjs}}": [
+      "eslint --max-warnings=0 --fix --config eslint.config.js",
+      "prettier --write"
+    ],
+    "*.{css,json,md,yaml,yml}": [
+      "prettier --write"
+    ]
   }
 }
