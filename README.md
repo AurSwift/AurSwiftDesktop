@@ -4,13 +4,13 @@ Modern Electron-based Point of Sale system for supermarkets with integrated hard
 
 ## 🚀 Quick Setup
 
-See [SSH Cloning & Setup](#-ssh-cloning--setup) for clone and environment setup (Windows full guide is there); see [Development](#-development) for Mac/Linux and run instructions.
+Please jump to the [Development](#️-development) section for complete OS-specific setup guides, covering Node.js version management, build tools, and native modules compiling instructions.
 
 ---
 
 ## 🔑 SSH Cloning & Setup
 
-To securely clone and contribute to this repository using SSH, set up SSH keys and (on Windows) the development environment as below.
+To securely clone and contribute to this repository using SSH, follow these steps to set up your SSH keys.
 
 ### Mac & Linux
 
@@ -42,13 +42,11 @@ To securely clone and contribute to this repository using SSH, set up SSH keys a
      git remote set-url origin git@github.com:AurSwift/AurSwiftDesktop.git
      ```
 
-Then follow [Development](#-development) for install and run steps.
-
 ### Windows
 
-Use **Git Bash** where possible so commands match Mac/Linux.
+> 📖 **Important for Windows Developers:** Setting up AurSwift on Windows requires specific Node.js versions and native Build Tools. After setting up your SSH keys and cloning the repository as shown below, **you MUST follow the Windows Setup instructions in the Development section** to correctly build the application.
 
-#### SSH keys
+We recommend using **Git Bash** for the smoothest experience, as the commands closely match Linux/Mac.
 
 1. **Check for existing SSH keys:**
    ```bash
@@ -61,62 +59,28 @@ Use **Git Bash** where possible so commands match Mac/Linux.
    > **Note:** When prompted for the file to save the key (e.g., `C:\Users\username\.ssh\id_ed25519`), type the name of the file, like `id_personal` or a full path.
    > Leave the passphrase as it is (empty) by pressing Enter.
 3. **Start the SSH agent:**
-   - In **Git Bash**: `eval "$(ssh-agent -s)"`
+   - In **Git Bash**:
+     ```bash
+     eval "$(ssh-agent -s)"
+     ```
    - In **PowerShell** (Run as Administrator):
      ```powershell
      Get-Service ssh-agent | Set-Service -StartupType Manual
      Start-Service ssh-agent
      ```
-4. **Add your SSH key to the ssh-agent:** `ssh-add ~/.ssh/id_personal`
-5. **Add the SSH key to GitHub:** Copy your `.pub` contents (e.g., open `~/.ssh/id_personal.pub` in Notepad) and add to GitHub → Settings → SSH keys.
-6. **Clone or update remote URL:**
-   - Fresh clone: `git clone git@github.com:AurSwift/AurSwiftDesktop.git`
-   - Existing clone: `git remote set-url origin git@github.com:AurSwift/AurSwiftDesktop.git`
-
-#### Windows development environment
-
-AurSwift needs **Node.js 22.12.0+** and native build tools on Windows. Set these up before installing dependencies.
-
-**Prerequisites:** Windows 10/11 (64-bit), ~10GB free space, Administrator access.
-
-1. **Node.js (NVM recommended)**  
-   - Install [nvm-windows](https://github.com/coreybutler/nvm-windows/releases) (`nvm-setup.exe`), then:
-     ```powershell
-     nvm install 22.12.0
-     nvm use 22.12.0
-     ```
-   - Or install Node.js 22.x from [nodejs.org](https://nodejs.org/) and restart.  
-   - Verify: `node --version` (v22.12.0 or higher), `npm --version` (≥10).  
-   - With NVM you can run `nvm use` in the repo to match `.nvmrc`.
-
-2. **Visual Studio Build Tools**  
-   Native modules (`better-sqlite3`, `serialport`, `node-hid`, `usb`) require C++ build tools.  
-   - Download [Build Tools for Visual Studio 2022](https://visualstudio.microsoft.com/downloads/).  
-   - In the installer, select **Desktop development with C++** and ensure:  
-     MSVC v143 (latest), Windows SDK (latest), C++ CMake tools, C++ ATL for v143 (x86 & x64).  
-   - Then:
-     ```powershell
-     npm config set msvs_version 2022
-     npm config set python python3
-     ```
-
-3. **Python**  
-   `node-gyp` needs Python 3.x.  
-   - Install [Python 3.11 or 3.12](https://www.python.org/downloads/) and **check "Add Python to PATH"**.  
-   - Configure: `npm config set python python3`
-
-4. **Clone** (if not done above):  
-   `git clone git@github.com:AurSwift/AurSwiftDesktop.git` then `cd AurSwiftDesktop`
-
-5. **Install dependencies:**
-   ```powershell
-   npm cache clean --force
-   npm install
+4. **Add your SSH key to the ssh-agent:**
+   ```bash
+   ssh-add ~/.ssh/id_personal
    ```
-   Native modules will compile (can take 10–20 minutes). `npm run postinstall` runs `electron-rebuild` automatically.
-
-6. **Verify:**  
-   `npm start` (dev server + Electron window). Optional: `npm run test:unit`, `npm run test:e2e`, `npm run compile`.
+5. **Add the SSH key to GitHub:**
+   - Copy the contents of your `.pub` file (e.g., open `~/.ssh/id_personal.pub` in Notepad).
+   - Paste the `.pub` content into your GitHub website personal account SSH keys section.
+6. **Clone or update remote URL:**
+   - Check out freshly: `git clone git@github.com:AurSwift/AurSwiftDesktop.git`
+   - Or redefine the remote pattern the SSH way for an existing clone:
+     ```bash
+     git remote set-url origin git@github.com:AurSwift/AurSwiftDesktop.git
+     ```
 
 ---
 
@@ -548,13 +512,50 @@ ELECTRON_UPDATER_DISABLED=1
 
 ---
 
-## 🛠️ Development
+### 🪟 Windows Setup Guide
 
-> **Windows:** Full setup (Node, Build Tools, Python, clone, install) is in [SSH Cloning & Setup — Windows](#windows).
+#### 1. Node.js Installation
+
+Using NVM (Node Version Manager) is recommended:
+
+1. Download `nvm-setup.exe` from [nvm-windows releases](https://github.com/coreybutler/nvm-windows/releases) and install.
+2. Open PowerShell as Administrator and run:
+   ```powershell
+   nvm install 22.12.0
+   nvm use 22.12.0
+   ```
+
+#### 2. Visual Studio Build Tools
+
+Aurswift uses native Node.js modules (`better-sqlite3`, `serialport`, `node-hid`, `usb`, etc.) that require native build tools.
+
+1. Download **Build Tools for Visual Studio 2022** from the [Microsoft site](https://visualstudio.microsoft.com/downloads/).
+2. In the Visual Studio Installer, select **Desktop development with C++** and ensure these are checked:
+   - MSVC v143 - VS 2022 C++ x64/x86 build tools (Latest)
+   - Windows SDK (Latest version)
+   - C++ CMake tools for Windows
+   - C++ ATL for latest v143 build tools (x86 & x64)
+3. Set environment variables:
+   ```powershell
+   npm config set msvs_version 2022
+   npm config set python python3
+   ```
+
+#### 3. Python Installation
+
+`node-gyp` requires Python.
+
+1. Download Python 3.11 or 3.12 from [python.org](https://www.python.org/downloads/).
+2. Run installer and **Check "Add Python to PATH"**.
+3. Configure npm:
+   ```powershell
+   npm config set python python3
+   ```
 
 ### 🍎 Mac/Linux Setup Guide
 
 Ensure you have:
+
 - **Node.js:** ≥22.12.0
 - **npm:** ≥10.0.0
 - **Python:** 3.x
@@ -563,20 +564,24 @@ Ensure you have:
 ### 🚀 Getting Started
 
 1. **Install Git & Clone** (if not done via SSH earlier):
+
    ```bash
    git clone git@github.com:AurSwift/AurSwiftDesktop.git
    cd AurSwiftDesktop
    ```
 
 2. **Clean npm cache (recommended):**
+
    ```bash
    npm cache clean --force
    ```
 
 3. **Install dependencies:**
+
    ```bash
    npm install
    ```
+
    > ⏳ **Note:** This process may take 10-20 minutes. Native modules will be compiled during this step. After installation, `npm run postinstall` will automatically run `electron-rebuild`.
 
 4. **Run Development Server:**
