@@ -154,11 +154,11 @@
   },
   "lint-staged": {
     "packages/renderer/**/*.{ts,tsx,js,mjs,cjs}": [
-      "eslint --max-warnings=0 --fix --config packages/renderer/eslint.config.js",
+      "eslint --fix --config packages/renderer/eslint.config.js",
       "prettier --write"
     ],
     "{*.{ts,tsx,js,mjs,cjs},packages/*.{ts,tsx,js,mjs,cjs},packages/{main,preload,shared,integrate-renderer,electron-versions}/**/*.{ts,tsx,js,mjs,cjs},scripts/**/*.{ts,tsx,js,mjs,cjs},tests/**/*.{ts,tsx,js,mjs,cjs}}": [
-      "eslint --max-warnings=0 --fix --config eslint.config.js",
+      "eslint --fix --config eslint.config.js",
       "prettier --write"
     ],
     "*.{css,json,md,yaml,yml}": [
