@@ -1,45 +1,46 @@
-import { defineConfig } from "vitest/config";
-import react from "@vitejs/plugin-react";
-import path from "path";
-import { fileURLToPath } from "url";
+import react from '@vitejs/plugin-react'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import { defineConfig } from 'vitest/config'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // Vitest configuration for test suite
 export default defineConfig({
-  plugins: [react()] as any,
+  plugins: [react()],
   test: {
     globals: true,
-    environment: "jsdom",
-    setupFiles: ["./tests/setup.ts"],
-    include: ["tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
+    setupFiles: ['./tests/setup.ts'],
+    include: ['tests/**/*.test.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     exclude: [
-      "node_modules",
-      "dist",
-      ".idea",
-      ".git",
-      ".cache",
-      "tests/e2e",
-      "tests/**/*.spec.ts", // Exclude Playwright specs
+      'node_modules',
+      'dist',
+      '.idea',
+      '.git',
+      '.cache',
+      'tests/e2e/**',
+      'tests/**/*.e2e.spec.ts', // Exclude Playwright specs
+      'test-outputs/**',
     ],
     coverage: {
-      provider: "v8",
-      reporter: ["text", "json", "html", "lcov"],
+      provider: 'v8',
+      reportsDirectory: 'test-outputs/coverage',
+      reporter: ['text', 'json', 'html', 'lcov'],
       // In CI we only want to measure code that is actually executed by tests.
       // Counting the entire monorepo (configs/scripts/build tooling) makes the
       // global % extremely noisy and causes threshold flakiness.
       all: false,
-      include: ["packages/**/src/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
+      include: ['packages/**/src/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
       exclude: [
-        "node_modules/",
-        "tests/",
-        "**/*.d.ts",
-        "**/*.config.*",
-        "**/dist/",
-        "**/build/",
-        "**/*.spec.ts",
-        "**/migrations/",
-        "**/seed.ts",
+        'node_modules/',
+        'tests/',
+        '**/*.d.ts',
+        '**/*.config.*',
+        '**/dist/',
+        '**/build/',
+        '**/*.e2e.spec.ts',
+        '**/migrations/',
+        '**/seed.ts',
       ],
       // Coverage thresholds - set to current baseline to prevent CI blocking
       // TODO: Gradually increase as test coverage improves
@@ -58,9 +59,10 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./packages/renderer/src"),
-      "@app/main": path.resolve(__dirname, "./packages/main/src"),
-      "@app/preload": path.resolve(__dirname, "./packages/preload/src"),
+      '@': path.resolve(__dirname, './packages/renderer/src'),
+      '@app/main': path.resolve(__dirname, './packages/main/src'),
+      '@app/preload': path.resolve(__dirname, './packages/preload/src'),
+      '@app/shared': path.resolve(__dirname, './packages/shared/src'),
     },
   },
-});
+})

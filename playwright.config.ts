@@ -1,95 +1,96 @@
-import { defineConfig, devices } from "@playwright/test";
+import { defineConfig } from '@playwright/test'
+
+const isCI = !!process.env.CI
 
 /**
  * Playwright Configuration for aurswift Electron E2E Tests
  *
- * This configuration is optimized for Electron applications which:
- * - Cannot run tests in parallel (single Electron instance)
- * - Require longer timeouts for native module initialization
- * - Need special handling for window management
- *
- * @see https://playwright.dev/docs/test-configuration
+ * Optimized for Electron applications:
+ * - single-worker execution
+ * - deterministic startup checks
+ * - CI-focused failure and timeout guardrails
  */
 export default defineConfig({
-  // Test directory - all E2E tests are now in tests/e2e
-  testDir: "./tests/e2e",
+  // Test directory - all E2E specs live under tests/e2e/specs
+  testDir: './tests/e2e/specs',
 
-  // Test file patterns - match .spec.ts files in e2e directory
-  testMatch: /.*\.spec\.ts/,
+  // Test file patterns - match *.e2e.spec.ts files
+  testMatch: /.*\.e2e\.spec\.ts/,
 
-  // Timeout for each test (30 seconds - reduced from 60)
-  timeout: 30000,
+  // Timeout for each test
+  timeout: 30_000,
 
-  // Expect timeout (5 seconds - reduced from 10)
+  // Bound total CI runtime to avoid hung pipelines
+  globalTimeout: isCI ? 45 * 60 * 1000 : undefined,
+
+  // Expect timeout
   expect: {
-    timeout: 5000,
+    timeout: 5_000,
   },
 
   // Run tests sequentially (Electron limitation)
   fullyParallel: false,
 
-  // Fail the build on CI if you accidentally left test.only in the source code
-  forbidOnly: !!process.env.CI,
+  // Fail the build on CI if test.only is committed
+  forbidOnly: isCI,
 
   // Retry failed tests in CI
-  retries: process.env.CI ? 2 : 0,
+  retries: isCI ? 2 : 0,
 
-  // Single worker for Electron tests (cannot run multiple instances)
+  // Stop early in CI after repeated failures
+  maxFailures: isCI ? 5 : undefined,
+
+  // Track slowest tests to keep suite healthy
+  reportSlowTests: {
+    max: 10,
+    threshold: 30_000,
+  },
+
+  // Single worker for Electron tests
   workers: 1,
 
   // Reporter configuration
-  reporter: [
-    // Console output
-    ["list"],
-
-    // HTML report (interactive)
-    ["html", { outputFolder: "test-results/html", open: "never" }],
-
-    // JUnit XML for CI integration
-    ["junit", { outputFile: "test-results/junit.xml" }],
-
-    // JSON report for programmatic analysis
-    ["json", { outputFile: "test-results/results.json" }],
-  ],
+  reporter: isCI
+    ? [
+        ['dot'],
+        ['junit', { outputFile: 'test-outputs/e2e/junit.xml' }],
+        ['json', { outputFile: 'test-outputs/e2e/results.json' }],
+        ['html', { outputFolder: 'test-outputs/e2e/html', open: 'never' }],
+      ]
+    : [['list'], ['html', { outputFolder: 'test-outputs/e2e/html', open: 'never' }]],
 
   // Shared settings for all tests
   use: {
-    // Collect trace on failure for debugging
-    trace: "retain-on-failure",
-
-    // Take screenshot only on failure
-    screenshot: "only-on-failure",
-
-    // Record video only on failure
-    video: "retain-on-failure",
-
-    // Maximum time each action such as `click()` can take
-    actionTimeout: 5000,
+    testIdAttribute: 'data-testid',
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
+    actionTimeout: 5_000,
+    navigationTimeout: 15_000,
   },
 
   // Test projects
   projects: [
     {
-      name: "electron",
-      testMatch: /.*\.spec\.ts/,
+      name: 'electron',
+      testMatch: /.*\.e2e\.spec\.ts/,
+      testIgnore: /.*hardware\.e2e\.spec\.ts/,
       use: {
-        // Electron-specific settings can go here
+        // Electron-specific overrides can go here.
       },
     },
-
-    // Separate project for hardware integration tests (slower)
     {
-      name: "hardware",
-      testMatch: /hardware.*\.spec\.ts/,
-      timeout: 120000, // Longer timeout for hardware tests
-      retries: 0, // Don't retry hardware tests
+      name: 'hardware',
+      testMatch: /.*hardware\.e2e\.spec\.ts/,
+      timeout: 120_000,
+      retries: 0,
     },
   ],
 
-  // Output directory for test results
-  outputDir: "test-results/artifacts",
+  // Output directory for test artifacts
+  outputDir: 'test-outputs/e2e/artifacts',
 
-  // Global setup/teardown
-  // globalSetup: require.resolve('./tests/e2e/global-setup.ts'),
-  // globalTeardown: require.resolve('./tests/e2e/global-teardown.ts'),
-});
+  // Global setup/teardown lifecycle
+  globalSetup: './tests/e2e/support/global-setup.ts',
+  globalTeardown: './tests/e2e/support/global-teardown.ts',
+})
