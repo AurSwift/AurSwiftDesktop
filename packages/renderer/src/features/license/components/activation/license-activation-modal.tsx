@@ -1,47 +1,41 @@
-import { useCallback, useEffect, useState } from "react";
+import { AlertCircle, CheckCircle2, Loader2, Power, TestTube } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import {
-  AdaptiveKeyboard,
-  AdaptiveFormField,
-} from "@/features/adaptive-keyboard";
-import { getLogger } from "@/shared/utils/logger";
-import {
-  Loader2,
-  CheckCircle2,
-  AlertCircle,
-  Power,
-  TestTube,
-} from "lucide-react";
-import { useLicense } from "../../hooks/use-license";
-import type { LicenseActivationFormProps } from "./license-activation-form";
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import { AdaptiveFormField, AdaptiveKeyboard } from '@/features/adaptive-keyboard'
+import { getLogger } from '@/shared/utils/logger'
 
-const logger = getLogger("license-activation-modal");
-const MIN_LICENSE_LENGTH = 28;
+import { useLicense } from '../../hooks/use-license'
+import type { LicenseActivationFormProps } from './license-activation-form'
+
+const logger = getLogger('license-activation-modal')
+const MIN_LICENSE_LENGTH = 28
 
 export interface LicenseActivationModalProps extends Pick<
   LicenseActivationFormProps,
-  "onActivationSuccess" | "onTestMode"
+  'onActivationSuccess' | 'onTestMode'
 > {
-  open: boolean;
-  onOpenChange?: (open: boolean) => void;
+  open: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 function formatLicenseKey(value: string): string {
-  const cleaned = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
-  let formatted = "";
-  if (cleaned.length > 0) formatted += cleaned.substring(0, 3);
-  if (cleaned.length > 3) formatted += `-${cleaned.substring(3, 6)}`;
-  if (cleaned.length > 6) formatted += `-${cleaned.substring(6, 8)}`;
-  if (cleaned.length > 8) formatted += `-${cleaned.substring(8, 16)}`;
-  if (cleaned.length > 16) formatted += `-${cleaned.substring(16, 24)}`;
-  return formatted;
+  const cleaned = value.toUpperCase().replace(/[^A-Z0-9]/g, '')
+  let formatted = ''
+  if (cleaned.length > 0) formatted += cleaned.substring(0, 3)
+  if (cleaned.length > 3) formatted += `-${cleaned.substring(3, 6)}`
+  if (cleaned.length > 6) formatted += `-${cleaned.substring(6, 8)}`
+  if (cleaned.length > 8) formatted += `-${cleaned.substring(8, 16)}`
+  if (cleaned.length > 16) formatted += `-${cleaned.substring(16, 24)}`
+  return formatted
 }
 
 export function LicenseActivationModal({
@@ -50,82 +44,78 @@ export function LicenseActivationModal({
   onTestMode,
   onOpenChange,
 }: LicenseActivationModalProps) {
-  const { activate, getMachineInfo, isLoading, error, clearError } =
-    useLicense();
+  const { activate, getMachineInfo, isLoading, error, clearError } = useLicense()
 
-  const [licenseKey, setLicenseKey] = useState("");
-  const [activationError, setActivationError] = useState<string | null>(null);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const productSelected = true;
-  const [showKeyboard, setShowKeyboard] = useState(false);
+  const [licenseKey, setLicenseKey] = useState('')
+  const [activationError, setActivationError] = useState<string | null>(null)
+  const [isSuccess, setIsSuccess] = useState(false)
+  const productSelected = true
+  const [showKeyboard, setShowKeyboard] = useState(false)
 
   const handleFieldFocus = useCallback(() => {
-    setShowKeyboard(true);
-  }, []);
+    setShowKeyboard(true)
+  }, [])
 
   const handleCloseKeyboard = useCallback(() => {
-    setShowKeyboard(false);
-  }, []);
+    setShowKeyboard(false)
+  }, [])
+
+  const handleLicenseKeyChange = useCallback(
+    (value: string) => {
+      setLicenseKey(formatLicenseKey(value))
+      setActivationError(null)
+      clearError()
+    },
+    [clearError]
+  )
+
+  const handleActivate = useCallback(async () => {
+    if (!licenseKey || licenseKey.length < MIN_LICENSE_LENGTH) {
+      setActivationError('Please enter a valid license key')
+      return
+    }
+    setActivationError(null)
+    const result = await activate(licenseKey)
+    if (!result.success) {
+      setActivationError(result.message || 'Activation failed. Please check your license key.')
+      return
+    }
+    setIsSuccess(true)
+    setTimeout(() => onActivationSuccess(), 1500)
+  }, [licenseKey, activate, onActivationSuccess])
 
   const handleKeyboardInput = useCallback(
     (char: string) => {
-      handleLicenseKeyChange(licenseKey + char);
+      handleLicenseKeyChange(licenseKey + char)
     },
-    [licenseKey],
-  );
+    [licenseKey, handleLicenseKeyChange]
+  )
 
   const handleQuit = useCallback(async () => {
     try {
-      await window.appAPI?.quit?.();
+      await window.appAPI?.quit?.()
     } catch (err) {
-      logger.warn("Failed to quit app from activation modal", err);
+      logger.warn('Failed to quit app from activation modal', err)
     }
-  }, []);
+  }, [])
 
   useEffect(() => {
-    if (!open) {
-      setShowKeyboard(false);
-      return;
-    }
-    void getMachineInfo();
-  }, [open, getMachineInfo]);
-
-  const handleLicenseKeyChange = (value: string) => {
-    setLicenseKey(formatLicenseKey(value));
-    setActivationError(null);
-    clearError();
-  };
-
-  const handleActivate = async () => {
-    if (!licenseKey || licenseKey.length < MIN_LICENSE_LENGTH) {
-      setActivationError("Please enter a valid license key");
-      return;
-    }
-    setActivationError(null);
-    const result = await activate(licenseKey);
-    if (!result.success) {
-      setActivationError(
-        result.message || "Activation failed. Please check your license key.",
-      );
-      return;
-    }
-    setIsSuccess(true);
-    setTimeout(() => onActivationSuccess(), 1500);
-  };
+    if (open) void getMachineInfo()
+  }, [open, getMachineInfo])
 
   const handleKeyboardEnter = useCallback(() => {
     if (licenseKey.length >= MIN_LICENSE_LENGTH && !isLoading) {
-      void handleActivate();
+      void handleActivate()
     } else {
-      handleCloseKeyboard();
+      handleCloseKeyboard()
     }
-  }, [licenseKey, isLoading, handleCloseKeyboard]);
+  }, [licenseKey, isLoading, handleActivate, handleCloseKeyboard])
 
   return (
     <Dialog
       open={open}
-      onOpenChange={(nextOpen) => {
-        if (nextOpen) onOpenChange?.(nextOpen);
+      onOpenChange={nextOpen => {
+        if (nextOpen) onOpenChange?.(nextOpen)
       }}
     >
       <DialogContent
@@ -133,20 +123,23 @@ export function LicenseActivationModal({
         showCloseButton={false}
         overlayClassName="bg-black/40 backdrop-blur-[2px]"
         className="w-full max-w-[min(720px,96vw)] border border-gray-200 bg-white p-0 shadow-xl sm:max-w-[min(720px,96vw)] flex flex-col max-h-[90vh]"
-        onEscapeKeyDown={(e) => e.preventDefault()}
-        onPointerDownOutside={(e) => e.preventDefault()}
-        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={e => e.preventDefault()}
+        onPointerDownOutside={e => e.preventDefault()}
+        onInteractOutside={e => e.preventDefault()}
       >
         <div className="rounded-lg bg-white text-gray-900 flex flex-col min-h-0">
           {/* Header */}
           <DialogHeader className="flex flex-row items-start justify-between gap-4 border-b border-gray-200 px-6 pt-6 pb-4 shrink-0">
-            <DialogTitle className="text-xl font-semibold tracking-tight text-gray-900">
-              License Activator
-            </DialogTitle>
+            <div className="space-y-1">
+              <DialogTitle className="text-xl font-semibold tracking-tight text-gray-900">
+                License Activator
+              </DialogTitle>
+              <DialogDescription className="sr-only">
+                Activate the application with a valid license key.
+              </DialogDescription>
+            </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-500">
-                Aurswift
-              </span>
+              <span className="text-sm font-medium text-gray-500">Aurswift</span>
               <Button
                 type="button"
                 variant="ghost"
@@ -165,18 +158,14 @@ export function LicenseActivationModal({
             <div className="space-y-5 px-6 py-4 overflow-y-auto flex-1 min-h-0">
               {/* Instructional text */}
               <p className="text-sm leading-relaxed text-gray-700">
-                You can enable license with the license key provided when the
-                software is purchased. Enter your key below to activate.
+                You can enable license with the license key provided when the software is purchased.
+                Enter your key below to activate.
               </p>
 
               {/* License key row - batch-style form field + adaptive keyboard */}
               <div className="space-y-2">
-                <Label
-                  htmlFor="license-key-input"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Please enter the license key for the product you wish to
-                  activate:
+                <Label htmlFor="license-key-input" className="text-sm font-medium text-gray-700">
+                  Please enter the license key for the product you wish to activate:
                 </Label>
                 <div className="flex flex-wrap items-start gap-4">
                   <div className="flex-1 min-w-0 max-w-[360px]">
@@ -222,8 +211,8 @@ export function LicenseActivationModal({
                     size="sm"
                     className="border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
                     onClick={() => {
-                      handleCloseKeyboard();
-                      onTestMode();
+                      handleCloseKeyboard()
+                      onTestMode()
                     }}
                     disabled={isLoading || isSuccess}
                   >
@@ -254,7 +243,7 @@ export function LicenseActivationModal({
                       Activated
                     </>
                   ) : (
-                    "Activate"
+                    'Activate'
                   )}
                 </Button>
               </div>
@@ -267,13 +256,11 @@ export function LicenseActivationModal({
                   visible={showKeyboard}
                   initialMode="qwerty"
                   onInput={handleKeyboardInput}
-                  onBackspace={() =>
-                    handleLicenseKeyChange(licenseKey.slice(0, -1))
-                  }
+                  onBackspace={() => handleLicenseKeyChange(licenseKey.slice(0, -1))}
                   onClear={() => {
-                    setLicenseKey("");
-                    setActivationError(null);
-                    clearError();
+                    setLicenseKey('')
+                    setActivationError(null)
+                    clearError()
                   }}
                   onEnter={handleKeyboardEnter}
                   onClose={handleCloseKeyboard}
@@ -284,5 +271,5 @@ export function LicenseActivationModal({
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }
